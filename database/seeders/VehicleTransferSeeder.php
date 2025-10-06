@@ -23,8 +23,6 @@ class VehicleTransferSeeder extends Seeder {
                 'type' => 'temporary',
                 'status' => 'pending',
 
-                // --- MODIFICADO AQUI ---
-                // 'now()' já retorna um objeto de data e hora completo
                 'start_date' => now()->addDay()->setHour(8)->setMinutes(0), // Começa amanhã às 08:00
                 'end_date' => now()->addMonth()->setHour(18)->setMinutes(0), // Termina em um mês às 18:00
 

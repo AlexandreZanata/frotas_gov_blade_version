@@ -41,6 +41,7 @@ class DatabaseSeeder extends Seeder
             InventorySeeder::class,
             FineSeeder::class,
             VehicleTransferSeeder::class,
+            ServiceOrderSeeder::class,
         ]);
     }
 }
