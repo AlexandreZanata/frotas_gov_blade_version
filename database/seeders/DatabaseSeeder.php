@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
             InventoryCategorySeeder::class,
             InventorySeeder::class,
             FineSeeder::class,
+            VehicleTransferSeeder::class,
         ]);
     }
 }
