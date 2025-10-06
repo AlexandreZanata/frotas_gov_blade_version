@@ -39,6 +39,7 @@ class DatabaseSeeder extends Seeder
             RunSignatureSeeder::class,
             InventoryCategorySeeder::class,
             InventorySeeder::class,
+            FineSeeder::class,
         ]);
     }
 }
