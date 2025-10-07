@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Secretariat;
+use App\Models\DefaultPassword;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -14,27 +15,46 @@ class UserController extends Controller
     /**
      * Exibe a lista de usuários.
      */
-    public function index()
+    public function index(Request $request)
     {
         $currentUser = auth()->user();
+        $search = $request->input('search');
 
         // Gestor geral vê todos os usuários
         if ($currentUser->isGeneralManager()) {
-            $users = User::with(['role', 'secretariat'])->latest()->paginate(15);
+            $users = User::with(['role', 'secretariat'])
+                ->when($search, function ($query, $search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                          ->orWhere('email', 'like', "%{$search}%")
+                          ->orWhere('cpf', 'like', "%{$search}%");
+                    });
+                })
+                ->latest()
+                ->paginate(15)
+                ->withQueryString();
         }
         // Gestor setorial vê apenas usuários da sua secretaria
         elseif ($currentUser->isSectorManager()) {
             $users = User::with(['role', 'secretariat'])
                 ->where('secretariat_id', $currentUser->secretariat_id)
+                ->when($search, function ($query, $search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                          ->orWhere('email', 'like', "%{$search}%")
+                          ->orWhere('cpf', 'like', "%{$search}%");
+                    });
+                })
                 ->latest()
-                ->paginate(15);
+                ->paginate(15)
+                ->withQueryString();
         }
         // Outros usuários não podem ver listagem
         else {
             abort(403, 'Você não tem permissão para visualizar usuários.');
         }
 
-        return view('users.index', compact('users'));
+        return view('users.index', compact('users', 'search'));
     }
 
     /**
@@ -50,6 +70,7 @@ class UserController extends Controller
         }
 
         $secretariats = Secretariat::all();
+        $defaultPasswords = DefaultPassword::where('is_active', true)->get();
 
         // Gestor geral pode atribuir qualquer role
         if ($currentUser->isGeneralManager()) {
@@ -60,7 +81,7 @@ class UserController extends Controller
             $roles = Role::whereIn('name', ['driver', 'mechanic'])->get();
         }
 
-        return view('users.create', compact('roles', 'secretariats'));
+        return view('users.create', compact('roles', 'secretariats', 'defaultPasswords'));
     }
 
     /**
@@ -79,7 +100,9 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'cpf' => ['required', 'string', 'max:14', 'unique:users'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'use_default_password' => ['required', 'boolean'],
+            'default_password_id' => ['required_if:use_default_password,true', 'exists:default_passwords,id'],
+            'password' => ['required_if:use_default_password,false', 'nullable', 'confirmed', Rules\Password::defaults()],
             'role_id' => ['required', 'exists:roles,id'],
             'secretariat_id' => ['required', 'exists:secretariats,id'],
             'phone' => ['nullable', 'string', 'max:20'],
@@ -99,11 +122,19 @@ class UserController extends Controller
             abort(403, 'Você só pode criar usuários na sua própria secretaria.');
         }
 
+        // Determinar a senha a ser usada
+        if ($request->use_default_password) {
+            $defaultPassword = DefaultPassword::findOrFail($request->default_password_id);
+            $password = $defaultPassword->password; // Já está hasheada
+        } else {
+            $password = Hash::make($request->password);
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'cpf' => $request->cpf,
-            'password' => Hash::make($request->password),
+            'password' => $password,
             'role_id' => $request->role_id,
             'secretariat_id' => $request->secretariat_id,
             'phone' => $request->phone,

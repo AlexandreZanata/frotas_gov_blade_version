@@ -39,4 +39,12 @@ class Run extends Model
     {
         return $this->belongsTo(Vehicle::class);
     }
+
+    /**
+     * Relação com as assinaturas da viagem
+     */
+    public function signatures()
+    {
+        return $this->hasMany(RunSignature::class);
+    }
 }

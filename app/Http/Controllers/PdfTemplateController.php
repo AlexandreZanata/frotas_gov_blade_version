@@ -13,8 +13,8 @@ class PdfTemplateController extends Controller
      */
     public function index(Request $request)
     {
-        // Apenas admin (role 1)
-        if (auth()->user()->role_id != 1) {
+        // Apenas gestor geral pode gerenciar templates
+        if (!auth()->user()->isGeneralManager()) {
             abort(403, 'Acesso negado. Apenas administradores podem gerenciar templates.');
         }
 
@@ -36,7 +36,7 @@ class PdfTemplateController extends Controller
      */
     public function create()
     {
-        if (auth()->user()->role_id != 1) {
+        if (!auth()->user()->isGeneralManager()) {
             abort(403, 'Acesso negado.');
         }
 
@@ -48,7 +48,7 @@ class PdfTemplateController extends Controller
      */
     public function store(Request $request)
     {
-        if (auth()->user()->role_id != 1) {
+        if (!auth()->user()->isGeneralManager()) {
             abort(403, 'Acesso negado.');
         }
 
@@ -59,6 +59,25 @@ class PdfTemplateController extends Controller
         ]);
 
         $data = $request->except(['header_image', 'footer_image']);
+
+        // Converter checkboxes para boolean
+        $data['show_table_lines'] = $request->has('show_table_lines');
+        $data['use_zebra_stripes'] = $request->has('use_zebra_stripes');
+        $data['real_time_preview'] = $request->has('real_time_preview');
+        $data['cell_word_wrap'] = $request->has('cell_word_wrap');
+
+        // Garantir valores padrão para campos numéricos
+        $data['header_line_height'] = $request->input('header_line_height', 1.2);
+        $data['footer_line_height'] = $request->input('footer_line_height', 1.2);
+        $data['body_line_height'] = $request->input('body_line_height', 1.5);
+        $data['paragraph_spacing'] = $request->input('paragraph_spacing', 5);
+        $data['heading_spacing'] = $request->input('heading_spacing', 8);
+        $data['header_image_width'] = $request->input('header_image_width', 50);
+        $data['header_image_height'] = $request->input('header_image_height', 0);
+        $data['footer_image_width'] = $request->input('footer_image_width', 40);
+        $data['footer_image_height'] = $request->input('footer_image_height', 0);
+        $data['table_row_height'] = $request->input('table_row_height', 10);
+        $data['font_size_table'] = $request->input('font_size_table', 10);
 
         // Upload de imagens
         if ($request->hasFile('header_image')) {
@@ -80,7 +99,7 @@ class PdfTemplateController extends Controller
      */
     public function show(PdfTemplate $pdfTemplate)
     {
-        if (auth()->user()->role_id != 1) {
+        if (!auth()->user()->isGeneralManager()) {
             abort(403, 'Acesso negado.');
         }
 
@@ -92,7 +111,7 @@ class PdfTemplateController extends Controller
      */
     public function edit(PdfTemplate $pdfTemplate)
     {
-        if (auth()->user()->role_id != 1) {
+        if (!auth()->user()->isGeneralManager()) {
             abort(403, 'Acesso negado.');
         }
 
@@ -104,7 +123,7 @@ class PdfTemplateController extends Controller
      */
     public function update(Request $request, PdfTemplate $pdfTemplate)
     {
-        if (auth()->user()->role_id != 1) {
+        if (!auth()->user()->isGeneralManager()) {
             abort(403, 'Acesso negado.');
         }
 
@@ -115,6 +134,25 @@ class PdfTemplateController extends Controller
         ]);
 
         $data = $request->except(['header_image', 'footer_image']);
+
+        // Converter checkboxes para boolean (HTML envia "on" quando marcado)
+        $data['show_table_lines'] = $request->has('show_table_lines');
+        $data['use_zebra_stripes'] = $request->has('use_zebra_stripes');
+        $data['real_time_preview'] = $request->has('real_time_preview');
+        $data['cell_word_wrap'] = $request->has('cell_word_wrap');
+
+        // Garantir valores padrão para campos numéricos
+        $data['header_line_height'] = $request->input('header_line_height', 1.2);
+        $data['footer_line_height'] = $request->input('footer_line_height', 1.2);
+        $data['body_line_height'] = $request->input('body_line_height', 1.5);
+        $data['paragraph_spacing'] = $request->input('paragraph_spacing', 5);
+        $data['heading_spacing'] = $request->input('heading_spacing', 8);
+        $data['header_image_width'] = $request->input('header_image_width', 50);
+        $data['header_image_height'] = $request->input('header_image_height', 0);
+        $data['footer_image_width'] = $request->input('footer_image_width', 40);
+        $data['footer_image_height'] = $request->input('footer_image_height', 0);
+        $data['table_row_height'] = $request->input('table_row_height', 10);
+        $data['font_size_table'] = $request->input('font_size_table', 10);
 
         // Upload de imagens
         if ($request->hasFile('header_image')) {
@@ -142,7 +180,7 @@ class PdfTemplateController extends Controller
      */
     public function destroy(Request $request, PdfTemplate $pdfTemplate)
     {
-        if (auth()->user()->role_id != 1) {
+        if (!auth()->user()->isGeneralManager()) {
             abort(403, 'Acesso negado.');
         }
 
@@ -162,7 +200,7 @@ class PdfTemplateController extends Controller
 
     public function preview(Request $request)
     {
-        if (auth()->user()->role_id != 1) {
+        if (!auth()->user()->isGeneralManager()) {
             abort(403, 'Acesso negado.');
         }
 

@@ -24,7 +24,10 @@
                     <td class="px-4 py-2 uppercase tracking-wide">{{ $v->plate }}</td>
                     <td class="px-4 py-2">{{ $v->category->name ?? '-' }}</td>
                     <td class="px-4 py-2">{{ $v->fuelType->name ?? '—' }}</td>
-                    <td class="px-4 py-2"><span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50">{{ $v->status->name ?? '—' }}</span></td>
+                    <td class="px-4 py-2">
+                        {{-- USANDO O NOVO COMPONENTE DE STATUS COM AS NOVAS CORES --}}
+                        <x-ui.status-badge :status="$v->status" />
+                    </td>
                     <td class="px-4 py-2 whitespace-nowrap text-right">
                         <div class="flex items-center justify-end gap-1">
                             <x-ui.action-icon :href="route('vehicles.show',$v)" icon="eye" title="Ver" variant="primary" />

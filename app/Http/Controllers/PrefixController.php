@@ -48,6 +48,14 @@ class PrefixController extends Controller
 
     public function destroy(Request $request, Prefix $prefix)
     {
+        // Verificar se o prefixo está em uso
+        $vehiclesCount = $prefix->vehicles()->count();
+
+        if ($vehiclesCount > 0) {
+            return redirect()->back()
+                ->with('error', "Não é possível excluir o prefixo '{$prefix->name}' pois existem {$vehiclesCount} veículo(s) usando este prefixo.");
+        }
+
         // Gerar backup se solicitado
         if ($request->has('create_backup') && $request->input('create_backup')) {
             try {
@@ -63,5 +71,37 @@ class PrefixController extends Controller
 
         return redirect()->route('prefixes.index')
             ->with('success', 'Prefixo excluído com sucesso.' . ($request->has('create_backup') ? ' Backup gerado com sucesso.' : ''));
+    }
+
+    /**
+     * API para buscar prefixos (autocomplete)
+     */
+    public function search(Request $request)
+    {
+        $search = $request->input('q', '');
+
+        $prefixes = Prefix::query()
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
+            ->orderBy('name')
+            ->limit(10)
+            ->get(['id', 'name']);
+
+        return response()->json($prefixes);
+    }
+
+    /**
+     * API para criar prefixo inline (usado no formulário de veículos)
+     */
+    public function storeInline(Request $request)
+    {
+        $request->validate(['name' => 'required|string|max:255|unique:prefixes,name']);
+        $prefix = Prefix::create($request->only('name'));
+
+        return response()->json([
+            'success' => true,
+            'prefix' => $prefix
+        ]);
     }
 }

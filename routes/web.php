@@ -6,6 +6,8 @@ use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleCategoryController;
 use App\Http\Controllers\PrefixController;
 use App\Http\Controllers\BackupReportController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\DefaultPasswordController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -32,7 +34,17 @@ Route::middleware('auth')->group(function () {
     Route::resource('vehicles', VehicleController::class);
     Route::resource('vehicle-categories', VehicleCategoryController::class);
     Route::resource('prefixes', PrefixController::class);
+
+    // API Routes para prefixos
+    Route::get('/api/prefixes/search', [PrefixController::class, 'search'])->name('api.prefixes.search');
+    Route::post('/api/prefixes/store-inline', [PrefixController::class, 'storeInline'])->name('api.prefixes.store-inline');
+
     Route::resource('users', UserController::class);
+    Route::resource('default-passwords', DefaultPasswordController::class);
+
+    // Audit Logs (apenas para gestores gerais)
+    Route::get('/audit-logs', [\App\Http\Controllers\AuditLogController::class, 'index'])->name('audit-logs.index');
+    Route::get('/audit-logs/{auditLog}', [\App\Http\Controllers\AuditLogController::class, 'show'])->name('audit-logs.show');
 });
 
 

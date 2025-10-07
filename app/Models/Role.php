@@ -40,4 +40,17 @@ class Role extends Model
     {
         return $this->hierarchy_level > $otherRole->hierarchy_level;
     }
+
+    /**
+     * Get display name (usa description se existir, senão usa name formatado)
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        if (!empty($this->description)) {
+            return $this->description;
+        }
+
+        // Formata o name: converte de snake_case para Title Case
+        return ucwords(str_replace('_', ' ', $this->name));
+    }
 }

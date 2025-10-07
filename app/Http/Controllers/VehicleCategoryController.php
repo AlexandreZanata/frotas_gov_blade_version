@@ -48,6 +48,14 @@ class VehicleCategoryController extends Controller
 
     public function destroy(Request $request, VehicleCategory $vehicleCategory)
     {
+        // Verificar se a categoria está em uso
+        $vehiclesCount = $vehicleCategory->vehicles()->count();
+
+        if ($vehiclesCount > 0) {
+            return redirect()->back()
+                ->with('error', "Não é possível excluir a categoria '{$vehicleCategory->name}' pois existem {$vehiclesCount} veículo(s) usando esta categoria.");
+        }
+
         // Gerar backup se solicitado
         if ($request->has('create_backup') && $request->input('create_backup')) {
             try {

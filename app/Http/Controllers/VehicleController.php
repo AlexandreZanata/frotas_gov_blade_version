@@ -49,12 +49,16 @@ class VehicleController extends Controller
             'plate' => 'required|string|max:255|unique:vehicles,plate',
             'fuel_tank_capacity' => 'required|integer',
             'category_id' => 'required|exists:vehicle_categories,id',
-            'prefix_id' => 'nullable|exists:prefixes,id',
+            'prefix_id' => 'required|exists:prefixes,id',
             'status_id' => 'required|exists:vehicle_statuses,id',
             'fuel_type_id' => 'required|exists:fuel_types,id', // nova validação
         ]);
 
-        Vehicle::create($request->all());
+        // Criar veículo associando a secretaria do usuário logado
+        $vehicleData = $request->all();
+        $vehicleData['secretariat_id'] = auth()->user()->secretariat_id;
+
+        Vehicle::create($vehicleData);
 
         return redirect()->route('vehicles.index')
             ->with('success', 'Veículo criado com sucesso.');
@@ -84,12 +88,16 @@ class VehicleController extends Controller
             'plate' => 'required|string|max:255|unique:vehicles,plate,' . $vehicle->id,
             'fuel_tank_capacity' => 'required|integer',
             'category_id' => 'required|exists:vehicle_categories,id',
-            'prefix_id' => 'nullable|exists:prefixes,id',
+            'prefix_id' => 'required|exists:prefixes,id',
             'status_id' => 'required|exists:vehicle_statuses,id',
             'fuel_type_id' => 'required|exists:fuel_types,id',
         ]);
 
-        $vehicle->update($request->all());
+        // Atualizar mantendo a secretaria original (não permitir mudança)
+        $vehicleData = $request->all();
+        $vehicleData['secretariat_id'] = $vehicle->secretariat_id;
+
+        $vehicle->update($vehicleData);
 
         return redirect()->route('vehicles.index')
             ->with('success', 'Veículo atualizado com sucesso.');

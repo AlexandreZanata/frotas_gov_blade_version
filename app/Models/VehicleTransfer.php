@@ -27,6 +27,11 @@ class VehicleTransfer extends Model {
     public function vehicle(): BelongsTo { return $this->belongsTo(Vehicle::class); }
     public function originSecretariat(): BelongsTo { return $this->belongsTo(Secretariat::class, 'origin_secretariat_id'); }
     public function destinationSecretariat(): BelongsTo { return $this->belongsTo(Secretariat::class, 'destination_secretariat_id'); }
+
+    // Aliases para compatibilidade
+    public function fromSecretariat(): BelongsTo { return $this->originSecretariat(); }
+    public function toSecretariat(): BelongsTo { return $this->destinationSecretariat(); }
+
     public function requester(): BelongsTo { return $this->belongsTo(User::class, 'requester_id'); }
     public function approver(): BelongsTo { return $this->belongsTo(User::class, 'approver_id'); }
     public function histories(): HasMany { return $this->hasMany(VehicleTransferHistory::class); }

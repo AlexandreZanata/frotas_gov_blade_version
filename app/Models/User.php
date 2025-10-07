@@ -9,11 +9,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\Auditable;
 
 class User extends Authenticatable
 {
     // 2. USAR A TRAIT
-    use HasFactory, Notifiable, HasUuids;
+    use HasFactory, Notifiable, HasUuids, Auditable;
 
     /**
      * The attributes that are mass assignable.
@@ -26,11 +27,13 @@ class User extends Authenticatable
         'password',
         // Adicionar os novos campos aqui!
         'cpf',
-        'cnh_number',
-        'cnh_expiry_date',
         'role_id',
         'secretariat_id',
         'status',
+        'phone',
+        'cnh',
+        'cnh_expiration_date',
+        'cnh_category',
     ];
 
     /**
