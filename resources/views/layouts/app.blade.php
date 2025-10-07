@@ -1,15 +1,21 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="layoutState()" x-init="init()" x-bind:class="{ 'dark': darkMode }" class="h-full">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="layoutState()" x-init="init(); document.documentElement.classList.add('alpine-ready');" x-bind:class="{ 'dark': darkMode }" class="h-full">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ config('app.name', 'Laravel') }}</title>
         <script>/* Anti-flicker dark mode early apply */(function(){try{const s=localStorage.getItem('theme-dark');if(s==='true'||(s===null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
+        <script>/* Anti-flicker dark + sidebar width */(function(){try{var d=document.documentElement;const s=localStorage.getItem('theme-dark');if(s==='true'||(s===null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){d.classList.add('dark');}var c=localStorage.getItem('sidebar-collapsed')==='true';d.classList.add('pre-sidebar');d.style.setProperty('--sidebar-w', c? '4rem':'16rem');}catch(e){}})();</script>
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-        <style>[x-cloak]{display:none!important} .no-transition *{transition:none!important}</style>
+        <style>
+            :root { --sidebar-w:16rem; }
+            .pre-sidebar .layout-shell { margin-left: var(--sidebar-w); }
+            @media (max-width:1023px){ .pre-sidebar .layout-shell { margin-left:0!important; } }
+            [x-cloak]{display:none!important} .no-transition *{transition:none!important}
+        </style>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         <script>
             function layoutState() {
@@ -21,12 +27,14 @@
                     init() {
                         const collapsedStored = localStorage.getItem('sidebar-collapsed');
                         if (collapsedStored !== null) this.isSidebarCollapsed = collapsedStored === 'true';
+                        document.documentElement.style.setProperty('--sidebar-w', this.isSidebarCollapsed? '4rem':'16rem');
                         const stored = localStorage.getItem('theme-dark');
                         if (stored !== null) this.darkMode = stored === 'true'; else this.darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
                         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e)=>{ if(!localStorage.getItem('theme-dark')) this.darkMode=e.matches; });
                         this.setupPageTransitions();
+                        requestAnimationFrame(()=>document.documentElement.classList.remove('pre-sidebar'));
                     },
-                    toggleCollapse(){ this.isSidebarCollapsed=!this.isSidebarCollapsed; localStorage.setItem('sidebar-collapsed', this.isSidebarCollapsed);},
+                    toggleCollapse(){ this.isSidebarCollapsed=!this.isSidebarCollapsed; localStorage.setItem('sidebar-collapsed', this.isSidebarCollapsed); document.documentElement.style.setProperty('--sidebar-w', this.isSidebarCollapsed? '4rem':'16rem');},
                     openMobile(){ this.isMobileSidebarOpen=true; },
                     closeMobile(){ this.isMobileSidebarOpen=false; },
                     toggleDark(){ this.darkMode=!this.darkMode; localStorage.setItem('theme-dark', this.darkMode);},
@@ -51,20 +59,38 @@
     </head>
     <body class="font-sans antialiased h-full bg-gray-100 dark:bg-navy-900">
         <!-- Page Loading Overlay -->
-        <div x-cloak x-show="pageLoading" x-transition.opacity class="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-white/70 dark:bg-navy-900/90 backdrop-blur-sm">
+        <div x-cloak x-show="pageLoading" x-transition.opacity class="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-gradient-to-br from-white via-primary-50/30 to-primary-100/40 dark:from-navy-900 dark:via-navy-900/95 dark:to-navy-800/90 backdrop-blur-sm">
             <div class="relative">
-                <div class="h-14 w-14 rounded-full border-4 border-primary-200 dark:border-navy-600 border-t-primary-600 dark:border-t-navy-200 animate-spin"></div>
+                <!-- Círculo externo pulsante -->
+                <div class="absolute inset-0 h-20 w-20 rounded-full bg-primary-200/40 dark:bg-navy-600/40 animate-ping"></div>
+                <!-- Anel principal girando -->
+                <div class="relative h-20 w-20 rounded-full border-4 border-primary-200 dark:border-navy-600 border-t-primary-600 dark:border-t-primary-500 animate-spin shadow-lg"></div>
+                <!-- Ícone central animado -->
                 <div class="absolute inset-0 flex items-center justify-center">
-                    <svg class="w-7 h-7 text-primary-600 dark:text-navy-100 animate-pulse" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h2l1 3h12l1-3h2M5 13l4-8h6l4 8M10 9h4" /></svg>
+                    <svg class="w-9 h-9 text-primary-600 dark:text-primary-400 animate-pulse" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13h2l1 3h12l1-3h2M5 13l4-8h6l4 8M10 9h4" />
+                    </svg>
                 </div>
             </div>
-            <p class="mt-6 text-sm font-medium text-primary-700 dark:text-navy-100 tracking-wide">Carregando...</p>
+            <!-- Texto e barra de progresso -->
+            <div class="mt-8 text-center space-y-3">
+                <p class="text-sm font-semibold text-primary-700 dark:text-primary-300 tracking-wide animate-pulse">Carregando...</p>
+                <div class="w-48 h-1 bg-gray-200 dark:bg-navy-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-primary-500 via-primary-600 to-primary-500 dark:from-primary-400 dark:via-primary-500 dark:to-primary-400 animate-[loading_1.5s_ease-in-out_infinite] rounded-full"></div>
+                </div>
+            </div>
         </div>
+        <style>
+            @keyframes loading {
+                0%, 100% { transform: translateX(-100%); }
+                50% { transform: translateX(100%); }
+            }
+        </style>
         <!-- Sidebar Desktop & Mobile Offcanvas -->
         @include('layouts.sidebar')
 
         <!-- Main Wrapper ajusta margem conforme sidebar -->
-        <div class="min-h-screen flex flex-col transition-[margin] duration-300 ease-in-out" x-bind:class="isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'">
+        <div class="min-h-screen flex flex-col transition-[margin] duration-300 ease-in-out layout-shell" x-bind:class="isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'">
             <!-- Top Bar -->
             <header class="sticky top-0 z-30 h-16 flex items-center gap-3 px-4 lg:px-6 bg-white/85 dark:bg-navy-800/90 backdrop-blur border-b border-gray-200 dark:border-navy-700 shadow-sm">
                 <!-- User Dropdown (mobile esquerda, desktop direita) -->
@@ -92,13 +118,16 @@
                         <div class="text-gray-700 dark:text-navy-50 font-semibold truncate">{{ $header }}</div>
                     @endisset
                 </div>
+                @isset($pageActions)
+                    <div class="order-3 flex items-center gap-2">{{ $pageActions }}</div>
+                @endisset
                 <!-- Toggle Dark Mode -->
-                <button @click="toggleDark" class="order-3 lg:order-3 inline-flex items-center justify-center h-10 w-10 rounded-md text-primary-600 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition" x-bind:title="darkMode ? 'Modo claro' : 'Modo escuro'">
+                <button @click="toggleDark" class="order-4 inline-flex items-center justify-center h-10 w-10 rounded-md text-primary-600 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition" x-bind:title="darkMode ? 'Modo claro' : 'Modo escuro'">
                     <x-icon name="sun" x-show="!darkMode" class="h-5 w-5" />
                     <x-icon name="moon" x-show="darkMode" x-cloak class="h-5 w-5" />
                 </button>
                 <!-- Hamburger agora à direita somente mobile -->
-                <button @click="openMobile" aria-controls="mobile-sidebar" x-bind:aria-expanded="isMobileSidebarOpen" class="order-4 lg:hidden inline-flex items-center justify-center h-10 w-10 rounded-md text-primary-600 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition" aria-label="Abrir menu">
+                <button @click="openMobile" aria-controls="mobile-sidebar" x-bind:aria-expanded="isMobileSidebarOpen" class="order-5 lg:hidden inline-flex items-center justify-center h-10 w-10 rounded-md text-primary-600 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition" aria-label="Abrir menu">
                     <x-icon name="menu" x-show="!isMobileSidebarOpen" class="h-6 w-6" />
                     <x-icon name="close" x-show="isMobileSidebarOpen" x-cloak class="h-6 w-6" />
                 </button>

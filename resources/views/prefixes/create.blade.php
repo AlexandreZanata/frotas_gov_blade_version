@@ -1,8 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-ui.page-header title="Novo Prefixo" subtitle="Cadastrar identificador">
+        <x-ui.page-header title="Novo Prefixo" subtitle="Cadastrar identificador" hide-title-mobile icon="prefix">
             <x-slot name="actions">
-                <a href="{{ route('prefixes.index') }}" class="text-sm text-gray-600 dark:text-navy-200 hover:underline">Voltar</a>
+                <x-ui.action-icon :href="route('prefixes.index')" icon="arrow-left" title="Voltar" variant="neutral" />
             </x-slot>
         </x-ui.page-header>
     </x-slot>

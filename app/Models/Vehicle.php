@@ -46,4 +46,34 @@ class Vehicle extends Model
     {
         return $this->belongsTo(\App\Models\FuelType::class, 'fuel_type_id');
     }
+
+    public function serviceOrders()
+    {
+        return $this->hasMany(ServiceOrder::class);
+    }
+
+    public function fuelings()
+    {
+        return $this->hasMany(Fueling::class);
+    }
+
+    public function runs()
+    {
+        return $this->hasMany(Run::class);
+    }
+
+    public function fines()
+    {
+        return $this->hasMany(Fine::class);
+    }
+
+    public function defectReports()
+    {
+        return $this->hasMany(DefectReport::class);
+    }
+
+    public function transfers()
+    {
+        return $this->hasMany(VehicleTransfer::class);
+    }
 }

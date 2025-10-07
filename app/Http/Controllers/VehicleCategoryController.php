@@ -7,10 +7,19 @@ use Illuminate\Http\Request;
 
 class VehicleCategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = VehicleCategory::latest()->paginate(10);
-        return view('vehicle_categories.index', compact('categories'));
+        $search = $request->input('search');
+
+        $categories = VehicleCategory::query()
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('vehicle_categories.index', compact('categories', 'search'));
     }
 
     public function create()
@@ -37,9 +46,22 @@ class VehicleCategoryController extends Controller
         return redirect()->route('vehicle-categories.index')->with('success', 'Categoria atualizada com sucesso.');
     }
 
-    public function destroy(VehicleCategory $vehicleCategory)
+    public function destroy(Request $request, VehicleCategory $vehicleCategory)
     {
+        // Gerar backup se solicitado
+        if ($request->has('create_backup') && $request->input('create_backup')) {
+            try {
+                $backupService = new \App\Services\BackupPdfService();
+                $backupService->generateCategoryBackup($vehicleCategory);
+            } catch (\Exception $e) {
+                return redirect()->back()
+                    ->with('error', 'Erro ao gerar backup: ' . $e->getMessage());
+            }
+        }
+
         $vehicleCategory->delete();
-        return redirect()->route('vehicle-categories.index')->with('success', 'Categoria excluída com sucesso.');
+
+        return redirect()->route('vehicle-categories.index')
+            ->with('success', 'Categoria excluída com sucesso.' . ($request->has('create_backup') ? ' Backup gerado com sucesso.' : ''));
     }
 }

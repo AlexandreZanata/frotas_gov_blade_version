@@ -13,6 +13,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('name')->unique();
             $table->string('description')->nullable();
+            $table->integer('hierarchy_level')->default(0); // Nível hierárquico (maior = mais privilégios)
             $table->timestamps();
         });
     }

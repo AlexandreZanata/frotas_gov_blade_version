@@ -1,13 +1,16 @@
-@props(['title','subtitle'=>null])
-<div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-    <div class="space-y-1">
-        <h1 class="text-xl font-semibold text-gray-800 dark:text-navy-50">{{ $title }}</h1>
-        @if($subtitle)
-            <p class="text-sm text-gray-500 dark:text-navy-200">{{ $subtitle }}</p>
+@props(['title','subtitle'=>null,'hideTitleMobile'=>false,'icon'=>null])
+@php( $hideTitleMobile = $hideTitleMobile || filter_var($attributes->get('hide-title-mobile') ?? false, FILTER_VALIDATE_BOOLEAN) )
+<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div class="space-y-1 min-w-0">
+        <h1 class="font-semibold tracking-tight text-gray-800 dark:text-navy-50 text-xl md:text-2xl flex items-center gap-2"
+            @class(['hidden'=>$hideTitleMobile,'flex'=>!$hideTitleMobile])>
+            <span>{{ $title }}</span>
+        </h1>
+        @if($subtitle && !$hideTitleMobile)
+            <p class="text-sm text-gray-500 dark:text-navy-200 leading-snug">{{ $subtitle }}</p>
         @endif
     </div>
     @if(isset($actions))
-        <div class="flex items-center gap-2" >{{ $actions }}</div>
+        <div class="flex flex-wrap items-center gap-2 shrink-0">{{ $actions }}</div>
     @endif
 </div>
-

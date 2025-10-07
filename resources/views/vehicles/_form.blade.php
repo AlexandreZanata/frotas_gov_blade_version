@@ -80,6 +80,6 @@
     </div>
 </div>
 <div class="flex items-center gap-3 pt-6">
-    <x-primary-button>Salvar</x-primary-button>
+    <x-primary-button icon="save" compact>Salvar</x-primary-button>
     <a href="{{ route('vehicles.index') }}" class="text-sm text-gray-600 dark:text-navy-200 hover:underline">Cancelar</a>
 </div>

@@ -19,8 +19,11 @@
         </button>
     </div>
 
-    <!-- Scrollable Nav -->
-    <nav class="flex-1 overflow-y-auto px-2" x-data x-ref="sidebarNav"
+    <!-- Scrollable Nav (sem scroll horizontal quando colapsada) -->
+    <nav class="flex-1 px-2"
+         x-data
+         x-ref="sidebarNav"
+         x-bind:class="isSidebarCollapsed ? 'overflow-y-hidden hover:overflow-y-auto' : 'overflow-y-auto'"
          x-init="(() => { const k='sidebar-scroll'; requestAnimationFrame(()=>{ $refs.sidebarNav.scrollTop = parseInt(localStorage.getItem(k)||0); }); $refs.sidebarNav.addEventListener('scroll', () => localStorage.setItem(k, $refs.sidebarNav.scrollTop), {passive:true}); })()">
         @include('layouts.navigation-links')
     </nav>

@@ -11,10 +11,24 @@ use Illuminate\Http\Request;
 
 class VehicleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $vehicles = Vehicle::with(['category', 'prefix', 'status', 'fuelType'])->latest()->paginate(10); // incluir fuelType
-        return view('vehicles.index', compact('vehicles'));
+        $search = $request->input('search');
+
+        $vehicles = Vehicle::with(['category', 'prefix', 'status', 'fuelType'])
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%")
+                      ->orWhere('plate', 'like', "%{$search}%")
+                      ->orWhere('brand', 'like', "%{$search}%")
+                      ->orWhereHas('category', function ($q) use ($search) {
+                          $q->where('name', 'like', "%{$search}%");
+                      });
+            })
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('vehicles.index', compact('vehicles', 'search'));
     }
 
     public function create()
@@ -81,11 +95,22 @@ class VehicleController extends Controller
             ->with('success', 'Veículo atualizado com sucesso.');
     }
 
-    public function destroy(Vehicle $vehicle)
+    public function destroy(Request $request, Vehicle $vehicle)
     {
+        // Gerar backup se solicitado
+        if ($request->has('create_backup') && $request->input('create_backup')) {
+            try {
+                $backupService = new \App\Services\BackupPdfService();
+                $backupService->generateVehicleBackup($vehicle);
+            } catch (\Exception $e) {
+                return redirect()->back()
+                    ->with('error', 'Erro ao gerar backup: ' . $e->getMessage());
+            }
+        }
+
         $vehicle->delete();
 
         return redirect()->route('vehicles.index')
-            ->with('success', 'Veículo excluído com sucesso.');
+            ->with('success', 'Veículo excluído com sucesso.' . ($request->has('create_backup') ? ' Backup gerado com sucesso.' : ''));
     }
 }

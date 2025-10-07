@@ -1,10 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-ui.page-header title="Editar Categoria" subtitle="Atualizar dados da categoria">
-            <x-slot name="actions">
-                <a href="{{ route('vehicle-categories.index') }}" class="text-sm text-gray-600 dark:text-navy-200 hover:underline">Voltar</a>
-            </x-slot>
-        </x-ui.page-header>
+        <x-ui.page-header title="Editar Categoria" subtitle="Atualizar dados da categoria" hide-title-mobile icon="category" />
+    </x-slot>
+    <x-slot name="pageActions">
+        <x-ui.action-icon :href="route('vehicle-categories.index')" icon="arrow-left" title="Voltar" variant="neutral" />
     </x-slot>
 
     <x-ui.card title="Dados da Categoria">

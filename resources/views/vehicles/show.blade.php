@@ -1,38 +1,60 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-ui.page-header title="Detalhes do Veículo" subtitle="Visualização">
-            <x-slot name="actions">
-                <a href="{{ route('vehicles.edit',$vehicle) }}" class="inline-flex items-center gap-1 px-3 py-2 rounded-md bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium">
-                    Editar
-                </a>
-                <a href="{{ route('vehicles.index') }}" class="text-sm text-gray-600 dark:text-navy-200 hover:underline">Voltar</a>
-            </x-slot>
-        </x-ui.page-header>
+        <x-ui.page-header title="Detalhes do Veículo" subtitle="Visualização" hide-title-mobile icon="car" />
+    </x-slot>
+    <x-slot name="pageActions">
+        <x-ui.action-icon :href="route('vehicles.index')" icon="arrow-left" title="Voltar" variant="neutral" />
+        <a href="{{ route('vehicles.edit',$vehicle) }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium">
+            <x-icon name="edit" class="w-4 h-4" /> <span>Editar</span>
+        </a>
     </x-slot>
 
     <div class="grid gap-6 md:grid-cols-2">
         <x-ui.card title="Informações Gerais">
-            <dl class="divide-y divide-gray-200 dark:divide-navy-700 text-sm">
-                <div class="py-2 grid grid-cols-3 gap-2"><dt class="text-gray-500 dark:text-navy-200">Nome</dt><dd class="col-span-2 font-medium">{{ $vehicle->name }}</dd></div>
-                <div class="py-2 grid grid-cols-3 gap-2"><dt class="text-gray-500 dark:text-navy-200">Marca</dt><dd class="col-span-2">{{ $vehicle->brand }}</dd></div>
-                <div class="py-2 grid grid-cols-3 gap-2"><dt class="text-gray-500 dark:text-navy-200">Ano/Modelo</dt><dd class="col-span-2">{{ $vehicle->model_year }}</dd></div>
-                <div class="py-2 grid grid-cols-3 gap-2"><dt class="text-gray-500 dark:text-navy-200">Placa</dt><dd class="col-span-2 uppercase">{{ $vehicle->plate }}</dd></div>
-                <div class="py-2 grid grid-cols-3 gap-2"><dt class="text-gray-500 dark:text-navy-200">Categoria</dt><dd class="col-span-2">{{ $vehicle->category->name ?? '-' }}</dd></div>
-                <div class="py-2 grid grid-cols-3 gap-2"><dt class="text-gray-500 dark:text-navy-200">Prefixo</dt><dd class="col-span-2">{{ $vehicle->prefix->name ?? '-' }}</dd></div>
-                <div class="py-2 grid grid-cols-3 gap-2"><dt class="text-gray-500 dark:text-navy-200">Status</dt><dd class="col-span-2">{{ $vehicle->status->name ?? '-' }}</dd></div>
-                <div class="py-2 grid grid-cols-3 gap-2"><dt class="text-gray-500 dark:text-navy-200">Chassi</dt><dd class="col-span-2">{{ $vehicle->chassis ?: '—' }}</dd></div>
-                <div class="py-2 grid grid-cols-3 gap-2"><dt class="text-gray-500 dark:text-navy-200">RENAVAM</dt><dd class="col-span-2">{{ $vehicle->renavam ?: '—' }}</dd></div>
-                <div class="py-2 grid grid-cols-3 gap-2"><dt class="text-gray-500 dark:text-navy-200">Registro</dt><dd class="col-span-2">{{ $vehicle->registration ?: '—' }}</dd></div>
-                <div class="py-2 grid grid-cols-3 gap-2"><dt class="text-gray-500 dark:text-navy-200">Tanque (L)</dt><dd class="col-span-2">{{ $vehicle->fuel_tank_capacity }}</dd></div>
-            </dl>
+            @php($items=[
+                ['label'=>'Nome','value'=>e($vehicle->name),'bold'=>true],
+                ['label'=>'Marca','value'=>e($vehicle->brand)],
+                ['label'=>'Ano/Modelo','value'=>e($vehicle->model_year)],
+                ['label'=>'Placa','value'=>strtoupper($vehicle->plate)],
+                ['label'=>'Categoria','value'=>e($vehicle->category->name ?? '-')],
+                ['label'=>'Prefixo','value'=>e($vehicle->prefix->name ?? '-')],
+                ['label'=>'Combustível','value'=>e($vehicle->fuelType->name ?? '—')],
+                ['label'=>'Status','value'=>e($vehicle->status->name ?? '-')],
+                ['label'=>'Tanque (L)','value'=>e($vehicle->fuel_tank_capacity)],
+                ['label'=>'Chassi','value'=>e($vehicle->chassis ?: '—')],
+                ['label'=>'RENAVAM','value'=>e($vehicle->renavam ?: '—')],
+                ['label'=>'Registro','value'=>e($vehicle->registration ?: '—')],
+            ])
+            <x-ui.detail-list :items="$items" />
         </x-ui.card>
         <x-ui.card title="Ações Rápidas">
             <div class="space-y-3">
-                <form action="{{ route('vehicles.destroy',$vehicle) }}" method="POST" onsubmit="return confirm('Confirmar exclusão definitiva?')" class="space-y-3">
-                    @csrf
-                    @method('DELETE')
-                    <x-danger-button>Excluir Veículo</x-danger-button>
-                </form>
+                <x-ui.confirm-form
+                    :action="route('vehicles.destroy',$vehicle)"
+                    method="DELETE"
+                    message="⚠️ ATENÇÃO: EXCLUSÃO PERMANENTE
+
+Ao excluir este veículo, TODOS os dados relacionados serão permanentemente removidos do sistema, incluindo:
+
+• Ordens de Serviço e manutenções
+• Histórico de abastecimentos
+• Registro de viagens e rotas
+• Multas e infrações
+• Relatórios de defeitos
+• Transferências entre secretarias
+
+Esta ação NÃO PODE SER DESFEITA. Os dados não poderão ser recuperados após a exclusão.
+
+Recomendamos fortemente gerar um backup em PDF antes de prosseguir."
+                    title="Excluir Veículo Permanentemente"
+                    button-class="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition shadow-sm"
+                    icon="trash"
+                    :icon-only="false"
+                    :require-backup="true"
+                    :require-confirmation-text="true"
+                    confirmation-text="Eu estou ciente">
+                    Excluir Veículo
+                </x-ui.confirm-form>
             </div>
         </x-ui.card>
     </div>

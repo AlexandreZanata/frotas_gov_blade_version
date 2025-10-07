@@ -16,8 +16,23 @@ class UserController extends Controller
      */
     public function index()
     {
-        // Usamos with() para carregar os relacionamentos e evitar o problema N+1
-        $users = User::with(['role', 'secretariat'])->latest()->paginate(15);
+        $currentUser = auth()->user();
+
+        // Gestor geral vê todos os usuários
+        if ($currentUser->isGeneralManager()) {
+            $users = User::with(['role', 'secretariat'])->latest()->paginate(15);
+        }
+        // Gestor setorial vê apenas usuários da sua secretaria
+        elseif ($currentUser->isSectorManager()) {
+            $users = User::with(['role', 'secretariat'])
+                ->where('secretariat_id', $currentUser->secretariat_id)
+                ->latest()
+                ->paginate(15);
+        }
+        // Outros usuários não podem ver listagem
+        else {
+            abort(403, 'Você não tem permissão para visualizar usuários.');
+        }
 
         return view('users.index', compact('users'));
     }
@@ -27,8 +42,23 @@ class UserController extends Controller
      */
     public function create()
     {
-        $roles = Role::all();
+        $currentUser = auth()->user();
+
+        // Apenas gestores podem criar usuários
+        if (!$currentUser->isManager()) {
+            abort(403, 'Você não tem permissão para criar usuários.');
+        }
+
         $secretariats = Secretariat::all();
+
+        // Gestor geral pode atribuir qualquer role
+        if ($currentUser->isGeneralManager()) {
+            $roles = Role::all();
+        }
+        // Gestor setorial só pode criar motoristas e mecânicos
+        else {
+            $roles = Role::whereIn('name', ['driver', 'mechanic'])->get();
+        }
 
         return view('users.create', compact('roles', 'secretariats'));
     }
@@ -38,6 +68,13 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        $currentUser = auth()->user();
+
+        // Apenas gestores podem criar usuários
+        if (!$currentUser->isManager()) {
+            abort(403, 'Você não tem permissão para criar usuários.');
+        }
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -50,6 +87,17 @@ class UserController extends Controller
             'cnh_expiration_date' => ['nullable', 'date'],
             'cnh_category' => ['nullable', 'string', 'max:5'],
         ]);
+
+        // Verificar se o gestor setorial está tentando criar role que não pode
+        $targetRole = Role::findOrFail($request->role_id);
+        if ($currentUser->isSectorManager() && !in_array($targetRole->name, ['driver', 'mechanic'])) {
+            abort(403, 'Você só pode criar usuários com roles de Motorista ou Mecânico.');
+        }
+
+        // Verificar se está criando usuário em outra secretaria (gestor setorial)
+        if ($currentUser->isSectorManager() && $request->secretariat_id != $currentUser->secretariat_id) {
+            abort(403, 'Você só pode criar usuários na sua própria secretaria.');
+        }
 
         $user = User::create([
             'name' => $request->name,
@@ -73,8 +121,23 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        $roles = Role::all();
+        $currentUser = auth()->user();
+
+        // Verificar se pode gerenciar este usuário
+        if (!$currentUser->canManage($user)) {
+            abort(403, 'Você não tem permissão para editar este usuário.');
+        }
+
         $secretariats = Secretariat::all();
+
+        // Gestor geral pode atribuir qualquer role
+        if ($currentUser->isGeneralManager()) {
+            $roles = Role::all();
+        }
+        // Gestor setorial só pode atribuir motoristas e mecânicos
+        else {
+            $roles = Role::whereIn('name', ['driver', 'mechanic'])->get();
+        }
 
         return view('users.edit', compact('user', 'roles', 'secretariats'));
     }
@@ -84,6 +147,13 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        $currentUser = auth()->user();
+
+        // Verificar se pode gerenciar este usuário
+        if (!$currentUser->canManage($user)) {
+            abort(403, 'Você não tem permissão para editar este usuário.');
+        }
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
@@ -96,6 +166,17 @@ class UserController extends Controller
             'cnh_expiration_date' => ['nullable', 'date'],
             'cnh_category' => ['nullable', 'string', 'max:5'],
         ]);
+
+        // Verificar se o gestor setorial está tentando atribuir role que não pode
+        $targetRole = Role::findOrFail($request->role_id);
+        if ($currentUser->isSectorManager() && !in_array($targetRole->name, ['driver', 'mechanic'])) {
+            abort(403, 'Você só pode atribuir roles de Motorista ou Mecânico.');
+        }
+
+        // Verificar se está movendo usuário para outra secretaria (gestor setorial)
+        if ($currentUser->isSectorManager() && $request->secretariat_id != $currentUser->secretariat_id) {
+            abort(403, 'Você só pode gerenciar usuários na sua própria secretaria.');
+        }
 
         $data = $request->except('password');
 
@@ -114,6 +195,19 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        $currentUser = auth()->user();
+
+        // Verificar se pode gerenciar este usuário
+        if (!$currentUser->canManage($user)) {
+            abort(403, 'Você não tem permissão para excluir este usuário.');
+        }
+
+        // Não pode excluir a si mesmo
+        if ($currentUser->id === $user->id) {
+            return redirect()->route('users.index')
+                ->with('error', 'Você não pode excluir sua própria conta.');
+        }
+
         $user->delete();
 
         return redirect()->route('users.index')

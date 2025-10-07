@@ -7,10 +7,19 @@ use Illuminate\Http\Request;
 
 class PrefixController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $prefixes = Prefix::latest()->paginate(10);
-        return view('prefixes.index', compact('prefixes'));
+        $search = $request->input('search');
+
+        $prefixes = Prefix::query()
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('prefixes.index', compact('prefixes', 'search'));
     }
 
     public function create()
@@ -37,9 +46,22 @@ class PrefixController extends Controller
         return redirect()->route('prefixes.index')->with('success', 'Prefixo atualizado com sucesso.');
     }
 
-    public function destroy(Prefix $prefix)
+    public function destroy(Request $request, Prefix $prefix)
     {
+        // Gerar backup se solicitado
+        if ($request->has('create_backup') && $request->input('create_backup')) {
+            try {
+                $backupService = new \App\Services\BackupPdfService();
+                $backupService->generatePrefixBackup($prefix);
+            } catch (\Exception $e) {
+                return redirect()->back()
+                    ->with('error', 'Erro ao gerar backup: ' . $e->getMessage());
+            }
+        }
+
         $prefix->delete();
-        return redirect()->route('prefixes.index')->with('success', 'Prefixo excluído com sucesso.');
+
+        return redirect()->route('prefixes.index')
+            ->with('success', 'Prefixo excluído com sucesso.' . ($request->has('create_backup') ? ' Backup gerado com sucesso.' : ''));
     }
 }
