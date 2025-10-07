@@ -2,10 +2,12 @@
 @php($vehicleGroupActive = request()->routeIs('vehicles.*') || request()->routeIs('vehicle-categories.*') || request()->routeIs('prefixes.*'))
 @php($reportsGroupActive = request()->routeIs('backup-reports.*') || request()->routeIs('pdf-templates.*'))
 @php($usersGroupActive = request()->routeIs('users.*') || request()->routeIs('default-passwords.*'))
+@php($auditGroupActive = request()->routeIs('audit-logs.*'))
 <ul class="mt-4 space-y-1" x-data="{
     vehiclesOpen: (()=>{const s=localStorage.getItem('nav-vehicles-open'); if(s!==null) return s==='true'; return {{ $vehicleGroupActive ? 'true' : 'false' }};})(),
     reportsOpen: (()=>{const s=localStorage.getItem('nav-reports-open'); if(s!==null) return s==='true'; return {{ $reportsGroupActive ? 'true' : 'false' }};})(),
     usersOpen: (()=>{const s=localStorage.getItem('nav-users-open'); if(s!==null) return s==='true'; return {{ $usersGroupActive ? 'true' : 'false' }};})(),
+    auditOpen: (()=>{const s=localStorage.getItem('nav-audit-open'); if(s!==null) return s==='true'; return {{ $auditGroupActive ? 'true' : 'false' }};})(),
     showCollapsedSubmenu: false
 }">
     <!-- Dashboard -->
@@ -113,8 +115,8 @@
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $reportsGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="document" class="w-5 h-5 shrink-0" />
-            <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Relatórios</span>
-            <x-icon name="chevron-down" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="reportsOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+            <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Relatórios</span>
+            <x-icon name="chevron-down" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="reportsOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
         <!-- Submenu quando expandida -->
@@ -176,8 +178,8 @@
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $usersGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="users" class="w-5 h-5 shrink-0" />
-            <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Usuários</span>
-            <x-icon name="chevron-down" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="usersOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+            <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Usuários</span>
+            <x-icon name="chevron-down" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="usersOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
         <!-- Submenu quando expandida -->
@@ -234,6 +236,87 @@
                 <span>Senhas Padrão</span>
             </a>
             @endif
+        </div>
+    </li>
+    @endif
+
+    <!-- Auditoria (somente para gestores gerais) -->
+    @if(auth()->user()->isGeneralManager())
+    <li class="relative group" x-data="{ submenuOpen: false }">
+        @if($auditGroupActive)
+            <span class="absolute inset-y-0 left-0 w-1 bg-primary-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"></span>
+        @endif
+        <button type="button"
+                @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = !submenuOpen; } else { auditOpen = !auditOpen; localStorage.setItem('nav-audit-open', auditOpen); }"
+                @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = false; }"
+                class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
+            {{ $auditGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
+            <x-icon name="clipboard" class="w-5 h-5 shrink-0" />
+            <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Auditoria</span>
+            <x-icon name="chevron-down" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="auditOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+        </button>
+
+        <!-- Submenu quando expandida -->
+        <ul x-cloak x-show="auditOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" x-transition.opacity class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600">
+            <li>
+                <a href="{{ route('audit-logs.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                    {{ request()->routeIs('audit-logs.index') && !request()->input('type') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                    <x-icon name="list" class="w-3.5 h-3.5" /> <span>Todos os Logs</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('audit-logs.index', ['type' => 'App\Models\User']) }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                    {{ request()->input('type') == 'App\Models\User' ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                    <x-icon name="users" class="w-3.5 h-3.5" /> <span>Usuários</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('audit-logs.index', ['type' => 'App\Models\Vehicle']) }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                    {{ request()->input('type') == 'App\Models\Vehicle' ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                    <x-icon name="car" class="w-3.5 h-3.5" /> <span>Veículos</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('audit-logs.index', ['type' => 'App\Models\Run']) }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                    {{ request()->input('type') == 'App\Models\Run' ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                    <x-icon name="route" class="w-3.5 h-3.5" /> <span>Rodagens</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Submenu popup quando colapsada (apenas desktop) -->
+        <div x-cloak
+             x-show="submenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
+             x-transition:enter="transition ease-out duration-100"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-75"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="absolute left-full top-0 ml-2 w-56 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-gray-200 dark:border-navy-700 py-2 z-50">
+            <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-navy-300 uppercase tracking-wider border-b border-gray-200 dark:border-navy-700 mb-1">
+                Auditoria
+            </div>
+            <a href="{{ route('audit-logs.index') }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('audit-logs.index') && !request()->input('type') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                <x-icon name="list" class="w-4 h-4" />
+                <span>Todos os Logs</span>
+            </a>
+            <a href="{{ route('audit-logs.index', ['type' => 'App\Models\User']) }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->input('type') == 'App\Models\User' ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                <x-icon name="users" class="w-4 h-4" />
+                <span>Usuários</span>
+            </a>
+            <a href="{{ route('audit-logs.index', ['type' => 'App\Models\Vehicle']) }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->input('type') == 'App\Models\Vehicle' ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                <x-icon name="car" class="w-4 h-4" />
+                <span>Veículos</span>
+            </a>
+            <a href="{{ route('audit-logs.index', ['type' => 'App\Models\Run']) }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->input('type') == 'App\Models\Run' ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                <x-icon name="route" class="w-4 h-4" />
+                <span>Rodagens</span>
+            </a>
         </div>
     </li>
     @endif

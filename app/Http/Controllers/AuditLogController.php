@@ -40,7 +40,7 @@ class AuditLogController extends Controller
                 $query->where('auditable_type', $type);
             })
             ->latest('created_at')
-            ->paginate(20)
+            ->paginate(10)
             ->withQueryString();
 
         // Obter tipos únicos para filtro

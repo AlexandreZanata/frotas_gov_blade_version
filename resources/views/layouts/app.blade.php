@@ -107,11 +107,7 @@
                         </form>
                     </div>
                 </div>
-                <!-- Collapse desktop -->
-                <button @click="toggleCollapse" aria-controls="sidebar" x-bind:aria-expanded="!isSidebarCollapsed" class="hidden lg:inline-flex order-1 lg:order-1 items-center justify-center h-9 w-9 rounded-md text-gray-500 dark:text-navy-100 hover:text-primary-600 dark:hover:text-white hover:bg-primary-50 dark:hover:bg-navy-700/60 transition" x-bind:title="isSidebarCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'">
-                    <x-icon name="chevron-left" x-show="!isSidebarCollapsed" class="h-5 w-5" />
-                    <x-icon name="chevron-right" x-show="isSidebarCollapsed" x-cloak class="h-5 w-5" />
-                </button>
+
                 <!-- Título -->
                 <div class="flex-1 flex items-center min-w-0 order-2 lg:order-2">
                     @isset($header)

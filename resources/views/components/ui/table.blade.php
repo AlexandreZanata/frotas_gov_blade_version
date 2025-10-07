@@ -70,27 +70,73 @@
                     Anterior
                 </span>
             @else
-                <a href="{{ $pagination->previousPageUrl() }}" class="px-3 py-1.5 text-sm text-gray-700 dark:text-navy-200 bg-white dark:bg-navy-700 border border-gray-300 dark:border-navy-600 rounded hover:bg-gray-50 dark:hover:bg-navy-600 transition">
+                <a href="{{ $pagination->appends(request()->except('page'))->previousPageUrl() }}" class="px-3 py-1.5 text-sm text-gray-700 dark:text-navy-200 bg-white dark:bg-navy-700 border border-gray-300 dark:border-navy-600 rounded hover:bg-gray-50 dark:hover:bg-navy-600 transition">
                     Anterior
                 </a>
             @endif
 
             <div class="hidden sm:flex items-center gap-1">
-                @foreach($pagination->getUrlRange(max(1, $pagination->currentPage() - 2), min($pagination->lastPage(), $pagination->currentPage() + 2)) as $page => $url)
+                @php
+                    // Limitar a exibição de no máximo 10 páginas
+                    $maxPages = 10;
+                    $halfPages = floor($maxPages / 2);
+                    $currentPage = $pagination->currentPage();
+                    $lastPage = $pagination->lastPage();
+
+                    // Calcular início e fim da paginação
+                    if ($lastPage <= $maxPages) {
+                        // Se tiver menos ou igual a 10 páginas, mostra todas
+                        $start = 1;
+                        $end = $lastPage;
+                    } else {
+                        // Se tiver mais de 10 páginas, centraliza em torno da página atual
+                        $start = max(1, $currentPage - $halfPages);
+                        $end = min($lastPage, $currentPage + $halfPages);
+
+                        // Ajustar se estiver muito no início
+                        if ($start == 1) {
+                            $end = min($maxPages, $lastPage);
+                        }
+                        // Ajustar se estiver muito no fim
+                        if ($end == $lastPage) {
+                            $start = max(1, $lastPage - $maxPages + 1);
+                        }
+                    }
+                @endphp
+
+                @if($start > 1)
+                    <a href="{{ $pagination->appends(request()->except('page'))->url(1) }}" class="px-3 py-1.5 text-sm text-gray-700 dark:text-navy-200 bg-white dark:bg-navy-700 border border-gray-300 dark:border-navy-600 rounded hover:bg-gray-50 dark:hover:bg-navy-600 transition">
+                        1
+                    </a>
+                    @if($start > 2)
+                        <span class="px-2 text-gray-500">...</span>
+                    @endif
+                @endif
+
+                @for($page = $start; $page <= $end; $page++)
                     @if($page == $pagination->currentPage())
                         <span class="px-3 py-1.5 text-sm font-medium text-white bg-primary-600 rounded">
                             {{ $page }}
                         </span>
                     @else
-                        <a href="{{ $url }}" class="px-3 py-1.5 text-sm text-gray-700 dark:text-navy-200 bg-white dark:bg-navy-700 border border-gray-300 dark:border-navy-600 rounded hover:bg-gray-50 dark:hover:bg-navy-600 transition">
+                        <a href="{{ $pagination->appends(request()->except('page'))->url($page) }}" class="px-3 py-1.5 text-sm text-gray-700 dark:text-navy-200 bg-white dark:bg-navy-700 border border-gray-300 dark:border-navy-600 rounded hover:bg-gray-50 dark:hover:bg-navy-600 transition">
                             {{ $page }}
                         </a>
                     @endif
-                @endforeach
+                @endfor
+
+                @if($end < $pagination->lastPage())
+                    @if($end < $pagination->lastPage() - 1)
+                        <span class="px-2 text-gray-500">...</span>
+                    @endif
+                    <a href="{{ $pagination->appends(request()->except('page'))->url($pagination->lastPage()) }}" class="px-3 py-1.5 text-sm text-gray-700 dark:text-navy-200 bg-white dark:bg-navy-700 border border-gray-300 dark:border-navy-600 rounded hover:bg-gray-50 dark:hover:bg-navy-600 transition">
+                        {{ $pagination->lastPage() }}
+                    </a>
+                @endif
             </div>
 
             @if($pagination->hasMorePages())
-                <a href="{{ $pagination->nextPageUrl() }}" class="px-3 py-1.5 text-sm text-gray-700 dark:text-navy-200 bg-white dark:bg-navy-700 border border-gray-300 dark:border-navy-600 rounded hover:bg-gray-50 dark:hover:bg-navy-600 transition">
+                <a href="{{ $pagination->appends(request()->except('page'))->nextPageUrl() }}" class="px-3 py-1.5 text-sm text-gray-700 dark:text-navy-200 bg-white dark:bg-navy-700 border border-gray-300 dark:border-navy-600 rounded hover:bg-gray-50 dark:hover:bg-navy-600 transition">
                     Próximo
                 </a>
             @else
