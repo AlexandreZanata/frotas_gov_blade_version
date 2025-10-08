@@ -31,7 +31,7 @@ class UserController extends Controller
                     });
                 })
                 ->latest()
-                ->paginate(15)
+                ->paginate(10)
                 ->withQueryString();
         }
         // Gestor setorial vê apenas usuários da sua secretaria
@@ -46,7 +46,7 @@ class UserController extends Controller
                     });
                 })
                 ->latest()
-                ->paginate(15)
+                ->paginate(10)
                 ->withQueryString();
         }
         // Outros usuários não podem ver listagem

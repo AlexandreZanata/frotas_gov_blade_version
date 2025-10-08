@@ -19,7 +19,7 @@ class LogbookPermissionController extends Controller
 
         $permissions = LogbookPermission::with(['user', 'secretariat', 'vehicles.prefix'])
             ->latest()
-            ->paginate(15);
+            ->paginate(10);
 
         return view('logbook-permissions.index', compact('permissions'));
     }

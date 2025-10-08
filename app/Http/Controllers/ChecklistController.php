@@ -63,7 +63,7 @@ class ChecklistController extends Controller
             $query->where('has_defects', $hasDefects === '1');
         }
 
-        $checklists = $query->paginate(20);
+        $checklists = $query->paginate(10);
 
         return view('checklists.index', compact('checklists', 'search', 'status', 'hasDefects'));
     }
@@ -104,8 +104,8 @@ class ChecklistController extends Controller
             });
         }
 
-        $pendingChecklists = $query->paginate(20, ['*'], 'checklists_page');
-        $pendingDefectReports = $defectReportsQuery->paginate(20, ['*'], 'defects_page');
+        $pendingChecklists = $query->paginate(10, ['*'], 'checklists_page');
+        $pendingDefectReports = $defectReportsQuery->paginate(10, ['*'], 'defects_page');
 
         return view('checklists.pending', compact('pendingChecklists', 'pendingDefectReports'));
     }

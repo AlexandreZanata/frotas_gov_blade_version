@@ -27,7 +27,7 @@ class VehicleController extends Controller
                       });
             })
             ->latest()
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         return view('vehicles.index', compact('vehicles', 'search'));

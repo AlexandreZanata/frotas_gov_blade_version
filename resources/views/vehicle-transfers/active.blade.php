@@ -9,7 +9,8 @@
     <x-ui.card>
         <x-ui.table
             :headers="['Veículo','Origem','Destino','Solicitante','Período','Ações']"
-            :searchable="false">
+            :searchable="false"
+            :pagination="$activeTransfers">
             @forelse($activeTransfers as $transfer)
                 <tr class="hover:bg-gray-50 dark:hover:bg-navy-700/40">
                     <td class="px-4 py-2">
@@ -73,4 +74,3 @@
         </x-ui.table>
     </x-ui.card>
 </x-app-layout>
-

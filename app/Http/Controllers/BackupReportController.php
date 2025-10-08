@@ -11,7 +11,7 @@ class BackupReportController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
-        $perPage = $request->input('per_page', 15);
+        $perPage = $request->input('per_page', 10);
 
         $backups = BackupReport::with('user')
             ->when($search, function ($query, $search) {

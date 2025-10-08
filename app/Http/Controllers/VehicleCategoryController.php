@@ -16,7 +16,7 @@ class VehicleCategoryController extends Controller
                 $query->where('name', 'like', "%{$search}%");
             })
             ->latest()
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         return view('vehicle_categories.index', compact('categories', 'search'));

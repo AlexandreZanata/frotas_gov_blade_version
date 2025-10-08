@@ -52,7 +52,7 @@ class RunController extends Controller
                 });
             })
             ->latest()
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         return view('logbook.index', compact('runs'));

@@ -7,6 +7,7 @@ use App\Models\VehicleTransfer;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class VehicleTransferService
 {
@@ -172,18 +173,15 @@ class VehicleTransferService
             ->pending()
             ->orderBy('created_at', 'desc');
 
-        // Gestor Geral vê tudo
         if ($user->role->name === 'general_manager') {
-            return $query->get();
+            return $query->paginate(10)->withQueryString();
         }
 
-        // Gestor Setorial vê apenas da sua secretaria
         if ($user->role->name === 'sector_manager') {
-            return $query->where('origin_secretariat_id', $user->secretariat_id)->get();
+            return $query->where('origin_secretariat_id', $user->secretariat_id)->paginate(10)->withQueryString();
         }
 
-        // Outros usuários não veem nada para aprovar
-        return collect();
+        return new LengthAwarePaginator([], 0, 10);
     }
 
     /**
@@ -197,18 +195,15 @@ class VehicleTransferService
             ->whereNull('returned_at')
             ->orderBy('end_date', 'asc');
 
-        // Gestor Geral vê tudo
         if ($user->role->name === 'general_manager') {
-            return $query->get();
+            return $query->paginate(10)->withQueryString();
         }
 
-        // Gestor Setorial vê apenas da sua secretaria de origem
         if ($user->role->name === 'sector_manager') {
-            return $query->where('origin_secretariat_id', $user->secretariat_id)->get();
+            return $query->where('origin_secretariat_id', $user->secretariat_id)->paginate(10)->withQueryString();
         }
 
-        // Usuário comum vê apenas os que ele solicitou
-        return $query->where('requester_id', $user->id)->get();
+        return $query->where('requester_id', $user->id)->paginate(10)->withQueryString();
     }
 
     /**
@@ -219,21 +214,18 @@ class VehicleTransferService
         $query = VehicleTransfer::with(['vehicle.prefix', 'originSecretariat', 'destinationSecretariat', 'requester', 'approver'])
             ->orderBy('created_at', 'desc');
 
-        // Gestor Geral vê tudo
         if ($user->role->name === 'general_manager') {
-            return $query->paginate(20);
+            return $query->paginate(10)->withQueryString();
         }
 
-        // Gestor Setorial vê da sua secretaria
         if ($user->role->name === 'sector_manager') {
             return $query->where(function ($q) use ($user) {
                 $q->where('origin_secretariat_id', $user->secretariat_id)
                   ->orWhere('destination_secretariat_id', $user->secretariat_id);
-            })->paginate(20);
+            })->paginate(10)->withQueryString();
         }
 
-        // Usuário comum vê apenas os seus
-        return $query->where('requester_id', $user->id)->paginate(20);
+        return $query->where('requester_id', $user->id)->paginate(10)->withQueryString();
     }
 }
 

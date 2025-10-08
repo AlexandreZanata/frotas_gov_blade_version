@@ -25,7 +25,7 @@ class PdfTemplateController extends Controller
                 $query->where('name', 'like', "%{$search}%");
             })
             ->latest()
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         return view('pdf-templates.index', compact('templates', 'search'));

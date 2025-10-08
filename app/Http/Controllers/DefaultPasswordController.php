@@ -28,7 +28,7 @@ class DefaultPasswordController extends Controller
                       ->orWhere('description', 'like', "%{$search}%");
             })
             ->latest()
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         return view('default-passwords.index', compact('passwords', 'search'));

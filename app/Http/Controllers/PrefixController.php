@@ -16,7 +16,7 @@ class PrefixController extends Controller
                 $query->where('name', 'like', "%{$search}%");
             })
             ->latest()
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         return view('prefixes.index', compact('prefixes', 'search'));
