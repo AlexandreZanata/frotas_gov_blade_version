@@ -6,7 +6,9 @@ use App\Models\Run;
 use App\Models\Vehicle;
 use App\Models\Checklist;
 use App\Models\ChecklistAnswer;
+use App\Models\ChecklistItem;
 use App\Models\User;
+use App\Notifications\ChecklistProblemNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
@@ -147,7 +149,6 @@ class LogbookService
                 'vehicle_id' => $vehicleId,
                 'user_id' => Auth::id(),
                 'status' => 'in_progress',
-                'origin' => 'A definir',
             ]);
 
             // Cria o checklist
@@ -237,6 +238,7 @@ class LogbookService
     {
         $run->update([
             'end_km' => $endKm,
+            'stop_point' => $stopPoint,
             'finished_at' => now(),
             'status' => 'completed',
         ]);
@@ -247,13 +249,14 @@ class LogbookService
     }
 
     /**
-     * Busca o último KM registrado de um veículo
+     * Busca o último KM registrado de um veículo (end_km da última corrida finalizada)
      */
     public function getLastKm(string $vehicleId): int
     {
         $lastRun = Run::where('vehicle_id', $vehicleId)
             ->where('status', 'completed')
             ->whereNotNull('end_km')
+            ->where('end_km', '>', 0)
             ->latest('finished_at')
             ->first();
 
@@ -261,12 +264,150 @@ class LogbookService
     }
 
     /**
+     * Calcula a média de quilometragem das últimas 10 corridas
+     */
+    public function getAverageKmFromLastRuns(string $vehicleId, int $numberOfRuns = 10): ?float
+    {
+        $runs = Run::where('vehicle_id', $vehicleId)
+            ->where('status', 'completed')
+            ->whereNotNull('start_km')
+            ->whereNotNull('end_km')
+            ->latest('finished_at')
+            ->limit($numberOfRuns)
+            ->get();
+
+        if ($runs->count() < $numberOfRuns) {
+            return null; // Não há corridas suficientes
+        }
+
+        $totalKm = $runs->sum(function ($run) {
+            return $run->end_km - $run->start_km;
+        });
+
+        return $totalKm / $runs->count();
+    }
+
+    /**
+     * Calcula o KM máximo permitido baseado na autonomia do veículo
+     * Após 10 corridas, usa a média de autonomia (km/L) x capacidade do tanque
+     */
+    public function getMaxAllowedKm(string $vehicleId, float $percentageAdjustment = 100): ?array
+    {
+        $vehicle = Vehicle::with('fuelType')->findOrFail($vehicleId);
+
+        // Verifica se o veículo tem pelo menos 10 corridas completadas
+        $completedRunsCount = Run::where('vehicle_id', $vehicleId)
+            ->where('status', 'completed')
+            ->whereNotNull('start_km')
+            ->whereNotNull('end_km')
+            ->count();
+
+        if ($completedRunsCount < 10) {
+            return [
+                'has_limit' => false,
+                'runs_count' => $completedRunsCount,
+                'message' => "Ainda não há limite. Complete " . (10 - $completedRunsCount) . " corridas para ativar o cálculo automático.",
+            ];
+        }
+
+        // Calcula a média de KM rodados nas últimas 10 corridas
+        $averageKm = $this->getAverageKmFromLastRuns($vehicleId, 10);
+
+        if (!$averageKm) {
+            return [
+                'has_limit' => false,
+                'message' => 'Não foi possível calcular a média de quilometragem.',
+            ];
+        }
+
+        // Aplica o percentual de ajuste (ex: 100%, 200%)
+        $maxKm = $averageKm * ($percentageAdjustment / 100);
+
+        return [
+            'has_limit' => true,
+            'max_km' => round($maxKm, 2),
+            'average_km' => round($averageKm, 2),
+            'percentage' => $percentageAdjustment,
+            'tank_capacity' => $vehicle->fuel_tank_capacity,
+            'runs_count' => $completedRunsCount,
+        ];
+    }
+
+    /**
+     * Valida se o KM inicial está dentro do limite permitido
+     */
+    public function validateStartKm(string $vehicleId, int $startKm, float $percentageAdjustment = 100): array
+    {
+        $lastKm = $this->getLastKm($vehicleId);
+        $maxAllowedData = $this->getMaxAllowedKm($vehicleId, $percentageAdjustment);
+
+        // Se o KM inicial é menor que o último KM, retorna erro
+        if ($startKm < $lastKm) {
+            return [
+                'valid' => false,
+                'message' => "O KM atual ($startKm km) não pode ser menor que o último KM registrado ($lastKm km).",
+            ];
+        }
+
+        // Se não há limite definido ainda (menos de 10 corridas)
+        if (!$maxAllowedData['has_limit']) {
+            return [
+                'valid' => true,
+                'warning' => $maxAllowedData['message'],
+            ];
+        }
+
+        // Calcula a diferença entre o KM atual e o último KM
+        $kmDifference = $startKm - $lastKm;
+
+        // Verifica se a diferença excede o limite
+        if ($kmDifference > $maxAllowedData['max_km']) {
+            return [
+                'valid' => false,
+                'message' => "A diferença de quilometragem ($kmDifference km) excede o máximo permitido ({$maxAllowedData['max_km']} km) baseado na média das últimas 10 corridas.",
+                'max_allowed' => $maxAllowedData['max_km'],
+                'km_difference' => $kmDifference,
+            ];
+        }
+
+        return [
+            'valid' => true,
+            'km_difference' => $kmDifference,
+            'max_allowed' => $maxAllowedData['max_km'],
+        ];
+    }
+
+    /**
      * Notifica o gestor sobre problemas no checklist
      */
     protected function notifyManagerAboutProblem(Run $run, string $itemId, string $notes): void
     {
-        // Implementar lógica de notificação
-        // Exemplo: enviar email, notificação no sistema, etc.
+        // Busca o item do checklist
+        $item = ChecklistItem::find($itemId);
+
+        if (!$item) {
+            return;
+        }
+
+        // Busca os gestores da secretaria do veículo
+        // Usando whereHas com 'role' (singular) ao invés de 'roles' (plural)
+        $managers = User::where('secretariat_id', $run->vehicle->secretariat_id)
+            ->whereHas('role', function ($query) {
+                $query->whereIn('name', ['gestor_secretaria', 'gestor_setorial', 'admin']);
+            })
+            ->get();
+
+        // Se não encontrou gestores, notifica todos os admins do sistema como fallback
+        if ($managers->isEmpty()) {
+            $managers = User::whereHas('role', function ($query) {
+                $query->where('name', 'admin');
+            })->get();
+        }
+
+        // Envia notificação para cada gestor
+        foreach ($managers as $manager) {
+            $manager->notify(new ChecklistProblemNotification($run, $item, $notes));
+        }
     }
 
     /**
@@ -274,7 +415,10 @@ class LogbookService
      */
     public function getAvailableVehicles(): \Illuminate\Database\Eloquent\Collection
     {
-        return Vehicle::where('secretariat_id', Auth::user()->secretariat_id)
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        return Vehicle::where('secretariat_id', $user->secretariat_id)
             ->with(['prefix', 'status', 'category'])
             ->get();
     }
@@ -290,4 +434,3 @@ class LogbookService
             ->first();
     }
 }
-

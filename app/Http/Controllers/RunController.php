@@ -16,9 +16,12 @@ use App\Services\LogbookService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class RunController extends Controller
 {
+    use AuthorizesRequests;
+
     protected LogbookService $logbookService;
 
     public function __construct(LogbookService $logbookService)
@@ -38,7 +41,7 @@ class RunController extends Controller
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('destination', 'like', "%{$search}%")
-                      ->orWhere('origin', 'like', "%{$search}%")
+                      ->orWhere('stop_point', 'like', "%{$search}%")
                       ->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
                           $vehicleQuery->where('name', 'like', "%{$search}%")
                               ->orWhere('plate', 'like', "%{$search}%")
@@ -64,16 +67,18 @@ class RunController extends Controller
         $activeRun = $this->logbookService->getUserActiveRun();
 
         if ($activeRun) {
-            // Recupera o estado salvo
-            $flowState = $this->logbookService->getUserFlowState();
-
-            // Redireciona para o passo correto
-            return match($flowState['step']) {
-                'checklist' => redirect()->route('logbook.checklist', $activeRun),
-                'start_run' => redirect()->route('logbook.start', $activeRun),
-                'finish_run' => redirect()->route('logbook.finish', $activeRun),
-                default => redirect()->route('logbook.vehicle-select'),
-            };
+            // Detecta automaticamente em qual etapa está baseado no estado da corrida
+            if (!$activeRun->checklist) {
+                // Tem corrida mas não tem checklist - vai para checklist
+                return redirect()->route('logbook.checklist', $activeRun);
+            } elseif (!$activeRun->start_km || !$activeRun->destination) {
+                // Tem checklist mas não iniciou corrida (km inicial = 0 e destino vazio)
+                // Redireciona para iniciar corrida
+                return redirect()->route('logbook.start-run', $activeRun);
+            } else {
+                // Já iniciou com km e destino - vai para finalizar
+                return redirect()->route('logbook.finish', $activeRun);
+            }
         }
 
         // Se não há corrida em andamento, começa do início
@@ -174,7 +179,7 @@ class RunController extends Controller
             $request->input('general_notes')
         );
 
-        return redirect()->route('logbook.start', $run)
+        return redirect()->route('logbook.start-run', $run)
             ->with('success', 'Checklist preenchido! Agora inicie a corrida.');
     }
 
@@ -204,7 +209,7 @@ class RunController extends Controller
             $request->input('general_notes')
         );
 
-        return redirect()->route('logbook.start', $run);
+        return redirect()->route('logbook.start-run', $run);
     }
 
     /**
@@ -215,8 +220,9 @@ class RunController extends Controller
         $this->authorize('update', $run);
 
         $lastKm = $this->logbookService->getLastKm($run->vehicle_id);
+        $maxAllowedData = $this->logbookService->getMaxAllowedKm($run->vehicle_id, 100);
 
-        return view('logbook.start-run', compact('run', 'lastKm'));
+        return view('logbook.start-run', compact('run', 'lastKm', 'maxAllowedData'));
     }
 
     /**
@@ -243,7 +249,10 @@ class RunController extends Controller
     {
         $this->authorize('update', $run);
 
-        return view('logbook.finish-run', compact('run'));
+        $gasStations = GasStation::where('status', 'active')->get();
+        $fuelTypes = FuelType::all();
+
+        return view('logbook.finish-run', compact('run', 'gasStations', 'fuelTypes'));
     }
 
     /**
@@ -253,16 +262,48 @@ class RunController extends Controller
     {
         $this->authorize('update', $run);
 
-        $this->logbookService->finishRun(
-            $run,
-            $request->validated()['end_km'],
-            $request->input('stop_point')
-        );
+        DB::transaction(function () use ($request, $run) {
+            // Finaliza a corrida
+            $this->logbookService->finishRun(
+                $run,
+                $request->validated()['end_km'],
+                $request->input('stop_point')
+            );
 
-        // Verifica se o usuário quer abastecer
-        if ($request->has('add_fueling')) {
-            return redirect()->route('logbook.fueling', $run);
-        }
+            // Se houver abastecimento, registra
+            if ($request->has('add_fueling')) {
+                $fuelingData = [
+                    'vehicle_id' => $run->vehicle_id,
+                    'user_id' => Auth::id(),
+                    'run_id' => $run->id,
+                    'fueling_km' => $request->input('fueling_km'),
+                    'liters' => $request->input('liters'),
+                    'fuel_type_id' => $request->input('fuel_type_id'),
+                    'fueled_at' => now(),
+                    'public_code' => 'FUEL-' . strtoupper(uniqid()),
+                ];
+
+                if ($request->input('fueling_type') === 'credenciado') {
+                    $gasStation = GasStation::findOrFail($request->input('gas_station_id'));
+                    $fuelingData['gas_station_id'] = $gasStation->id;
+                    $fuelingData['value_per_liter'] = $gasStation->price_per_liter;
+                    $fuelingData['total_value'] = $request->input('liters') * $gasStation->price_per_liter;
+                    $fuelingData['is_manual'] = false;
+                } else {
+                    $fuelingData['gas_station_name'] = $request->input('gas_station_name');
+                    $fuelingData['total_value'] = $request->input('total_value');
+                    $fuelingData['value_per_liter'] = $request->input('total_value') / $request->input('liters');
+                    $fuelingData['is_manual'] = true;
+                }
+
+                // Upload da nota fiscal se houver
+                if ($request->hasFile('invoice')) {
+                    $fuelingData['invoice_path'] = $request->file('invoice')->store('invoices', 'public');
+                }
+
+                Fueling::create($fuelingData);
+            }
+        });
 
         return redirect()->route('logbook.index')
             ->with('success', 'Corrida finalizada com sucesso!');
@@ -275,7 +316,7 @@ class RunController extends Controller
     {
         $this->authorize('update', $run);
 
-        $gasStations = GasStation::where('is_active', true)->get();
+        $gasStations = GasStation::where('status', 'active')->get();
         $fuelTypes = FuelType::all();
 
         return view('logbook.fueling', compact('run', 'gasStations', 'fuelTypes'));

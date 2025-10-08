@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -27,8 +28,16 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'login' => ['required', 'string'],
             'password' => ['required', 'string'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'login.required' => 'Informe seu e-mail ou CPF.',
+            'password.required' => 'A senha é obrigatória.',
         ];
     }
 
@@ -41,11 +50,40 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+        $login = $this->input('login');
+        $password = $this->input('password');
 
+        // Detecta se é email ou CPF
+        $fieldType = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'cpf';
+
+        // Remove formatação do CPF se for CPF
+        if ($fieldType === 'cpf') {
+            $login = preg_replace('/[^0-9]/', '', $login);
+        }
+
+        // Busca o usuário
+        $user = User::where($fieldType, $login)->first();
+
+        // Verifica se o usuário existe
+        if (!$user) {
+            RateLimiter::hit($this->throttleKey());
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'login' => ['Credenciais inválidas.'],
+            ]);
+        }
+
+        // Verifica se o usuário está ativo
+        if ($user->status !== 'active') {
+            throw ValidationException::withMessages([
+                'login' => ['Sua conta está inativa. Entre em contato com o administrador.'],
+            ]);
+        }
+
+        // Tenta autenticar
+        if (!Auth::attempt([$fieldType => $login, 'password' => $password], $this->boolean('remember'))) {
+            RateLimiter::hit($this->throttleKey());
+            throw ValidationException::withMessages([
+                'login' => ['Credenciais inválidas.'],
             ]);
         }
 
@@ -68,7 +106,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'login' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -80,6 +118,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('login')).'|'.$this->ip());
     }
 }

@@ -19,9 +19,20 @@ class Run extends Model
         'started_at',
         'finished_at',
         'destination',
-        'origin',
+        'stop_point',
         'status'
     ];
+
+    /**
+     * Get the attributes that should be cast.
+     */
+    protected function casts(): array
+    {
+        return [
+            'started_at' => 'datetime',
+            'finished_at' => 'datetime',
+        ];
+    }
 
     /**
      * Adicione esta função para definir a relação com o Usuário.

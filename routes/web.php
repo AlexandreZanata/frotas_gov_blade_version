@@ -10,7 +10,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\DefaultPasswordController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', function () {
@@ -53,7 +53,7 @@ Route::middleware('auth')->group(function () {
     // Diário de Bordo (Logbook)
     Route::prefix('logbook')->name('logbook.')->group(function () {
         Route::get('/', [\App\Http\Controllers\RunController::class, 'index'])->name('index');
-        Route::get('/start', [\App\Http\Controllers\RunController::class, 'start'])->name('start');
+        Route::get('/start', [\App\Http\Controllers\RunController::class, 'start'])->name('start-flow');
 
         // Etapa 1: Seleção do Veículo
         Route::get('/select-vehicle', [\App\Http\Controllers\RunController::class, 'selectVehicle'])->name('vehicle-select');
@@ -68,8 +68,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/{run}/checklist', [\App\Http\Controllers\RunController::class, 'storeChecklist'])->name('store-checklist');
 
         // Etapa 3: Iniciar Corrida
-        Route::get('/{run}/start-run', [\App\Http\Controllers\RunController::class, 'startRun'])->name('start');
-        Route::post('/{run}/start-run', [\App\Http\Controllers\RunController::class, 'storeStartRun'])->name('store-start');
+        Route::get('/{run}/start-run', [\App\Http\Controllers\RunController::class, 'startRun'])->name('start-run');
+        Route::post('/{run}/start-run', [\App\Http\Controllers\RunController::class, 'storeStartRun'])->name('store-start-run');
 
         // Etapa 4: Finalizar Corrida
         Route::get('/{run}/finish', [\App\Http\Controllers\RunController::class, 'finishRun'])->name('finish');

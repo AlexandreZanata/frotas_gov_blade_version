@@ -129,15 +129,15 @@
                 <a href="{{ route('logbook.index') }}">
                     <x-secondary-button>
                         <x-icon name="arrow-left" class="w-4 h-4 mr-2" />
-                        Voltar
+                        Voltar para Minhas Corridas
                     </x-secondary-button>
                 </a>
 
                 @if($run->status === 'in_progress')
-                    <a href="{{ route('logbook.finish', $run) }}">
+                    <a href="{{ route('logbook.start-flow') }}">
                         <x-primary-button>
+                            <x-icon name="play-circle" class="w-4 h-4 mr-2" />
                             Continuar Corrida
-                            <x-icon name="chevron-right" class="w-4 h-4 ml-2" />
                         </x-primary-button>
                     </a>
                 @endif
@@ -145,44 +145,3 @@
         </div>
     </div>
 </x-app-layout>
-<?php
-
-namespace App\Policies;
-
-use App\Models\Run;
-use App\Models\User;
-
-class RunPolicy
-{
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, Run $run): bool
-    {
-        // Usuário pode ver suas próprias corridas
-        // Gestores podem ver corridas de sua secretaria
-        return $user->id === $run->user_id ||
-               ($user->role_id <= 2 && $user->secretariat_id === $run->vehicle->secretariat_id);
-    }
-
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Run $run): bool
-    {
-        // Apenas o motorista que criou pode editar
-        // E apenas se a corrida estiver em andamento
-        return $user->id === $run->user_id && $run->status === 'in_progress';
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Run $run): bool
-    {
-        // Apenas o motorista que criou pode cancelar
-        // E apenas se a corrida estiver em andamento
-        return $user->id === $run->user_id && $run->status === 'in_progress';
-    }
-}
-

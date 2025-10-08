@@ -38,16 +38,16 @@
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $logbookGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="clipboard" class="w-5 h-5 shrink-0" />
-            <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Diário de Bordo</span>
-            <x-icon name="chevron-down" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="logbookOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+            <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Diário de Bordo</span>
+            <x-icon name="chevron-down" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="logbookOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
         <!-- Submenu quando expandida -->
         <ul x-cloak x-show="logbookOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" x-transition.opacity class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600">
 
             <li>
-                <a href="{{ route('logbook.start') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
-                    {{ request()->routeIs('logbook.start') || request()->routeIs('logbook.vehicle-select') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                <a href="{{ route('logbook.start-flow') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                    {{ request()->routeIs('logbook.start-flow') || request()->routeIs('logbook.vehicle-select') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
                     <x-icon name="plus" class="w-3.5 h-3.5" /> <span>Nova Corrida</span>
                 </a>
             </li>
@@ -77,8 +77,8 @@
                 <x-icon name="list" class="w-4 h-4" />
                 <span>Minhas Corridas</span>
             </a>
-            <a href="{{ route('logbook.start') }}"
-               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('logbook.start') || request()->routeIs('logbook.vehicle-select') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+            <a href="{{ route('logbook.start-flow') }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('logbook.start-flow') || request()->routeIs('logbook.vehicle-select') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
                 <x-icon name="plus" class="w-4 h-4" />
                 <span>Nova Corrida</span>
             </a>
@@ -96,8 +96,8 @@
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $vehicleGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="car" class="w-5 h-5 shrink-0" />
-            <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Veículos</span>
-            <x-icon name="chevron-down" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="vehiclesOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+            <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Veículos</span>
+            <x-icon name="chevron-down" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="vehiclesOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
         <!-- Submenu quando expandida -->
@@ -175,8 +175,8 @@
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $reportsGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="document" class="w-5 h-5 shrink-0" />
-            <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Relatórios</span>
-            <x-icon name="chevron-down" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="reportsOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+            <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Relatórios</span>
+            <x-icon name="chevron-down" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="reportsOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
         <!-- Submenu quando expandida -->
@@ -238,8 +238,8 @@
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $usersGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="users" class="w-5 h-5 shrink-0" />
-            <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Usuários</span>
-            <x-icon name="chevron-down" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="usersOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+            <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Usuários</span>
+            <x-icon name="chevron-down" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="usersOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
         <!-- Submenu quando expandida -->
@@ -312,8 +312,8 @@
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $auditGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="clipboard" class="w-5 h-5 shrink-0" />
-            <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Auditoria</span>
-            <x-icon name="chevron-down" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="auditOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+            <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-transition.opacity>Auditoria</span>
+            <x-icon name="chevron-down" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="auditOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
         <!-- Submenu quando expandida -->

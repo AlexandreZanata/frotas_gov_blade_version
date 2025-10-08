@@ -3,7 +3,7 @@
         <x-ui.page-header title="Minhas Corridas" subtitle="Histórico de corridas realizadas" hide-title-mobile icon="car" />
     </x-slot>
     <x-slot name="pageActions">
-        <a href="{{ route('logbook.start') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium shadow transition">
+        <a href="{{ route('logbook.start-flow') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium shadow transition">
             <x-icon name="plus" class="w-4 h-4" />
             <span>Nova Corrida</span>
         </a>
@@ -28,7 +28,7 @@
                                 Veículo: {{ $activeRun->vehicle->prefix->name ?? '' }} - {{ $activeRun->vehicle->name }}
                             </p>
                             <div class="mt-3">
-                                <a href="{{ route('logbook.start') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-800 dark:text-yellow-200 dark:hover:bg-yellow-700 transition">
+                                <a href="{{ route('logbook.start-flow') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-800 dark:text-yellow-200 dark:hover:bg-yellow-700 transition">
                                     Continuar Corrida
                                 </a>
                             </div>
@@ -65,9 +65,9 @@
                             </td>
                             <td class="px-4 py-3">
                                 <div class="text-sm text-gray-900 dark:text-navy-50 font-medium">{{ $run->destination }}</div>
-                                @if($run->origin)
+                                @if($run->stop_point)
                                     <div class="text-xs text-gray-500 dark:text-navy-300">
-                                        <span class="font-medium">De:</span> {{ $run->origin }}
+                                        <span class="font-medium">Parada:</span> {{ $run->stop_point }}
                                     </div>
                                 @endif
                             </td>
@@ -114,7 +114,7 @@
                                     <x-ui.action-icon :href="route('logbook.show', $run)" icon="eye" title="Ver Detalhes" variant="primary" />
 
                                     @if($run->status === 'in_progress')
-                                        <x-ui.action-icon :href="route('logbook.start')" icon="play" title="Continuar" variant="success" />
+                                        <x-ui.action-icon :href="route('logbook.start-flow')" icon="play" title="Continuar" variant="success" />
                                     @endif
                                 </div>
                             </td>
@@ -125,7 +125,7 @@
                                 <x-icon name="car" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
                                 <h3 class="text-sm font-medium text-gray-900 dark:text-navy-50 mb-1">Nenhuma corrida realizada</h3>
                                 <p class="text-sm text-gray-500 dark:text-navy-300 mb-4">Comece sua primeira corrida agora!</p>
-                                <a href="{{ route('logbook.start') }}">
+                                <a href="{{ route('logbook.start-flow') }}">
                                     <x-primary-button>
                                         <x-icon name="plus" class="w-4 h-4 mr-2" />
                                         Nova Corrida

@@ -94,12 +94,12 @@
             <!-- Top Bar -->
             <header class="sticky top-0 z-30 h-16 flex items-center gap-3 px-4 lg:px-6 bg-white/85 dark:bg-navy-800/90 backdrop-blur border-b border-gray-200 dark:border-navy-700 shadow-sm">
                 <!-- User Dropdown (mobile esquerda, desktop direita) -->
-                <div class="relative order-1 lg:order-5" x-data="{ open:false }">
-                    <button @click="open=!open" class="inline-flex items-center gap-2 pl-3 pr-3 h-10 rounded-md bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition">
+                <div class="relative order-1 lg:order-5" x-data="{ open: false }" @click.outside="open = false">
+                    <button @click="open = !open" class="inline-flex items-center gap-2 pl-3 pr-3 h-10 rounded-md bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition">
                         <span class="hidden sm:inline-block max-w-[8rem] truncate">{{ Auth::user()->name }}</span>
                         <x-icon name="chevron-down" class="h-4 w-4 transition-transform duration-200" x-bind:class="open ? 'rotate-180' : ''" />
                     </button>
-                    <div x-show="open" @click.away="open=false" x-transition.origin-top-left class="absolute left-0 lg:left-auto lg:right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-navy-800 border border-gray-200 dark:border-navy-700 py-1 z-20 overflow-hidden">
+                    <div x-show="open" x-cloak x-transition.origin-top-left class="absolute left-0 lg:left-auto lg:right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-navy-800 border border-gray-200 dark:border-navy-700 py-1 z-20 overflow-hidden">
                         <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-navy-50 hover:bg-primary-50 dark:hover:bg-navy-700/60">Perfil</a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

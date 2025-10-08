@@ -21,14 +21,12 @@ class GasStation extends Model
         'cnpj',
         'status',
         'price_per_liter',
-        'is_active',
     ];
 
     /**
      * The attributes that should be cast.
      */
     protected $casts = [
-        'is_active' => 'boolean',
         'price_per_liter' => 'decimal:2',
     ];
 
@@ -37,6 +35,6 @@ class GasStation extends Model
      */
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('status', 'active');
     }
 }
