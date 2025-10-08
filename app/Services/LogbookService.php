@@ -151,11 +151,21 @@ class LogbookService
                 'status' => 'in_progress',
             ]);
 
+            // Verifica se há problemas no checklist
+            $hasDefects = false;
+            foreach ($checklistData as $itemId => $data) {
+                if ($data['status'] === 'problem') {
+                    $hasDefects = true;
+                    break;
+                }
+            }
+
             // Cria o checklist
             $checklist = Checklist::create([
                 'run_id' => $run->id,
                 'user_id' => Auth::id(),
                 'notes' => $generalNotes,
+                'has_defects' => $hasDefects,
             ]);
 
             // Salva as respostas do checklist
@@ -189,10 +199,20 @@ class LogbookService
     public function saveChecklist(Run $run, array $checklistData, ?string $generalNotes = null): Checklist
     {
         return DB::transaction(function () use ($run, $checklistData, $generalNotes) {
+            // Verifica se há problemas no checklist
+            $hasDefects = false;
+            foreach ($checklistData as $itemId => $data) {
+                if ($data['status'] === 'problem') {
+                    $hasDefects = true;
+                    break;
+                }
+            }
+
             $checklist = Checklist::create([
                 'run_id' => $run->id,
                 'user_id' => Auth::id(),
                 'notes' => $generalNotes,
+                'has_defects' => $hasDefects,
             ]);
 
             foreach ($checklistData as $itemId => $data) {
@@ -411,7 +431,7 @@ class LogbookService
     }
 
     /**
-     * Busca veículos disponíveis baseado nos privilégios do usuário
+ne     * Busca veículos disponíveis baseado nos privilégios do usuário
      */
     public function getAvailableVehicles(): \Illuminate\Database\Eloquent\Collection
     {

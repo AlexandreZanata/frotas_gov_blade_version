@@ -1,35 +1,37 @@
 {{-- Links de Navegação Sidebar --}}
-@php($vehicleGroupActive = request()->routeIs('vehicles.*') || request()->routeIs('vehicle-categories.*') || request()->routeIs('prefixes.*'))
+@php($vehicleGroupActive = request()->routeIs('vehicles.*') || request()->routeIs('vehicle-categories.*') || request()->routeIs('prefixes.*') || request()->routeIs('vehicle-transfers.*'))
 @php($logbookGroupActive = request()->routeIs('logbook.*') || request()->routeIs('logbook-permissions.*'))
+@php($checklistGroupActive = request()->routeIs('checklists.*'))
 @php($reportsGroupActive = request()->routeIs('backup-reports.*') || request()->routeIs('pdf-templates.*'))
 @php($usersGroupActive = request()->routeIs('users.*') || request()->routeIs('default-passwords.*'))
 @php($auditGroupActive = request()->routeIs('audit-logs.*'))
 
-{{-- CSS inline para aplicar estado ANTES do Alpine.js carregar - SOLUÇÃO DEFINITIVA --}}
+{{-- CSS inline para ESCONDER submenus por padrão ANTES do Alpine.js carregar --}}
 <style>
-    /* Aplicar estado inicial via CSS puro - renderizado no servidor */
+    /* IMPORTANTE: Esconder TODOS os submenus por padrão para evitar flash visual */
+
+    /* Apenas aplicar transformações visuais que não conflitem com Alpine */
     @if($vehicleGroupActive)
-        #nav-vehicles-submenu { display: block !important; }
         #nav-vehicles-chevron { transform: rotate(180deg); }
     @endif
 
     @if($logbookGroupActive)
-        #nav-logbook-submenu { display: block !important; }
         #nav-logbook-chevron { transform: rotate(180deg); }
     @endif
 
+    @if($checklistGroupActive)
+        #nav-checklist-chevron { transform: rotate(180deg); }
+    @endif
+
     @if($reportsGroupActive)
-        #nav-reports-submenu { display: block !important; }
         #nav-reports-chevron { transform: rotate(180deg); }
     @endif
 
     @if($usersGroupActive)
-        #nav-users-submenu { display: block !important; }
         #nav-users-chevron { transform: rotate(180deg); }
     @endif
 
     @if($auditGroupActive)
-        #nav-audit-submenu { display: block !important; }
         #nav-audit-chevron { transform: rotate(180deg); }
     @endif
 
@@ -47,6 +49,7 @@
     x-data="{
         vehiclesOpen: {{ $vehicleGroupActive ? 'true' : 'false' }},
         logbookOpen: {{ $logbookGroupActive ? 'true' : 'false' }},
+        checklistOpen: {{ $checklistGroupActive ? 'true' : 'false' }},
         reportsOpen: {{ $reportsGroupActive ? 'true' : 'false' }},
         usersOpen: {{ $usersGroupActive ? 'true' : 'false' }},
         auditOpen: {{ $auditGroupActive ? 'true' : 'false' }}
@@ -61,6 +64,12 @@
     @if(!$logbookGroupActive)
         if (localStorage.getItem('nav-logbook-open') !== null) {
             logbookOpen = localStorage.getItem('nav-logbook-open') === 'true';
+        }
+    @endif
+
+    @if(!$checklistGroupActive)
+        if (localStorage.getItem('nav-checklist-open') !== null) {
+            checklistOpen = localStorage.getItem('nav-checklist-open') === 'true';
         }
     @endif
 
@@ -84,6 +93,7 @@
 
     $watch('vehiclesOpen', value => { if (!{{ $vehicleGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-vehicles-open', value); });
     $watch('logbookOpen', value => { if (!{{ $logbookGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-logbook-open', value); });
+    $watch('checklistOpen', value => { if (!{{ $checklistGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-checklist-open', value); });
     $watch('reportsOpen', value => { if (!{{ $reportsGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-reports-open', value); });
     $watch('usersOpen', value => { if (!{{ $usersGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-users-open', value); });
     $watch('auditOpen', value => { if (!{{ $auditGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-audit-open', value); });
@@ -174,6 +184,66 @@
         </div>
     </li>
 
+    <!-- Checklists (Notificações) -->
+    <li class="relative group" x-data="{ submenuOpen: false }">
+        @if($checklistGroupActive)
+            <span class="absolute inset-y-0 left-0 w-1 bg-primary-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"></span>
+        @endif
+        <button type="button"
+                @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = !submenuOpen; } else { checklistOpen = !checklistOpen; }"
+                @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = false; }"
+                class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
+            {{ $checklistGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
+            <x-icon name="clipboard-check" class="w-5 h-5 shrink-0" />
+            <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Checklists</span>
+            <x-icon name="chevron-down" id="nav-checklist-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="checklistOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+        </button>
+
+        <ul id="nav-checklist-submenu" x-show="checklistOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition" style="display: none;">
+            <li>
+                <a href="{{ route('checklists.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                    {{ request()->routeIs('checklists.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                    <x-icon name="list" class="w-3.5 h-3.5" /> <span>Todos</span>
+                </a>
+            </li>
+            @if(auth()->user()->isManager())
+            <li>
+                <a href="{{ route('checklists.pending') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                    {{ request()->routeIs('checklists.pending') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                    <x-icon name="bell" class="w-3.5 h-3.5" /> <span>Pendentes</span>
+                </a>
+            </li>
+            @endif
+        </ul>
+
+        <!-- Submenu popup quando colapsada -->
+        <div x-cloak
+             x-show="submenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
+             x-transition:enter="transition ease-out duration-100"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-75"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="absolute left-full top-0 ml-2 w-56 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-gray-200 dark:border-navy-700 py-2 z-50">
+            <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-navy-300 uppercase tracking-wider border-b border-gray-200 dark:border-navy-700 mb-1">
+                Checklists
+            </div>
+            <a href="{{ route('checklists.index') }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('checklists.index') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                <x-icon name="list" class="w-4 h-4" />
+                <span>Todos</span>
+            </a>
+            @if(auth()->user()->isManager())
+            <a href="{{ route('checklists.pending') }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('checklists.pending') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                <x-icon name="bell" class="w-4 h-4" />
+                <span>Pendentes</span>
+            </a>
+            @endif
+        </div>
+    </li>
+
     <!-- Grupo Veículos -->
     <li class="relative group" x-data="{ submenuOpen: false }">
         @if($vehicleGroupActive)
@@ -190,6 +260,7 @@
         </button>
 
         <ul id="nav-vehicles-submenu" x-show="vehiclesOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition" style="display: none;">
+            @if(!auth()->user()->hasRole('driver'))
             <li>
                 <a href="{{ route('vehicles.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('vehicles.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
@@ -214,6 +285,13 @@
                     <x-icon name="prefix" class="w-3.5 h-3.5" /> <span>Prefixos</span>
                 </a>
             </li>
+            @endif
+            <li>
+                <a href="{{ route('vehicle-transfers.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                    {{ request()->routeIs('vehicle-transfers.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                    <x-icon name="swap" class="w-3.5 h-3.5" /> <span>Transferências</span>
+                </a>
+            </li>
         </ul>
 
         <!-- Submenu popup quando colapsada -->
@@ -229,6 +307,7 @@
             <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-navy-300 uppercase tracking-wider border-b border-gray-200 dark:border-navy-700 mb-1">
                 Veículos
             </div>
+            @if(!auth()->user()->hasRole('driver'))
             <a href="{{ route('vehicles.index') }}"
                class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('vehicles.index') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
                 <x-icon name="list" class="w-4 h-4" />
@@ -248,6 +327,12 @@
                class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('prefixes.*') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
                 <x-icon name="prefix" class="w-4 h-4" />
                 <span>Prefixos</span>
+            </a>
+            @endif
+            <a href="{{ route('vehicle-transfers.index') }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('vehicle-transfers.*') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                <x-icon name="swap" class="w-4 h-4" />
+                <span>Transferências</span>
             </a>
         </div>
     </li>

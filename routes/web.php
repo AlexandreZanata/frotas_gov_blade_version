@@ -59,6 +59,22 @@ Route::middleware('auth')->group(function () {
     // Logbook Permissions (apenas para gestores gerais)
     Route::resource('logbook-permissions', \App\Http\Controllers\LogbookPermissionController::class);
 
+    // Vehicle Transfers (Transferências de Veículos)
+    Route::prefix('vehicle-transfers')->name('vehicle-transfers.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\VehicleTransferController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\VehicleTransferController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\VehicleTransferController::class, 'store'])->name('store');
+        Route::get('/pending', [\App\Http\Controllers\VehicleTransferController::class, 'pending'])->name('pending');
+        Route::get('/active', [\App\Http\Controllers\VehicleTransferController::class, 'active'])->name('active');
+        Route::get('/{vehicleTransfer}', [\App\Http\Controllers\VehicleTransferController::class, 'show'])->name('show');
+        Route::post('/{vehicleTransfer}/approve', [\App\Http\Controllers\VehicleTransferController::class, 'approve'])->name('approve');
+        Route::post('/{vehicleTransfer}/reject', [\App\Http\Controllers\VehicleTransferController::class, 'reject'])->name('reject');
+        Route::post('/{vehicleTransfer}/return', [\App\Http\Controllers\VehicleTransferController::class, 'return'])->name('return');
+    });
+
+    // API para buscar veículos na transferência
+    Route::get('/api/vehicle-transfers/search-vehicle', [\App\Http\Controllers\VehicleTransferController::class, 'searchVehicle'])->name('api.vehicle-transfers.search-vehicle');
+
     // Diário de Bordo (Logbook)
     Route::prefix('logbook')->name('logbook.')->group(function () {
         Route::get('/', [\App\Http\Controllers\RunController::class, 'index'])->name('index');
@@ -93,6 +109,15 @@ Route::middleware('auth')->group(function () {
 
         // Detalhes da corrida
         Route::get('/{run}', [\App\Http\Controllers\RunController::class, 'show'])->name('show');
+    });
+
+    // Checklists (Notificações e Aprovações)
+    Route::prefix('checklists')->name('checklists.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ChecklistController::class, 'index'])->name('index');
+        Route::get('/pending', [\App\Http\Controllers\ChecklistController::class, 'pending'])->name('pending');
+        Route::get('/{checklist}', [\App\Http\Controllers\ChecklistController::class, 'show'])->name('show');
+        Route::post('/{checklist}/approve', [\App\Http\Controllers\ChecklistController::class, 'approve'])->name('approve');
+        Route::post('/{checklist}/reject', [\App\Http\Controllers\ChecklistController::class, 'reject'])->name('reject');
     });
 });
 

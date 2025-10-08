@@ -98,7 +98,9 @@ class PrefixController extends Controller
     {
         // Apenas gestores gerais e setoriais podem criar prefixos
         $user = $request->user();
-        if (!in_array($user->role, ['gestor_geral', 'gestor_setorial'])) {
+
+        // Verificação corrigida: usar $user->role->name ao invés de $user->role
+        if (!$user->role || !in_array($user->role->name, ['general_manager', 'sector_manager'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Você não tem permissão para criar prefixos.'

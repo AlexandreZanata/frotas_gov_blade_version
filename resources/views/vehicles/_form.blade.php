@@ -212,31 +212,53 @@ function prefixSearch(initialId, initialName) {
                 if (data.success) {
                     this.selectPrefix(data.prefix);
                     this.showDropdown = false;
-                    // Mostrar mensagem de sucesso
-                    const successMsg = document.createElement('div');
-                    successMsg.className = 'fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg';
-                    successMsg.innerHTML = `
-                        <strong class="font-bold">Sucesso!</strong>
-                        <span class="block sm:inline">Prefixo "${data.prefix.name}" criado com sucesso.</span>
-                    `;
-                    document.body.appendChild(successMsg);
-                    setTimeout(() => successMsg.remove(), 3000);
+                    // Mostrar mensagem de sucesso usando toast notification
+                    this.showNotification('✅ Sucesso!', `Prefixo "${data.prefix.name}" criado com sucesso.`, 'success');
                 } else {
-                    alert(data.message || 'Erro ao criar prefixo. Pode já existir um com este nome.');
+                    this.showNotification('❌ Erro', data.message || 'Erro ao criar prefixo.', 'error');
                 }
                 this.loading = false;
             })
             .catch(error => {
                 console.error('Erro ao criar prefixo:', error);
+                let errorMsg = 'Erro ao criar prefixo.';
+
                 if (error.message) {
-                    alert(error.message);
+                    errorMsg = error.message;
                 } else if (error.errors && error.errors.name) {
-                    alert('Erro: ' + error.errors.name[0]);
-                } else {
-                    alert('Erro ao criar prefixo. Verifique se você tem permissão ou se o prefixo já existe.');
+                    errorMsg = error.errors.name[0];
                 }
+
+                this.showNotification('❌ Erro', errorMsg, 'error');
                 this.loading = false;
             });
+        },
+
+        showNotification(title, message, type = 'success') {
+            const bgColor = type === 'success' ? 'bg-green-100 border-green-400 text-green-700 dark:bg-green-900/30 dark:border-green-700 dark:text-green-400' : 'bg-red-100 border-red-400 text-red-700 dark:bg-red-900/30 dark:border-red-700 dark:text-red-400';
+
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 ${bgColor} border px-4 py-3 rounded-lg shadow-lg max-w-md animate-slide-in`;
+            notification.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="flex-1">
+                        <strong class="font-bold block">${title}</strong>
+                        <span class="block text-sm mt-1">${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-current opacity-70 hover:opacity-100 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
         },
 
         closeDropdown() {
