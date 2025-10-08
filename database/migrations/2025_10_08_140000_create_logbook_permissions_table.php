@@ -34,13 +34,12 @@ return new class extends Migration
 
         // Tabela pivot para veículos específicos (quando scope = 'vehicles')
         Schema::create('logbook_permission_vehicles', function (Blueprint $table) {
-            $table->uuid('id')->primary();
             $table->foreignUuid('logbook_permission_id')->constrained('logbook_permissions')->onDelete('cascade');
             $table->foreignUuid('vehicle_id')->constrained('vehicles')->onDelete('cascade');
             $table->timestamps();
 
-            // Evitar duplicatas
-            $table->unique(['logbook_permission_id', 'vehicle_id'], 'logbook_perm_vehicle_unique');
+            // Chave primária composta
+            $table->primary(['logbook_permission_id', 'vehicle_id']);
         });
     }
 
@@ -53,4 +52,3 @@ return new class extends Migration
         Schema::dropIfExists('logbook_permissions');
     }
 };
-

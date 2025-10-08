@@ -51,6 +51,8 @@ class LogbookPermissionController extends Controller
             'user_id' => 'required|exists:users,id',
             'scope' => 'required|in:all,secretariat,vehicles',
             'secretariat_id' => 'required_if:scope,secretariat|nullable|exists:secretariats,id',
+            'secretariat_ids' => 'required_if:scope,secretariat|nullable|array',
+            'secretariat_ids.*' => 'exists:secretariats,id',
             'vehicle_ids' => 'required_if:scope,vehicles|nullable|array',
             'vehicle_ids.*' => 'exists:vehicles,id',
             'description' => 'nullable|string|max:500',
@@ -60,10 +62,15 @@ class LogbookPermissionController extends Controller
         $permission = LogbookPermission::create([
             'user_id' => $validated['user_id'],
             'scope' => $validated['scope'],
-            'secretariat_id' => $validated['secretariat_id'] ?? null,
+            'secretariat_id' => $validated['secretariat_id'] ?? null, // Manter compatibilidade
             'description' => $validated['description'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
         ]);
+
+        // Se o escopo for 'secretariat', associar as secretarias
+        if ($validated['scope'] === 'secretariat' && !empty($validated['secretariat_ids'])) {
+            $permission->secretariats()->attach($validated['secretariat_ids']);
+        }
 
         // Se o escopo for 'vehicles', associar os veículos
         if ($validated['scope'] === 'vehicles' && !empty($validated['vehicle_ids'])) {
@@ -103,6 +110,8 @@ class LogbookPermissionController extends Controller
             'user_id' => 'required|exists:users,id',
             'scope' => 'required|in:all,secretariat,vehicles',
             'secretariat_id' => 'required_if:scope,secretariat|nullable|exists:secretariats,id',
+            'secretariat_ids' => 'required_if:scope,secretariat|nullable|array',
+            'secretariat_ids.*' => 'exists:secretariats,id',
             'vehicle_ids' => 'required_if:scope,vehicles|nullable|array',
             'vehicle_ids.*' => 'exists:vehicles,id',
             'description' => 'nullable|string|max:500',
@@ -116,6 +125,13 @@ class LogbookPermissionController extends Controller
             'description' => $validated['description'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
         ]);
+
+        // Atualizar secretarias associadas
+        if ($validated['scope'] === 'secretariat' && isset($validated['secretariat_ids'])) {
+            $logbookPermission->secretariats()->sync($validated['secretariat_ids']);
+        } else {
+            $logbookPermission->secretariats()->detach();
+        }
 
         // Atualizar veículos associados
         if ($validated['scope'] === 'vehicles' && isset($validated['vehicle_ids'])) {

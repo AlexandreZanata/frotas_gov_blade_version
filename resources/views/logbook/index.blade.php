@@ -78,10 +78,10 @@
                     </td>
                     <td class="px-4 py-2 whitespace-nowrap">
                         <div class="text-sm text-gray-900 dark:text-gray-100">
-                            {{ $run->start_datetime ? $run->start_datetime->format('d/m/Y') : '-' }}
+                            {{ $run->started_at ? $run->started_at->format('d/m/Y') : '-' }}
                         </div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ $run->start_datetime ? $run->start_datetime->format('H:i') : '-' }}
+                            {{ $run->started_at ? $run->started_at->format('H:i') : '-' }}
                         </div>
                     </td>
                     <td class="px-4 py-2 whitespace-nowrap">

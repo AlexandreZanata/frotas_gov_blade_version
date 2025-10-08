@@ -35,6 +35,12 @@
 
     /* Esconder elementos x-cloak ANTES do Alpine carregar */
     [x-cloak] { display: none !important; }
+
+    /* Transições suaves para submenus */
+    .submenu-transition {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+    }
 </style>
 
 <ul class="mt-4 space-y-1"
@@ -112,17 +118,17 @@
             <x-icon name="chevron-down" id="nav-logbook-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="logbookOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
-        <ul id="nav-logbook-submenu" x-show="logbookOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600" style="display: none;">
-            <li>
-                <a href="{{ route('logbook.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
-                    {{ request()->routeIs('logbook.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                    <x-icon name="list" class="w-3.5 h-3.5" /> <span>Minhas Corridas</span>
-                </a>
-            </li>
+        <ul id="nav-logbook-submenu" x-show="logbookOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition" style="display: none;">
             <li>
                 <a href="{{ route('logbook.start-flow') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('logbook.start-flow') || request()->routeIs('logbook.vehicle-select') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
                     <x-icon name="plus" class="w-3.5 h-3.5" /> <span>Nova Corrida</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('logbook.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                    {{ request()->routeIs('logbook.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                    <x-icon name="list" class="w-3.5 h-3.5" /> <span>Minhas Corridas</span>
                 </a>
             </li>
             @if(auth()->user()->isGeneralManager())
@@ -183,7 +189,7 @@
             <x-icon name="chevron-down" id="nav-vehicles-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="vehiclesOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
-        <ul id="nav-vehicles-submenu" x-show="vehiclesOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600" style="display: none;">
+        <ul id="nav-vehicles-submenu" x-show="vehiclesOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition" style="display: none;">
             <li>
                 <a href="{{ route('vehicles.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('vehicles.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
@@ -261,7 +267,7 @@
             <x-icon name="chevron-down" id="nav-reports-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="reportsOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
-        <ul id="nav-reports-submenu" x-show="reportsOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600" style="display: none;">
+        <ul id="nav-reports-submenu" x-show="reportsOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition" style="display: none;">
             <li>
                 <a href="{{ route('backup-reports.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('backup-reports.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
@@ -318,11 +324,11 @@
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $usersGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="users" class="w-5 h-5 shrink-0" />
-            <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Usuários</span>
-            <x-icon name="chevron-down" id="nav-users-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="usersOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+            <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen">Usuários</span>
+            <x-icon name="chevron-down" id="nav-users-chevron" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="usersOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
-        <ul id="nav-users-submenu" x-show="usersOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600" style="display: none;">
+        <ul id="nav-users-submenu" x-show="usersOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition" style="display: none;">
             <li>
                 <a href="{{ route('users.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('users.*') && !request()->routeIs('users.create') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
@@ -391,11 +397,11 @@
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $auditGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="clipboard" class="w-5 h-5 shrink-0" />
-            <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Auditoria</span>
-            <x-icon name="chevron-down" id="nav-audit-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="auditOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+            <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen">Auditoria</span>
+            <x-icon name="chevron-down" id="nav-audit-chevron" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="auditOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
-        <ul id="nav-audit-submenu" x-show="auditOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600" style="display: none;">
+        <ul id="nav-audit-submenu" x-show="auditOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition" style="display: none;">
             <li>
                 <a href="{{ route('audit-logs.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('audit-logs.index') && !request()->input('type') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">

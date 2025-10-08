@@ -16,62 +16,45 @@
             <x-user-search
                 name="user_id"
                 label="Usuário *"
-                :roles="['driver', 'sector_manager']"
+                :roles="['driver', 'sector_manager', 'general_manager']"
                 placeholder="Digite o nome ou CPF do usuário..."
             />
 
             <!-- Escopo -->
             <div>
                 <x-input-label for="scope" value="Tipo de Permissão *" />
-                <x-ui.select name="scope" id="scope" x-model="scope" class="mt-1" required>
-                    <option value="vehicles">Veículos Específicos</option>
-                    <option value="secretariat">Secretaria Específica</option>
-                    <option value="all">Todas as Secretarias</option>
-                </x-ui.select>
+                <div class="flex items-center gap-2 mt-1">
+                    <x-icon name="building" class="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                    <x-ui.select name="scope" id="scope" x-model="scope" class="flex-1" required>
+                        <option value="vehicles">Veículos Específicos</option>
+                        <option value="secretariat">Secretaria Específica</option>
+                        <option value="all">Todas as Secretarias</option>
+                    </x-ui.select>
+                </div>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Defina o escopo de acesso para este usuário
                 </p>
                 <x-input-error :messages="$errors->get('scope')" class="mt-2" />
             </div>
 
-            <!-- Secretaria (se scope = secretariat) -->
+            <!-- Secretaria (se scope = secretariat) - Usando o novo componente de pesquisa -->
             <div x-show="scope === 'secretariat'" x-cloak>
-                <x-input-label for="secretariat_id" value="Secretaria *" />
-                <x-ui.select name="secretariat_id" id="secretariat_id" class="mt-1">
-                    <option value="">Selecione uma secretaria...</option>
-                    @foreach($secretariats as $secretariat)
-                        <option value="{{ $secretariat->id }}" @selected(old('secretariat_id') == $secretariat->id)>
-                            {{ $secretariat->name }}
-                        </option>
-                    @endforeach
-                </x-ui.select>
-                <x-input-error :messages="$errors->get('secretariat_id')" class="mt-2" />
+                <x-secretariat-search
+                    name="secretariat_ids"
+                    label="Secretarias *"
+                    :selectedIds="old('secretariat_ids', [])"
+                    placeholder="Digite o nome da secretaria..."
+                />
             </div>
 
-            <!-- Veículos (se scope = vehicles) -->
+            <!-- Veículos (se scope = vehicles) - Usando o novo componente de pesquisa -->
             <div x-show="scope === 'vehicles'" x-cloak>
-                <x-input-label for="vehicle_ids" value="Veículos *" />
-                <div class="mt-2 max-h-64 overflow-y-auto border border-gray-300 dark:border-gray-700 rounded-md p-4 bg-gray-50 dark:bg-gray-900">
-                    @foreach($vehicles as $vehicle)
-                        <label class="flex items-center py-2 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 rounded cursor-pointer">
-                            <input
-                                type="checkbox"
-                                name="vehicle_ids[]"
-                                value="{{ $vehicle->id }}"
-                                @checked(in_array($vehicle->id, old('vehicle_ids', [])))
-                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                            />
-                            <span class="ml-3 text-sm text-gray-700 dark:text-gray-300">
-                                <span class="font-medium">{{ $vehicle->prefix->name ?? 'N/A' }}</span> - {{ $vehicle->name }}
-                                <span class="text-gray-500">({{ $vehicle->plate }})</span>
-                            </span>
-                        </label>
-                    @endforeach
-                </div>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Selecione os veículos que o usuário poderá utilizar no diário de bordo
-                </p>
-                <x-input-error :messages="$errors->get('vehicle_ids')" class="mt-2" />
+                <x-vehicle-search
+                    name="vehicle_ids"
+                    label="Veículos *"
+                    :selectedIds="old('vehicle_ids', [])"
+                    placeholder="Digite o prefixo ou placa do veículo..."
+                />
             </div>
 
             <!-- Descrição -->

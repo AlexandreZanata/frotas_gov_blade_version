@@ -36,23 +36,28 @@
                         <p class="mt-1 text-base text-gray-900 dark:text-navy-50">{{ $run->user->cpf }}</p>
                     </div>
                     <div>
-                        <h4 class="text-sm font-medium text-gray-500 dark:text-navy-300">Origem</h4>
-                        <p class="mt-1 text-base text-gray-900 dark:text-navy-50">{{ $run->origin ?? 'N/A' }}</p>
-                    </div>
-                    <div>
                         <h4 class="text-sm font-medium text-gray-500 dark:text-navy-300">Destino</h4>
                         <p class="mt-1 text-base text-gray-900 dark:text-navy-50">{{ $run->destination }}</p>
                     </div>
+                    @if($run->stop_point)
                     <div>
-                        <h4 class="text-sm font-medium text-gray-500 dark:text-navy-300">Início</h4>
+                        <h4 class="text-sm font-medium text-gray-500 dark:text-navy-300 flex items-center gap-2">
+                            <x-icon name="map-pin" class="w-4 h-4" />
+                            Ponto de Parada
+                        </h4>
+                        <p class="mt-1 text-base text-gray-900 dark:text-navy-50">{{ $run->stop_point }}</p>
+                    </div>
+                    @endif
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 dark:text-navy-300">Data/Hora Início</h4>
                         <p class="mt-1 text-base text-gray-900 dark:text-navy-50">
-                            {{ $run->started_at?->format('d/m/Y H:i') ?? 'N/A' }}
+                            {{ $run->started_at ? $run->started_at->format('d/m/Y H:i') : 'N/A' }}
                         </p>
                     </div>
                     <div>
-                        <h4 class="text-sm font-medium text-gray-500 dark:text-navy-300">Término</h4>
+                        <h4 class="text-sm font-medium text-gray-500 dark:text-navy-300">Data/Hora Término</h4>
                         <p class="mt-1 text-base text-gray-900 dark:text-navy-50">
-                            {{ $run->finished_at?->format('d/m/Y H:i') ?? 'Em andamento' }}
+                            {{ $run->finished_at ? $run->finished_at->format('d/m/Y H:i') : 'Em andamento' }}
                         </p>
                     </div>
                 </div>

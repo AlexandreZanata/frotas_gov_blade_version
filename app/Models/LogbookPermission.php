@@ -33,11 +33,20 @@ class LogbookPermission extends Model
     }
 
     /**
-     * Get the secretariat if scope is 'secretariat'
+     * Get the secretariat if scope is 'secretariat' (single - DEPRECATED)
      */
     public function secretariat(): BelongsTo
     {
         return $this->belongsTo(Secretariat::class);
+    }
+
+    /**
+     * Get the secretariats if scope is 'secretariat' (multiple)
+     */
+    public function secretariats(): BelongsToMany
+    {
+        return $this->belongsToMany(Secretariat::class, 'logbook_permission_secretariats', 'logbook_permission_id', 'secretariat_id')
+            ->withTimestamps();
     }
 
     /**
@@ -141,4 +150,3 @@ class LogbookPermission extends Model
         return $hasCondition ? $query : Vehicle::whereRaw('1 = 0');
     }
 }
-

@@ -46,6 +46,9 @@ Route::middleware('auth')->group(function () {
     // API Routes para usuários
     Route::get('/api/users/search', [UserController::class, 'search'])->name('api.users.search');
 
+    // API Routes para secretarias
+    Route::get('/api/secretariats/search', [\App\Http\Controllers\SecretariatController::class, 'search'])->name('api.secretariats.search');
+
     Route::resource('users', UserController::class);
     Route::resource('default-passwords', DefaultPasswordController::class);
 
