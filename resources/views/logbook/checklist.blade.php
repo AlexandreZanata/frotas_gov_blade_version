@@ -209,7 +209,10 @@
                             rows="3"
                             class="mt-1 block w-full border-gray-300 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-100 focus:border-primary-500 dark:focus:border-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 rounded-md shadow-sm"
                             placeholder="Adicione observações gerais sobre o veículo ou a inspeção..."
-                        >{{ old('general_notes') }}</textarea>
+                        >{{ old('general_notes', '') }}</textarea>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Use este campo para adicionar qualquer observação relevante sobre o veículo ou a inspeção
+                        </p>
                     </div>
 
                     <!-- Botões de Ação -->
