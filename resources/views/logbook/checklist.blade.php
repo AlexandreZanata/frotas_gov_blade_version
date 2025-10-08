@@ -8,11 +8,7 @@
         />
     </x-slot>
 
-    <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
-
-            <!-- Flash Messages -->
-            <x-ui.flash />
 
             <!-- Informações do Veículo -->
             <x-ui.card title="Veículo Selecionado">
@@ -20,7 +16,6 @@
                     <div>
                         <p class="text-sm text-gray-500 dark:text-navy-300">Prefixo</p>
                         <p class="font-semibold text-gray-900 dark:text-navy-50">{{ $vehicle->prefix->name ?? 'N/A' }}</p>
-                    </div>
                     <div>
                         <p class="text-sm text-gray-500 dark:text-navy-300">Nome</p>
                         <p class="font-semibold text-gray-900 dark:text-navy-50">{{ $vehicle->name }}</p>

@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-ui.page-header title="Minhas Corridas" subtitle="Histórico de corridas realizadas" hide-title-mobile icon="car" />
+        <x-ui.page-header title="Minhas Corridas" subtitle="Diário de Bordo" hide-title-mobile icon="clipboard" />
     </x-slot>
     <x-slot name="pageActions">
         <a href="{{ route('logbook.start-flow') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium shadow transition">
@@ -9,133 +9,118 @@
         </a>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-
-            <!-- Flash Messages -->
-            <x-ui.flash />
-
-            <!-- Active Run Alert -->
-            @if($activeRun = app(\App\Services\LogbookService::class)->getUserActiveRun())
-                <div class="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
-                    <div class="flex items-start">
-                        <x-icon name="car" class="w-6 h-6 text-yellow-600 dark:text-yellow-400 mr-3 flex-shrink-0" />
-                        <div class="flex-1">
-                            <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-300">
-                                Você tem uma corrida em andamento
-                            </h3>
-                            <p class="mt-1 text-sm text-yellow-700 dark:text-yellow-400">
-                                Veículo: {{ $activeRun->vehicle->prefix->name ?? '' }} - {{ $activeRun->vehicle->name }}
-                            </p>
-                            <div class="mt-3">
-                                <a href="{{ route('logbook.start-flow') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-800 dark:text-yellow-200 dark:hover:bg-yellow-700 transition">
-                                    Continuar Corrida
-                                </a>
-                            </div>
-                        </div>
+    <!-- Corrida Ativa Alert -->
+    @if($activeRun = app(\App\Services\LogbookService::class)->getUserActiveRun())
+        <div class="mb-4 rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-4 border border-yellow-200 dark:border-yellow-800">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3 flex-1">
+                    <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                        Você tem uma corrida em andamento
+                    </h3>
+                    <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                        <p>Veículo: <span class="font-semibold">{{ $activeRun->vehicle->prefix->name ?? '' }} - {{ $activeRun->vehicle->name }}</span></p>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ route('logbook.start-flow') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-xs font-medium rounded-md text-yellow-800 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-800 dark:text-yellow-100 dark:hover:bg-yellow-700 transition">
+                            Continuar Corrida →
+                        </a>
                     </div>
                 </div>
-            @endif
-
-            <!-- Runs List -->
-            <x-ui.card>
-                <x-ui.table
-                    :headers="['Veículo','Destino','KM Rodados','Data/Hora','Status','Ações']"
-                    :searchable="true"
-                    search-placeholder="Pesquisar por veículo, destino ou origem..."
-                    :search-value="request('search') ?? ''"
-                    :pagination="$runs">
-                    @forelse($runs as $run)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-navy-700/40">
-                            <td class="px-4 py-3">
-                                <div class="flex items-center">
-                                    <x-icon name="car" class="w-5 h-5 text-gray-400 mr-2 flex-shrink-0" />
-                                    <div>
-                                        <div class="text-sm font-medium text-gray-900 dark:text-navy-50">
-                                            {{ $run->vehicle->prefix->name ?? 'N/A' }}
-                                        </div>
-                                        <div class="text-xs text-gray-500 dark:text-navy-300">
-                                            {{ $run->vehicle->name }}
-                                        </div>
-                                        <div class="text-xs text-gray-400 dark:text-navy-400">
-                                            {{ $run->vehicle->plate }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="text-sm text-gray-900 dark:text-navy-50 font-medium">{{ $run->destination }}</div>
-                                @if($run->stop_point)
-                                    <div class="text-xs text-gray-500 dark:text-navy-300">
-                                        <span class="font-medium">Parada:</span> {{ $run->stop_point }}
-                                    </div>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap">
-                                @if($run->end_km && $run->start_km)
-                                    <div class="text-sm font-semibold text-gray-900 dark:text-navy-50">
-                                        {{ number_format($run->end_km - $run->start_km) }} km
-                                    </div>
-                                    <div class="text-xs text-gray-500 dark:text-navy-300">
-                                        {{ number_format($run->start_km) }} → {{ number_format($run->end_km) }}
-                                    </div>
-                                @elseif($run->start_km)
-                                    <div class="text-sm text-gray-900 dark:text-navy-50">
-                                        Início: {{ number_format($run->start_km) }} km
-                                    </div>
-                                    <div class="text-xs text-yellow-600 dark:text-yellow-400">
-                                        Em andamento
-                                    </div>
-                                @else
-                                    <div class="text-sm text-gray-400 dark:text-navy-400">
-                                        Não iniciada
-                                    </div>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap">
-                                @if($run->started_at)
-                                    <div class="text-sm text-gray-900 dark:text-navy-50">
-                                        {{ $run->started_at->format('d/m/Y') }}
-                                    </div>
-                                    <div class="text-xs text-gray-500 dark:text-navy-300">
-                                        {{ $run->started_at->format('H:i') }}
-                                    </div>
-                                @else
-                                    <div class="text-sm text-gray-400 dark:text-navy-400">
-                                        Não iniciada
-                                    </div>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap">
-                                <x-ui.status-badge :status="$run->status" />
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-right">
-                                <div class="flex items-center justify-end gap-1">
-                                    <x-ui.action-icon :href="route('logbook.show', $run)" icon="eye" title="Ver Detalhes" variant="primary" />
-
-                                    @if($run->status === 'in_progress')
-                                        <x-ui.action-icon :href="route('logbook.start-flow')" icon="play" title="Continuar" variant="success" />
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-4 py-12 text-center">
-                                <x-icon name="car" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                <h3 class="text-sm font-medium text-gray-900 dark:text-navy-50 mb-1">Nenhuma corrida realizada</h3>
-                                <p class="text-sm text-gray-500 dark:text-navy-300 mb-4">Comece sua primeira corrida agora!</p>
-                                <a href="{{ route('logbook.start-flow') }}">
-                                    <x-primary-button>
-                                        <x-icon name="plus" class="w-4 h-4 mr-2" />
-                                        Nova Corrida
-                                    </x-primary-button>
-                                </a>
-                            </td>
-                        </tr>
-                    @endforelse
-                </x-ui.table>
-            </x-ui.card>
+            </div>
         </div>
-    </div>
+    @endif
+
+    <x-ui.card>
+        <x-ui.table
+            :headers="['Veículo','Destino','KM Rodados','Data/Hora','Status','Ações']"
+            :searchable="true"
+            search-placeholder="Pesquisar por veículo, destino..."
+            :search-value="$search ?? ''"
+            :pagination="$runs">
+            @forelse($runs as $run)
+                <tr class="hover:bg-gray-50 dark:hover:bg-navy-700/40">
+                    <td class="px-4 py-2">
+                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {{ $run->vehicle->prefix->name ?? 'N/A' }}
+                        </div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                            {{ $run->vehicle->name }} • {{ $run->vehicle->plate }}
+                        </div>
+                    </td>
+                    <td class="px-4 py-2">
+                        <div class="text-sm text-gray-900 dark:text-gray-100 font-medium">{{ $run->destination }}</div>
+                        @if($run->stop_point)
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Parada: {{ $run->stop_point }}
+                            </div>
+                        @endif
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                        @if($run->end_km && $run->start_km)
+                            <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                {{ number_format($run->end_km - $run->start_km) }} km
+                            </div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ number_format($run->start_km) }} → {{ number_format($run->end_km) }}
+                            </div>
+                        @elseif($run->start_km)
+                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                Início: {{ number_format($run->start_km) }} km
+                            </div>
+                        @else
+                            <span class="text-xs text-gray-400">-</span>
+                        @endif
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                        <div class="text-sm text-gray-900 dark:text-gray-100">
+                            {{ $run->start_datetime ? $run->start_datetime->format('d/m/Y') : '-' }}
+                        </div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                            {{ $run->start_datetime ? $run->start_datetime->format('H:i') : '-' }}
+                        </div>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                        @if($run->status === 'completed')
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                Concluída
+                            </span>
+                        @elseif($run->status === 'in_progress')
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                <svg class="w-3 h-3 mr-1 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                </svg>
+                                Em Andamento
+                            </span>
+                        @elseif($run->status === 'cancelled')
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                                Cancelada
+                            </span>
+                        @else
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                {{ ucfirst($run->status) }}
+                            </span>
+                        @endif
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-right">
+                        <x-ui.action-icon :href="route('logbook.show', $run)" icon="eye" title="Ver Detalhes" variant="primary" />
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-navy-200">Nenhuma corrida encontrada.</td>
+                </tr>
+            @endforelse
+        </x-ui.table>
+    </x-ui.card>
 </x-app-layout>

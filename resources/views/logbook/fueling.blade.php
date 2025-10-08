@@ -5,11 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
-
-            <!-- Flash Messages -->
-            <x-ui.flash />
 
             <!-- Vehicle Info -->
             <x-ui.card>
@@ -22,7 +18,6 @@
                         <p class="text-sm text-gray-500 dark:text-navy-300">
                             Placa: {{ $run->vehicle->plate }}
                         </p>
-                    </div>
                 </div>
             </x-ui.card>
 
@@ -266,4 +261,3 @@
     </script>
     @endpush
 </x-app-layout>
-

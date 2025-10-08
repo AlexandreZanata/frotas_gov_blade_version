@@ -5,18 +5,13 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
-
-            <!-- Flash Messages -->
-            <x-ui.flash />
 
             <!-- Vehicle Info Card -->
             <div class="bg-white dark:bg-navy-800 rounded-lg shadow p-6">
                 <div class="flex items-center gap-4">
                     <div class="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-full">
                         <x-icon name="car" class="w-8 h-8 text-primary-600 dark:text-primary-400" />
-                    </div>
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-navy-50">
                             {{ $run->vehicle->prefix->name ?? 'N/A' }} - {{ $run->vehicle->name }}

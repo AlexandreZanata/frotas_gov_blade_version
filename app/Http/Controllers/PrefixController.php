@@ -96,12 +96,32 @@ class PrefixController extends Controller
      */
     public function storeInline(Request $request)
     {
-        $request->validate(['name' => 'required|string|max:255|unique:prefixes,name']);
-        $prefix = Prefix::create($request->only('name'));
+        // Apenas gestores gerais e setoriais podem criar prefixos
+        $user = $request->user();
+        if (!in_array($user->role, ['gestor_geral', 'gestor_setorial'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Você não tem permissão para criar prefixos.'
+            ], 403);
+        }
 
-        return response()->json([
-            'success' => true,
-            'prefix' => $prefix
-        ]);
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255|unique:prefixes,name'
+            ]);
+
+            $prefix = Prefix::create($request->only('name'));
+
+            return response()->json([
+                'success' => true,
+                'prefix' => $prefix
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Prefixo já existe ou é inválido.',
+                'errors' => $e->errors()
+            ], 422);
+        }
     }
 }

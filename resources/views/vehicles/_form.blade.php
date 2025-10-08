@@ -45,8 +45,20 @@
         <x-input-error :messages="$errors->get('category_id')" class="mt-1" />
     </div>
 
+    <!-- Campo de Secretaria -->
+    <div>
+        <x-input-label for="secretariat_id" value="Secretaria" />
+        <x-ui.select name="secretariat_id" id="secretariat_id" class="mt-1" required>
+            <option value="">Selecione...</option>
+            @foreach($secretariats as $s)
+                <option value="{{ $s->id }}" @selected(old('secretariat_id', $vehicle->secretariat_id ?? auth()->user()->secretariat_id) == $s->id)>{{ $s->name }}</option>
+            @endforeach
+        </x-ui.select>
+        <x-input-error :messages="$errors->get('secretariat_id')" class="mt-1" />
+    </div>
+
     <!-- Campo de Prefixo com pesquisa inteligente -->
-    <div x-data="prefixSearch(@json(old('prefix_id', $vehicle->prefix_id ?? null)), @json(old('prefix_name', $vehicle->prefix->name ?? '')))">
+    <div x-data="prefixSearch('{{ $vehicle->prefix_id ?? '' }}', '{{ old('prefix_name', $vehicle->prefix->name ?? '') }}')">
         <x-input-label for="prefix_search" value="Prefixo *" />
         <div class="relative">
             <input
@@ -65,6 +77,7 @@
 
             <!-- Dropdown de resultados -->
             <div x-show="showDropdown && (results.length > 0 || searchQuery.length > 0)"
+                 x-cloak
                  x-transition
                  class="absolute z-50 w-full mt-1 bg-white dark:bg-navy-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
 
@@ -189,19 +202,39 @@ function prefixSearch(initialId, initialName) {
                     name: this.searchQuery.trim()
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     this.selectPrefix(data.prefix);
-                    alert('Prefixo criado com sucesso!');
+                    this.showDropdown = false;
+                    // Mostrar mensagem de sucesso
+                    const successMsg = document.createElement('div');
+                    successMsg.className = 'fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg';
+                    successMsg.innerHTML = `
+                        <strong class="font-bold">Sucesso!</strong>
+                        <span class="block sm:inline">Prefixo "${data.prefix.name}" criado com sucesso.</span>
+                    `;
+                    document.body.appendChild(successMsg);
+                    setTimeout(() => successMsg.remove(), 3000);
                 } else {
-                    alert('Erro ao criar prefixo. Pode já existir um com este nome.');
+                    alert(data.message || 'Erro ao criar prefixo. Pode já existir um com este nome.');
                 }
                 this.loading = false;
             })
             .catch(error => {
                 console.error('Erro ao criar prefixo:', error);
-                alert('Erro ao criar prefixo. Tente novamente.');
+                if (error.message) {
+                    alert(error.message);
+                } else if (error.errors && error.errors.name) {
+                    alert('Erro: ' + error.errors.name[0]);
+                } else {
+                    alert('Erro ao criar prefixo. Verifique se você tem permissão ou se o prefixo já existe.');
+                }
                 this.loading = false;
             });
         },

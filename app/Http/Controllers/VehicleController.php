@@ -6,7 +6,8 @@ use App\Models\Vehicle;
 use App\Models\VehicleCategory;
 use App\Models\Prefix;
 use App\Models\VehicleStatus;
-use App\Models\FuelType; // adicionado
+use App\Models\FuelType;
+use App\Models\Secretariat;
 use Illuminate\Http\Request;
 
 class VehicleController extends Controller
@@ -36,8 +37,9 @@ class VehicleController extends Controller
         $categories = VehicleCategory::all();
         $prefixes = Prefix::all();
         $statuses = VehicleStatus::all();
-        $fuelTypes = FuelType::all(); // lista de tipos combustivel
-        return view('vehicles.create', compact('categories', 'prefixes', 'statuses', 'fuelTypes'));
+        $fuelTypes = FuelType::all();
+        $secretariats = Secretariat::all();
+        return view('vehicles.create', compact('categories', 'prefixes', 'statuses', 'fuelTypes', 'secretariats'));
     }
 
     public function store(Request $request)
@@ -51,7 +53,8 @@ class VehicleController extends Controller
             'category_id' => 'required|exists:vehicle_categories,id',
             'prefix_id' => 'required|exists:prefixes,id',
             'status_id' => 'required|exists:vehicle_statuses,id',
-            'fuel_type_id' => 'required|exists:fuel_types,id', // nova validação
+            'fuel_type_id' => 'required|exists:fuel_types,id',
+            'secretariat_id' => 'required|exists:secretariats,id',
         ]);
 
         // Criar veículo associando a secretaria do usuário logado
@@ -76,7 +79,8 @@ class VehicleController extends Controller
         $prefixes = Prefix::all();
         $statuses = VehicleStatus::all();
         $fuelTypes = FuelType::all();
-        return view('vehicles.edit', compact('vehicle', 'categories', 'prefixes', 'statuses', 'fuelTypes'));
+        $secretariats = Secretariat::all();
+        return view('vehicles.edit', compact('vehicle', 'categories', 'prefixes', 'statuses', 'fuelTypes', 'secretariats'));
     }
 
     public function update(Request $request, Vehicle $vehicle)
@@ -91,13 +95,11 @@ class VehicleController extends Controller
             'prefix_id' => 'required|exists:prefixes,id',
             'status_id' => 'required|exists:vehicle_statuses,id',
             'fuel_type_id' => 'required|exists:fuel_types,id',
+            'secretariat_id' => 'required|exists:secretariats,id',
         ]);
 
-        // Atualizar mantendo a secretaria original (não permitir mudança)
-        $vehicleData = $request->all();
-        $vehicleData['secretariat_id'] = $vehicle->secretariat_id;
-
-        $vehicle->update($vehicleData);
+        // Atualizar com os dados do request (incluindo secretariat_id)
+        $vehicle->update($request->all());
 
         return redirect()->route('vehicles.index')
             ->with('success', 'Veículo atualizado com sucesso.');

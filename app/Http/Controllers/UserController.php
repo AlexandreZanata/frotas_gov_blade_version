@@ -244,4 +244,60 @@ class UserController extends Controller
         return redirect()->route('users.index')
             ->with('success', 'Usuário excluído com sucesso.');
     }
+
+    /**
+     * API para buscar usuários (autocomplete)
+     */
+    public function search(Request $request)
+    {
+        $search = $request->input('q', '');
+        $roles = $request->input('roles'); // Filtro opcional de roles
+
+        if (strlen($search) < 2) {
+            return response()->json([]);
+        }
+
+        $currentUser = auth()->user();
+
+        // Query base
+        $query = User::with(['role', 'secretariat']);
+
+        // Gestor setorial vê apenas usuários da sua secretaria
+        if ($currentUser->isSectorManager()) {
+            $query->where('secretariat_id', $currentUser->secretariat_id);
+        }
+
+        // Filtrar por nome ou CPF
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('cpf', 'like', "%{$search}%");
+        });
+
+        // Filtrar por roles se especificado
+        if ($roles) {
+            $rolesArray = is_string($roles) ? json_decode($roles, true) : $roles;
+            if (is_array($rolesArray) && !empty($rolesArray)) {
+                $query->whereHas('role', function ($q) use ($rolesArray) {
+                    $q->whereIn('name', $rolesArray);
+                });
+            }
+        }
+
+        $users = $query->orderBy('name')
+            ->limit(20)
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'cpf' => $user->cpf ?? 'N/A',
+                    'email' => $user->email,
+                    'role' => $user->role->name ?? 'N/A',
+                    'secretariat' => $user->secretariat->name ?? 'N/A',
+                    'status' => $user->status ?? 'active',
+                ];
+            });
+
+        return response()->json($users);
+    }
 }

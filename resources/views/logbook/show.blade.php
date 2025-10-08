@@ -5,7 +5,6 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             <!-- Vehicle and Status -->
@@ -20,7 +19,6 @@
                             <p class="text-sm text-gray-500 dark:text-navy-300">
                                 Placa: {{ $run->vehicle->plate }}
                             </p>
-                        </div>
                     </div>
                     <x-ui.status-badge :status="$run->status" class="text-lg px-4 py-2" />
                 </div>

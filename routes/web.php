@@ -43,12 +43,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/vehicles/search', [VehicleController::class, 'search'])->name('api.vehicles.search');
     Route::get('/api/vehicles/{vehicle}/data', [\App\Http\Controllers\RunController::class, 'getVehicleData'])->name('api.vehicles.data');
 
+    // API Routes para usuários
+    Route::get('/api/users/search', [UserController::class, 'search'])->name('api.users.search');
+
     Route::resource('users', UserController::class);
     Route::resource('default-passwords', DefaultPasswordController::class);
 
     // Audit Logs (apenas para gestores gerais)
     Route::get('/audit-logs', [\App\Http\Controllers\AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::get('/audit-logs/{auditLog}', [\App\Http\Controllers\AuditLogController::class, 'show'])->name('audit-logs.show');
+
+    // Logbook Permissions (apenas para gestores gerais)
+    Route::resource('logbook-permissions', \App\Http\Controllers\LogbookPermissionController::class);
 
     // Diário de Bordo (Logbook)
     Route::prefix('logbook')->name('logbook.')->group(function () {
@@ -60,8 +66,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/select-vehicle', [\App\Http\Controllers\RunController::class, 'storeVehicle'])->name('store-vehicle');
 
         // Etapa 2: Checklist (NOVO FLUXO - sem corrida criada)
-        Route::get('/checklist-form', [\App\Http\Controllers\RunController::class, 'checklistForm'])->name('checklist-form');
-        Route::post('/checklist-form', [\App\Http\Controllers\RunController::class, 'storeChecklistAndCreateRun'])->name('store-checklist-form');
+        Route::get('/checklist_form', [\App\Http\Controllers\RunController::class, 'checklistForm'])->name('checklist-form');
+        Route::post('/checklist_form', [\App\Http\Controllers\RunController::class, 'storeChecklistAndCreateRun'])->name('store-checklist-form');
 
         // Etapa 2: Checklist (ANTIGO - para compatibilidade)
         Route::get('/{run}/checklist', [\App\Http\Controllers\RunController::class, 'checklist'])->name('checklist');
