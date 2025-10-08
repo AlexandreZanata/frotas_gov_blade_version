@@ -46,7 +46,7 @@
     </div>
 
     <!-- Campo de Prefixo com pesquisa inteligente -->
-    <div x-data="prefixSearch({{ old('prefix_id', $vehicle->prefix_id ?? 'null') }}, '{{ old('prefix_name', $vehicle->prefix->name ?? '') }}')">
+    <div x-data="prefixSearch(@json(old('prefix_id', $vehicle->prefix_id ?? null)), @json(old('prefix_name', $vehicle->prefix->name ?? '')))">
         <x-input-label for="prefix_search" value="Prefixo *" />
         <div class="relative">
             <input

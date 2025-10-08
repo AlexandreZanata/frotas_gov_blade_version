@@ -77,4 +77,28 @@ class Vehicle extends Model
     {
         return $this->hasMany(VehicleTransfer::class);
     }
+
+    /**
+     * Relação com a secretaria
+     */
+    public function secretariat()
+    {
+        return $this->belongsTo(Secretariat::class);
+    }
+
+    /**
+     * Busca a última corrida completada
+     */
+    public function lastCompletedRun()
+    {
+        return $this->hasOne(Run::class)->where('status', 'completed')->latest('finished_at');
+    }
+
+    /**
+     * Busca corrida em andamento
+     */
+    public function activeRun()
+    {
+        return $this->hasOne(Run::class)->where('status', 'in_progress');
+    }
 }

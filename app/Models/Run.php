@@ -47,4 +47,21 @@ class Run extends Model
     {
         return $this->hasMany(RunSignature::class);
     }
+
+    /**
+     * Relação com o checklist da viagem
+     */
+    public function checklist()
+    {
+        return $this->hasOne(Checklist::class);
+    }
+
+    /**
+     * Relação com abastecimentos da viagem
+     */
+    public function fuelings()
+    {
+        return $this->hasMany(Fueling::class, 'vehicle_id', 'vehicle_id')
+                    ->whereBetween('fueled_at', [$this->started_at, $this->finished_at ?? now()]);
+    }
 }

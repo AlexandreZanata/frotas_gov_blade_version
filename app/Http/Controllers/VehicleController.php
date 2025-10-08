@@ -121,4 +121,46 @@ class VehicleController extends Controller
         return redirect()->route('vehicles.index')
             ->with('success', 'Veículo excluído com sucesso.' . ($request->has('create_backup') ? ' Backup gerado com sucesso.' : ''));
     }
+
+    /**
+     * API para buscar veículos (autocomplete) com verificação de disponibilidade
+     */
+    public function search(Request $request)
+    {
+        $search = $request->input('q', '');
+        $secretariatId = auth()->user()->secretariat_id;
+
+        $vehicles = Vehicle::with(['prefix', 'secretariat'])
+            ->where('secretariat_id', $secretariatId)
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('plate', 'like', "%{$search}%")
+                      ->orWhereHas('prefix', function ($prefixQuery) use ($search) {
+                          $prefixQuery->where('name', 'like', "%{$search}%");
+                      });
+                });
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get()
+            ->map(function ($vehicle) {
+                // Verifica se o veículo está em uso
+                $activeRun = $vehicle->runs()
+                    ->where('status', 'in_progress')
+                    ->first();
+
+                return [
+                    'id' => $vehicle->id,
+                    'name' => $vehicle->name,
+                    'plate' => $vehicle->plate,
+                    'prefix' => $vehicle->prefix->name ?? 'N/A',
+                    'secretariat' => $vehicle->secretariat->name ?? 'N/A',
+                    'full_name' => ($vehicle->prefix->name ?? '') . ' - ' . $vehicle->name,
+                    'available' => !$activeRun,
+                ];
+            });
+
+        return response()->json($vehicles);
+    }
 }
