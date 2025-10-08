@@ -180,6 +180,52 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user can access a specific vehicle based on logbook permissions
+     */
+    public function canAccessVehicle(Vehicle $vehicle): bool
+    {
+        return LogbookPermission::canAccessVehicle($this, $vehicle);
+    }
+
+    /**
+     * Get all vehicles the user has access to based on logbook permissions
+     */
+    public function getAccessibleVehicles(): \Illuminate\Database\Eloquent\Collection
+    {
+        $vehicleIds = LogbookPermission::getUserAccessibleVehicleIds($this);
+
+        if (empty($vehicleIds)) {
+            return Vehicle::whereRaw('1 = 0')->get(); // Retorna coleção vazia do Eloquent
+        }
+
+        return Vehicle::whereIn('id', $vehicleIds)
+            ->with(['prefix', 'status', 'category', 'secretariat'])
+            ->get();
+    }
+
+    /**
+     * Get all secretariats the user has access to based on logbook permissions
+     */
+    public function getAccessibleSecretariats(): \Illuminate\Database\Eloquent\Collection
+    {
+        $secretariatIds = LogbookPermission::getUserAccessibleSecretariatIds($this);
+
+        if (empty($secretariatIds)) {
+            return Secretariat::whereRaw('1 = 0')->get(); // Retorna coleção vazia do Eloquent
+        }
+
+        return Secretariat::whereIn('id', $secretariatIds)->get();
+    }
+
+    /**
+     * Check if user has any active logbook permissions
+     */
+    public function hasLogbookPermissions(): bool
+    {
+        return LogbookPermission::userHasActivePermissions($this);
+    }
+
+    /**
      * Get hierarchy level
      */
     public function getHierarchyLevel(): int

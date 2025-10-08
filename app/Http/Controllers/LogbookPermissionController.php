@@ -50,10 +50,9 @@ class LogbookPermissionController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'scope' => 'required|in:all,secretariat,vehicles',
-            'secretariat_id' => 'required_if:scope,secretariat|nullable|exists:secretariats,id',
-            'secretariat_ids' => 'required_if:scope,secretariat|nullable|array',
+            'secretariat_ids' => 'required_if:scope,secretariat|array|min:1',
             'secretariat_ids.*' => 'exists:secretariats,id',
-            'vehicle_ids' => 'required_if:scope,vehicles|nullable|array',
+            'vehicle_ids' => 'required_if:scope,vehicles|array|min:1',
             'vehicle_ids.*' => 'exists:vehicles,id',
             'description' => 'nullable|string|max:500',
             'is_active' => 'boolean',
@@ -62,7 +61,7 @@ class LogbookPermissionController extends Controller
         $permission = LogbookPermission::create([
             'user_id' => $validated['user_id'],
             'scope' => $validated['scope'],
-            'secretariat_id' => $validated['secretariat_id'] ?? null, // Manter compatibilidade
+            'secretariat_id' => null,
             'description' => $validated['description'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
         ]);
@@ -109,7 +108,6 @@ class LogbookPermissionController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'scope' => 'required|in:all,secretariat,vehicles',
-            'secretariat_id' => 'required_if:scope,secretariat|nullable|exists:secretariats,id',
             'secretariat_ids' => 'required_if:scope,secretariat|nullable|array',
             'secretariat_ids.*' => 'exists:secretariats,id',
             'vehicle_ids' => 'required_if:scope,vehicles|nullable|array',
@@ -121,7 +119,7 @@ class LogbookPermissionController extends Controller
         $logbookPermission->update([
             'user_id' => $validated['user_id'],
             'scope' => $validated['scope'],
-            'secretariat_id' => $validated['secretariat_id'] ?? null,
+            'secretariat_id' => null, // Campo legado, não mais usado
             'description' => $validated['description'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
         ]);

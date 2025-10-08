@@ -99,6 +99,17 @@ class RunController extends Controller
      */
     public function getVehicleData(Vehicle $vehicle)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Verifica se o usuário tem permissão para acessar este veículo
+        if (!\App\Models\LogbookPermission::canAccessVehicle($user, $vehicle)) {
+            return response()->json([
+                'error' => true,
+                'message' => 'Você não tem permissão para acessar este veículo.',
+            ], 403);
+        }
+
         // Verifica disponibilidade
         $availability = $this->logbookService->checkVehicleAvailability($vehicle->id);
 
@@ -127,6 +138,16 @@ class RunController extends Controller
     {
         $request->validate(['vehicle_id' => 'required|exists:vehicles,id']);
 
+        $vehicle = Vehicle::findOrFail($request->vehicle_id);
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Verifica se o usuário tem permissão para acessar este veículo
+        if (!\App\Models\LogbookPermission::canAccessVehicle($user, $vehicle)) {
+            return back()->with('error', 'Você não tem permissão para acessar este veículo.');
+        }
+
         // Verifica disponibilidade novamente
         $availability = $this->logbookService->checkVehicleAvailability($request->vehicle_id);
 
@@ -154,6 +175,17 @@ class RunController extends Controller
         }
 
         $vehicle = Vehicle::with('prefix', 'category')->findOrFail($vehicleId);
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Verifica se o usuário tem permissão para acessar este veículo
+        if (!\App\Models\LogbookPermission::canAccessVehicle($user, $vehicle)) {
+            $this->logbookService->clearVehicleSelection();
+            return redirect()->route('logbook.vehicle-select')
+                ->with('error', 'Você não tem permissão para acessar este veículo.');
+        }
+
         $checklistItems = ChecklistItem::all();
         $lastChecklistState = $this->logbookService->getLastChecklistState($vehicleId);
 
@@ -170,6 +202,18 @@ class RunController extends Controller
         if (!$vehicleId) {
             return redirect()->route('logbook.vehicle-select')
                 ->with('error', 'Selecione um veículo primeiro.');
+        }
+
+        $vehicle = Vehicle::findOrFail($vehicleId);
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Verifica se o usuário tem permissão para acessar este veículo
+        if (!\App\Models\LogbookPermission::canAccessVehicle($user, $vehicle)) {
+            $this->logbookService->clearVehicleSelection();
+            return redirect()->route('logbook.vehicle-select')
+                ->with('error', 'Você não tem permissão para acessar este veículo.');
         }
 
         // AGORA SIM: Cria a corrida e salva o checklist

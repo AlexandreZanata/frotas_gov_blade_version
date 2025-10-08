@@ -8,6 +8,7 @@ use App\Models\Prefix;
 use App\Models\VehicleStatus;
 use App\Models\FuelType;
 use App\Models\Secretariat;
+use App\Models\LogbookPermission;
 use Illuminate\Http\Request;
 
 class VehicleController extends Controller
@@ -125,15 +126,23 @@ class VehicleController extends Controller
     }
 
     /**
-     * API para buscar veículos (autocomplete) com verificação de disponibilidade
+     * API para buscar veículos (autocomplete) com verificação de disponibilidade e privilégios
      */
     public function search(Request $request)
     {
         $search = $request->input('q', '');
-        $secretariatId = auth()->user()->secretariat_id;
+        $user = auth()->user();
+
+        // Obter IDs dos veículos que o usuário tem permissão para acessar
+        $accessibleVehicleIds = LogbookPermission::getUserAccessibleVehicleIds($user);
+
+        // Se não há veículos acessíveis, retornar array vazio
+        if (empty($accessibleVehicleIds)) {
+            return response()->json([]);
+        }
 
         $vehicles = Vehicle::with(['prefix', 'secretariat'])
-            ->where('secretariat_id', $secretariatId)
+            ->whereIn('id', $accessibleVehicleIds)
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")

@@ -83,9 +83,16 @@ class LogbookPermission extends Model
                 return true;
             }
 
-            // Se tem permissão para a secretaria do veículo
-            if ($permission->scope === 'secretariat' && $permission->secretariat_id === $vehicle->secretariat_id) {
-                return true;
+            // Se tem permissão para secretaria(s) específica(s)
+            if ($permission->scope === 'secretariat') {
+                // Verifica se o veículo pertence a alguma das secretarias permitidas
+                $hasAccess = $permission->secretariats()
+                    ->where('secretariat_id', $vehicle->secretariat_id)
+                    ->exists();
+
+                if ($hasAccess) {
+                    return true;
+                }
             }
 
             // Se tem permissão para veículos específicos
@@ -100,53 +107,91 @@ class LogbookPermission extends Model
     }
 
     /**
-     * Get all vehicles a user can access
+     * Get all secretariat IDs that the user has permission to access
      */
-    public static function getAccessibleVehicles(User $user)
+    public static function getUserAccessibleSecretariatIds(User $user): array
     {
-        // Gestores gerais podem acessar todos
+        // Gestores gerais podem acessar todas as secretarias
         if ($user->isGeneralManager()) {
-            return Vehicle::with(['prefix', 'secretariat', 'status']);
+            return \App\Models\Secretariat::pluck('id')->toArray();
         }
 
+        $secretariatIds = [];
+
+        // Verifica as permissões do usuário
         $permissions = self::where('user_id', $user->id)
             ->where('is_active', true)
             ->get();
 
-        if ($permissions->isEmpty()) {
-            return Vehicle::whereRaw('1 = 0'); // Retorna query vazia
+        foreach ($permissions as $permission) {
+            // Se tem permissão para todas as secretarias
+            if ($permission->scope === 'all') {
+                return \App\Models\Secretariat::pluck('id')->toArray();
+            }
+
+            // Se tem permissão para secretaria(s) específica(s)
+            if ($permission->scope === 'secretariat') {
+                $permissionSecretariatIds = $permission->secretariats()->pluck('secretariat_id')->toArray();
+                $secretariatIds = array_merge($secretariatIds, $permissionSecretariatIds);
+            }
         }
 
-        $query = Vehicle::query()->with(['prefix', 'secretariat', 'status']);
-        $hasCondition = false;
+        return array_unique($secretariatIds);
+    }
+
+    /**
+     * Get all vehicle IDs that the user has permission to access
+     */
+    public static function getUserAccessibleVehicleIds(User $user): array
+    {
+        // Gestores gerais podem acessar todos os veículos
+        if ($user->isGeneralManager()) {
+            return \App\Models\Vehicle::pluck('id')->toArray();
+        }
+
+        $vehicleIds = [];
+
+        // Verifica as permissões do usuário
+        $permissions = self::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->get();
 
         foreach ($permissions as $permission) {
+            // Se tem permissão para todas as secretarias
             if ($permission->scope === 'all') {
-                return Vehicle::with(['prefix', 'secretariat', 'status']); // Todos os veículos
+                return \App\Models\Vehicle::pluck('id')->toArray();
             }
 
+            // Se tem permissão para secretaria(s) específica(s)
             if ($permission->scope === 'secretariat') {
-                if (!$hasCondition) {
-                    $query->where('secretariat_id', $permission->secretariat_id);
-                    $hasCondition = true;
-                } else {
-                    $query->orWhere('secretariat_id', $permission->secretariat_id);
-                }
+                $secretariatIds = $permission->secretariats()->pluck('secretariat_id')->toArray();
+                $secretariatVehicleIds = \App\Models\Vehicle::whereIn('secretariat_id', $secretariatIds)
+                    ->pluck('id')
+                    ->toArray();
+                $vehicleIds = array_merge($vehicleIds, $secretariatVehicleIds);
             }
 
+            // Se tem permissão para veículos específicos
             if ($permission->scope === 'vehicles') {
-                $vehicleIds = $permission->vehicles()->pluck('vehicle_id')->toArray();
-                if (!empty($vehicleIds)) {
-                    if (!$hasCondition) {
-                        $query->whereIn('id', $vehicleIds);
-                        $hasCondition = true;
-                    } else {
-                        $query->orWhereIn('id', $vehicleIds);
-                    }
-                }
+                $permissionVehicleIds = $permission->vehicles()->pluck('vehicle_id')->toArray();
+                $vehicleIds = array_merge($vehicleIds, $permissionVehicleIds);
             }
         }
 
-        return $hasCondition ? $query : Vehicle::whereRaw('1 = 0');
+        return array_unique($vehicleIds);
+    }
+
+    /**
+     * Check if user has any active permissions
+     */
+    public static function userHasActivePermissions(User $user): bool
+    {
+        if ($user->isGeneralManager()) {
+            return true;
+        }
+
+        return self::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->exists();
     }
 }

@@ -411,15 +411,29 @@ class LogbookService
     }
 
     /**
-     * Busca veículos da secretaria do usuário
+     * Busca veículos disponíveis baseado nos privilégios do usuário
      */
     public function getAvailableVehicles(): \Illuminate\Database\Eloquent\Collection
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        return Vehicle::where('secretariat_id', $user->secretariat_id)
-            ->with(['prefix', 'status', 'category'])
+        // Verifica se o usuário tem privilégios configurados
+        if (!\App\Models\LogbookPermission::userHasActivePermissions($user)) {
+            // Se não tem privilégios, retorna coleção vazia do Eloquent
+            return Vehicle::whereRaw('1 = 0')->get();
+        }
+
+        // Obtém os IDs dos veículos que o usuário pode acessar
+        $accessibleVehicleIds = \App\Models\LogbookPermission::getUserAccessibleVehicleIds($user);
+
+        if (empty($accessibleVehicleIds)) {
+            return Vehicle::whereRaw('1 = 0')->get();
+        }
+
+        // Retorna os veículos acessíveis
+        return Vehicle::whereIn('id', $accessibleVehicleIds)
+            ->with(['prefix', 'status', 'category', 'secretariat'])
             ->get();
     }
 
