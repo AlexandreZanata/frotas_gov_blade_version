@@ -187,6 +187,24 @@ Route::middleware('auth')->group(function () {
 
     // API para dados do veículo (troca de óleo)
     Route::get('/api/oil-changes/vehicle-data/{vehicle}', [\App\Http\Controllers\OilChangeController::class, 'getVehicleData'])->name('api.oil-changes.vehicle-data');
+
+    // Postos de Combustível
+    Route::resource('gas-stations', \App\Http\Controllers\GasStationController::class);
+    Route::get('/api/gas-stations/search', [\App\Http\Controllers\GasStationController::class, 'search'])->name('api.gas-stations.search');
+
+    // Cotação de Combustível
+    Route::prefix('fuel-quotations')->name('fuel-quotations.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\FuelQuotationController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\FuelQuotationController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\FuelQuotationController::class, 'store'])->name('store');
+        Route::get('/{fuelQuotation}', [\App\Http\Controllers\FuelQuotationController::class, 'show'])->name('show');
+        Route::get('/{fuelQuotation}/edit', [\App\Http\Controllers\FuelQuotationController::class, 'edit'])->name('edit');
+        Route::put('/{fuelQuotation}', [\App\Http\Controllers\FuelQuotationController::class, 'update'])->name('update');
+        Route::delete('/{fuelQuotation}', [\App\Http\Controllers\FuelQuotationController::class, 'destroy'])->name('destroy');
+
+        // API
+        Route::post('/calculate-averages', [\App\Http\Controllers\FuelQuotationController::class, 'calculateAverages'])->name('calculate-averages');
+    });
 });
 
 

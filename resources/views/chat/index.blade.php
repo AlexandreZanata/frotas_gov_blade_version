@@ -20,13 +20,27 @@
                 <!-- Header da Sidebar -->
                 <div class="bg-primary-600 dark:bg-primary-700 px-4 py-3 flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-white">Conversas</h2>
-                    <button
-                        @click="showNewChatModal = true"
-                        class="p-2 hover:bg-primary-700 dark:hover:bg-primary-800 rounded-full transition">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <!-- Botão de Mensagens em Massa (apenas para admins) -->
+                        @if(auth()->user()->isGeneralManager() || auth()->user()->isSectorManager())
+                            <a href="{{ route('broadcast-messages.index') }}"
+                               title="Mensagens em Massa"
+                               class="p-2 hover:bg-primary-700 dark:hover:bg-primary-800 rounded-full transition">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/>
+                                </svg>
+                            </a>
+                        @endif
+
+                        <button
+                            @click="showNewChatModal = true"
+                            title="Nova Conversa"
+                            class="p-2 hover:bg-primary-700 dark:hover:bg-primary-800 rounded-full transition">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Busca -->
@@ -505,12 +519,23 @@
                     this.activeRoomId = roomId;
                     this.activeRoom = this.rooms.find(r => r.id === roomId);
 
+                    // Limpar mensagens anteriores para evitar flash
+                    this.messages = [];
+
                     // Atualizar URL sem recarregar
                     window.history.pushState({}, '', `/chat?room=${roomId}`);
 
                     await this.loadMessages();
                     this.subscribeToRoom(roomId);
-                    this.markMessagesAsRead();
+
+                    // Marcar como lidas e atualizar contagem
+                    await this.markMessagesAsRead();
+
+                    // Atualizar contagem de não lidas no room
+                    const room = this.rooms.find(r => r.id === roomId);
+                    if (room) {
+                        room.unread_count = 0;
+                    }
                 },
 
                 async loadMessages() {
@@ -523,7 +548,14 @@
                             const messages = await response.json();
                             this.messages = messages.map(m => this.formatMessage(m));
                             console.log('Mensagens carregadas:', this.messages.length);
-                            this.$nextTick(() => this.scrollToBottom());
+
+                            // Scroll imediato sem delay para evitar flash
+                            this.$nextTick(() => {
+                                const container = this.$refs.messagesContainer;
+                                if (container) {
+                                    container.scrollTop = container.scrollHeight;
+                                }
+                            });
                         }
                     } catch (error) {
                         console.error('Erro ao carregar mensagens:', error);
