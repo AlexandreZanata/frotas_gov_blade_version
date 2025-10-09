@@ -83,42 +83,92 @@
                             const nextChangeKmInput = document.getElementById('next_change_km');
                             const nextChangeDateInput = document.getElementById('next_change_date');
                             const litersUsedInput = document.getElementById('liters_used');
+                            const changeDateInput = document.getElementById('change_date');
 
-                            // Se houver última troca, usar como base
-                            if (data.last_oil_change) {
-                                // Sugerir próxima troca baseada na última + intervalo
-                                const lastKm = data.last_oil_change.km_at_change;
-                                const suggestedNextKm = lastKm + data.suggested_km_interval;
-
-                                if (nextChangeKmInput && !nextChangeKmInput.value) {
-                                    nextChangeKmInput.value = suggestedNextKm;
-                                }
-                            } else {
-                                // Primeira troca - usar KM atual + intervalo sugerido
-                                if (kmAtChangeInput.value && nextChangeKmInput && !nextChangeKmInput.value) {
-                                    const currentKm = parseInt(kmAtChangeInput.value);
-                                    nextChangeKmInput.value = currentKm + data.suggested_km_interval;
-                                }
+                            // Preencher KM atual do veículo
+                            if (data.current_km && kmAtChangeInput) {
+                                kmAtChangeInput.value = data.current_km;
                             }
 
-                            // Sugerir data da próxima troca (data atual + dias sugeridos)
-                            if (nextChangeDateInput && !nextChangeDateInput.value) {
-                                const today = new Date();
-                                today.setDate(today.getDate() + data.suggested_days_interval);
-                                const suggestedDate = today.toISOString().split('T')[0];
+                            // Calcular e preencher PRÓXIMA TROCA KM automaticamente
+                            if (nextChangeKmInput) {
+                                let baseKm = 0;
+
+                                if (data.last_oil_change) {
+                                    // Se já houve troca, usar o KM da última troca
+                                    baseKm = data.last_oil_change.next_change_km ||
+                                            (data.last_oil_change.km_at_change + data.suggested_km_interval);
+                                } else if (kmAtChangeInput.value) {
+                                    // Se é primeira troca, usar KM atual + intervalo
+                                    baseKm = parseInt(kmAtChangeInput.value) + data.suggested_km_interval;
+                                } else if (data.current_km) {
+                                    // Fallback: usar KM atual do veículo + intervalo
+                                    baseKm = parseInt(data.current_km) + data.suggested_km_interval;
+                                }
+
+                                nextChangeKmInput.value = baseKm;
+                            }
+
+                            // Calcular e preencher PRÓXIMA TROCA DATA automaticamente
+                            if (nextChangeDateInput) {
+                                const baseDate = changeDateInput && changeDateInput.value
+                                    ? new Date(changeDateInput.value)
+                                    : new Date();
+
+                                baseDate.setDate(baseDate.getDate() + data.suggested_days_interval);
+                                const suggestedDate = baseDate.toISOString().split('T')[0];
                                 nextChangeDateInput.value = suggestedDate;
                             }
 
                             // Sugerir litros padrão se configurado
-                            if (data.suggested_liters && litersUsedInput && !litersUsedInput.value) {
+                            if (data.suggested_liters && litersUsedInput) {
                                 this.litersUsed = data.suggested_liters;
                             }
 
-                            console.log('Dados carregados:', data);
+                            console.log('Dados carregados e calculados:', {
+                                currentKm: data.current_km,
+                                suggestedKmInterval: data.suggested_km_interval,
+                                suggestedDaysInterval: data.suggested_days_interval,
+                                nextChangeKm: nextChangeKmInput?.value,
+                                nextChangeDate: nextChangeDateInput?.value
+                            });
                         })
                         .catch(error => {
                             console.error('Erro ao carregar dados do veículo:', error);
                         });
+                },
+
+                // Método auxiliar para recalcular a data da próxima troca quando mudar a data da troca
+                recalculateNextChangeDate() {
+                    const changeDateInput = document.getElementById('change_date');
+                    const nextChangeDateInput = document.getElementById('next_change_date');
+
+                    if (changeDateInput && changeDateInput.value && nextChangeDateInput && this.selectedVehicleId) {
+                        // Buscar intervalo de dias sugerido
+                        fetch(`/api/oil-changes/vehicle-data/${this.selectedVehicleId}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                const baseDate = new Date(changeDateInput.value);
+                                baseDate.setDate(baseDate.getDate() + data.suggested_days_interval);
+                                nextChangeDateInput.value = baseDate.toISOString().split('T')[0];
+                            });
+                    }
+                },
+
+                // Método auxiliar para recalcular o KM da próxima troca quando mudar o KM atual
+                recalculateNextChangeKm() {
+                    const kmAtChangeInput = document.getElementById('km_at_change');
+                    const nextChangeKmInput = document.getElementById('next_change_km');
+
+                    if (kmAtChangeInput && kmAtChangeInput.value && nextChangeKmInput && this.selectedVehicleId) {
+                        // Buscar intervalo de KM sugerido
+                        fetch(`/api/oil-changes/vehicle-data/${this.selectedVehicleId}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                const currentKm = parseInt(kmAtChangeInput.value);
+                                nextChangeKmInput.value = currentKm + data.suggested_km_interval;
+                            });
+                    }
                 },
 
                 updateOilInfo() {
@@ -344,6 +394,7 @@
                                         required
                                         value="{{ date('Y-m-d') }}"
                                         max="{{ date('Y-m-d') }}"
+                                        @change="recalculateNextChangeDate"
                                         class="mt-1 block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500">
                                 </div>
                                 <div>
@@ -356,6 +407,7 @@
                                         min="0"
                                         step="1"
                                         placeholder="Ex: 15000"
+                                        @input="recalculateNextChangeKm"
                                         class="mt-1 block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500">
                                 </div>
                             </div>

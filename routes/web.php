@@ -120,6 +120,19 @@ Route::middleware('auth')->group(function () {
         Route::post('/{checklist}/reject', [\App\Http\Controllers\ChecklistController::class, 'reject'])->name('reject');
     });
 
+
+// MÓDULO DE PNEUS
+    Route::middleware(['auth'])->prefix('tires')->name('tires.')->group(function () {
+        Route::get('/dashboard', [App\Http\Controllers\TireDashboardController::class, 'index'])->name('dashboard');
+
+        // CRUD para o Estoque de Pneus Físicos
+        Route::resource('/', App\Http\Controllers\TireController::class)->parameters(['' => 'tire']);
+    });
+
+// Rota para a tela de gerenciamento visual de um veículo
+    Route::middleware(['auth'])->get('/vehicles/{vehicle}/tires', [App\Http\Controllers\VehicleTireController::class, 'show'])->name('vehicles.tires.show');
+
+
     // Manutenção - Troca de Óleo
     Route::prefix('oil-changes')->name('oil-changes.')->group(function () {
         Route::get('/', [\App\Http\Controllers\OilChangeController::class, 'index'])->name('index');
