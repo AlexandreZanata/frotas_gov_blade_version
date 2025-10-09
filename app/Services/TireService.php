@@ -2,121 +2,285 @@
 
 namespace App\Services;
 
-use App\Models\InventoryMovement;
 use App\Models\Tire;
 use App\Models\TireEvent;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Vehicle;
+use App\Models\VehicleTireLayout;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class TireService
 {
     /**
-     * Registra a entrada de um novo pneu no estoque e no histórico.
+     * Obter estatísticas para o dashboard
      */
-    public function registerNewTire(Tire $tire, array $data): void
+    public function getDashboardStats()
     {
-        DB::transaction(function () use ($tire, $data) {
-            // 1. Cria o evento de cadastro
-            TireEvent::create([
-                'tire_id' => $tire->id,
-                'user_id' => Auth::id(),
-                'event_type' => 'Cadastro',
-                'description' => 'Pneu cadastrado no sistema.',
-                'event_date' => now(),
-            ]);
+        $totalTires = Tire::count();
+        $criticalCount = Tire::where('condition', 'Crítico')->count();
+        $attentionCount = Tire::where('condition', 'Atenção')->count();
+        $inUseCount = Tire::where('status', 'Em Uso')->count();
+        $inStockCount = Tire::where('status', 'Em Estoque')->count();
+        $inMaintenanceCount = Tire::whereIn('status', ['Em Manutenção', 'Recapagem'])->count();
 
-            // 2. Cria o movimento de entrada no estoque
-            InventoryMovement::create([
-                'inventory_item_id' => $tire->inventory_item_id,
-                'user_id' => Auth::id(),
-                'type' => 'in',
-                'quantity' => 1,
-                'reason' => 'Compra / Novo pneu cadastrado: ' . $tire->serial_number,
-                'movement_date' => $data['purchase_date'],
-            ]);
+        // Calcular vida útil média da frota
+        $averageLifespan = Tire::where('status', 'Em Uso')
+            ->selectRaw('AVG((lifespan_km - current_km) / lifespan_km * 100) as avg_life')
+            ->first()
+            ->avg_life ?? 0;
 
-            // 3. Atualiza a quantidade no item de inventário
-            $tire->inventoryItem->increment('quantity_on_hand');
+        $totalVehicles = Vehicle::whereHas('tires')->count();
+
+        return [
+            'total' => $totalTires,
+            'critical_count' => $criticalCount,
+            'attention_count' => $attentionCount,
+            'in_use' => $inUseCount,
+            'in_stock' => $inStockCount,
+            'maintenance' => $inMaintenanceCount,
+            'average_lifespan' => round($averageLifespan, 2),
+            'total_vehicles' => $totalVehicles,
+        ];
+    }
+
+    /**
+     * Obter layout de pneus para um veículo
+     */
+    public function getVehicleLayout(Vehicle $vehicle)
+    {
+        // Mapear categoria de veículo para layout
+        $layoutMap = [
+            'Carro' => 1,
+            'Caminhonete' => 1,
+            'Van' => 2,
+            'Caminhão' => 3,
+            'Ônibus' => 4,
+            'Motocicleta' => 5,
+        ];
+
+        $categoryName = $vehicle->category->name ?? 'Carro';
+        $layoutId = $layoutMap[$categoryName] ?? 1;
+
+        $layout = VehicleTireLayout::find($layoutId);
+
+        if (!$layout) {
+            // Layout padrão (4 pneus)
+            return $this->getDefaultLayout();
+        }
+
+        return $layout;
+    }
+
+    /**
+     * Layout padrão para veículos sem layout específico
+     */
+    private function getDefaultLayout()
+    {
+        return (object)[
+            'id' => 0,
+            'name' => 'Padrão (4 Pneus)',
+            'layout_data' => [
+                'positions' => [
+                    ['id' => 1, 'name' => 'Dianteiro Esquerdo', 'x' => 20, 'y' => 10],
+                    ['id' => 2, 'name' => 'Dianteiro Direito', 'x' => 80, 'y' => 10],
+                    ['id' => 3, 'name' => 'Traseiro Esquerdo', 'x' => 20, 'y' => 80],
+                    ['id' => 4, 'name' => 'Traseiro Direito', 'x' => 80, 'y' => 80],
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Executar rodízio de pneus
+     */
+    public function rotateTires($vehicleId, $tire1Id, $tire2Id, $position1, $position2, $kmAtEvent)
+    {
+        return DB::transaction(function() use ($vehicleId, $tire1Id, $tire2Id, $position1, $position2, $kmAtEvent) {
+            $tire1 = Tire::findOrFail($tire1Id);
+            $tire2 = Tire::findOrFail($tire2Id);
+            $vehicle = Vehicle::findOrFail($vehicleId);
+
+            // Validações
+            if ($tire1->current_vehicle_id != $vehicleId || $tire2->current_vehicle_id != $vehicleId) {
+                throw new \Exception('Ambos os pneus devem estar no mesmo veículo');
+            }
+
+            // Trocar posições
+            $tire1->update(['current_position' => $position2]);
+            $tire2->update(['current_position' => $position1]);
+
+            // Registrar eventos
+            $this->registerEvent(
+                $tire1,
+                'Rodízio',
+                "Rodízio: Posição {$position1} → {$position2}",
+                $vehicleId,
+                $kmAtEvent
+            );
+
+            $this->registerEvent(
+                $tire2,
+                'Rodízio',
+                "Rodízio: Posição {$position2} → {$position1}",
+                $vehicleId,
+                $kmAtEvent
+            );
+
+            return [
+                'tire1' => $tire1->fresh(),
+                'tire2' => $tire2->fresh(),
+            ];
         });
     }
 
     /**
-     * Instala um pneu do estoque em um veículo.
+     * Substituir pneu
      */
-    public function installTire(Tire $tire, int $vehicleId, int $position, int $vehicleKm): void
+    public function replaceTire($vehicleId, $oldTireId, $newTireId, $position, $kmAtEvent, $reason)
     {
-        DB::transaction(function () use ($tire, $vehicleId, $position, $vehicleKm) {
-            // 1. Atualiza os dados do pneu
-            $tire->update([
+        return DB::transaction(function() use ($vehicleId, $oldTireId, $newTireId, $position, $kmAtEvent, $reason) {
+            $vehicle = Vehicle::findOrFail($vehicleId);
+            $newTire = Tire::findOrFail($newTireId);
+
+            // Validar que o novo pneu está disponível
+            if ($newTire->status != 'Em Estoque') {
+                throw new \Exception('O pneu selecionado não está disponível no estoque');
+            }
+
+            // Remover pneu antigo se existir
+            if ($oldTireId) {
+                $oldTire = Tire::findOrFail($oldTireId);
+                $oldTire->update([
+                    'status' => 'Em Estoque',
+                    'current_vehicle_id' => null,
+                    'current_position' => null,
+                ]);
+
+                $this->registerEvent(
+                    $oldTire,
+                    'Troca',
+                    "Pneu removido do veículo. Motivo: {$reason}",
+                    $vehicleId,
+                    $kmAtEvent
+                );
+            }
+
+            // Instalar novo pneu
+            $newTire->update([
+                'status' => 'Em Uso',
                 'current_vehicle_id' => $vehicleId,
                 'current_position' => $position,
-                'status' => 'Em Uso',
             ]);
 
-            // 2. Cria o evento de instalação
-            TireEvent::create([
-                'tire_id' => $tire->id,
-                'user_id' => Auth::id(),
-                'vehicle_id' => $vehicleId,
-                'event_type' => 'Instalação',
-                'description' => "Pneu instalado na posição {$position}.",
-                'km_at_event' => $vehicleKm,
-                'event_date' => now(),
-            ]);
+            $this->registerEvent(
+                $newTire,
+                'Instalação',
+                "Pneu instalado na posição {$position}. Motivo: {$reason}",
+                $vehicleId,
+                $kmAtEvent
+            );
 
-            // 3. Cria o movimento de SAÍDA do estoque
-            InventoryMovement::create([
-                'inventory_item_id' => $tire->inventory_item_id,
-                'user_id' => Auth::id(),
-                'type' => 'out',
-                'quantity' => 1,
-                'reason' => 'Instalado no veículo. Pneu S/N: ' . $tire->serial_number,
-                'movement_date' => now(),
-            ]);
-
-            // 4. Atualiza a quantidade no item de inventário
-            $tire->inventoryItem->decrement('quantity_on_hand');
+            return [
+                'old_tire' => $oldTireId ? Tire::find($oldTireId) : null,
+                'new_tire' => $newTire->fresh(),
+            ];
         });
     }
 
     /**
-     * Remove um pneu de um veículo e o retorna para o estoque.
+     * Remover pneu do veículo
      */
-    public function moveToStock(Tire $tire, int $vehicleKm): void
+    public function removeTire($tireId, $newStatus, $kmAtEvent, $reason)
     {
-        DB::transaction(function () use ($tire, $vehicleKm) {
+        return DB::transaction(function() use ($tireId, $newStatus, $kmAtEvent, $reason) {
+            $tire = Tire::findOrFail($tireId);
+
+            if ($tire->status != 'Em Uso') {
+                throw new \Exception('Este pneu não está em uso');
+            }
+
             $vehicleId = $tire->current_vehicle_id;
 
-            // 1. Atualiza os dados do pneu
             $tire->update([
+                'status' => $newStatus,
                 'current_vehicle_id' => null,
                 'current_position' => null,
-                'status' => 'Em Estoque',
             ]);
 
-            // 2. Cria o evento
-            TireEvent::create([
-                'tire_id' => $tire->id,
-                'user_id' => Auth::id(),
-                'vehicle_id' => $vehicleId,
-                'event_type' => 'Manutenção',
-                'description' => 'Pneu removido do veículo e retornado ao estoque.',
-                'km_at_event' => $vehicleKm,
-                'event_date' => now(),
-            ]);
+            $eventType = match($newStatus) {
+                'Recapagem' => 'Recapagem',
+                'Em Manutenção' => 'Manutenção',
+                'Descartado' => 'Descarte',
+                default => 'Troca',
+            };
 
-            // 3. Cria o movimento de ENTRADA no estoque
-            InventoryMovement::create([
-                'inventory_item_id' => $tire->inventory_item_id,
-                'user_id' => Auth::id(),
-                'type' => 'in',
-                'quantity' => 1,
-                'reason' => 'Retorno do veículo para estoque. Pneu S/N: ' . $tire->serial_number,
-                'movement_date' => now(),
-            ]);
+            $this->registerEvent(
+                $tire,
+                $eventType,
+                "Pneu removido. Motivo: {$reason}. Novo status: {$newStatus}",
+                $vehicleId,
+                $kmAtEvent
+            );
 
-            // 4. Atualiza a quantidade no item de inventário
-            $tire->inventoryItem->increment('quantity_on_hand');
+            return $tire->fresh();
         });
+    }
+
+    /**
+     * Registrar evento de pneu
+     */
+    public function registerEvent(Tire $tire, $eventType, $description, $vehicleId = null, $kmAtEvent = null)
+    {
+        return TireEvent::create([
+            'tire_id' => $tire->id,
+            'user_id' => Auth::id(),
+            'vehicle_id' => $vehicleId ?? $tire->current_vehicle_id,
+            'event_type' => $eventType,
+            'description' => $description,
+            'km_at_event' => $kmAtEvent,
+            'event_date' => now(),
+        ]);
+    }
+
+    /**
+     * Calcular condição do pneu baseado na quilometragem
+     */
+    public function calculateCondition(Tire $tire)
+    {
+        $percentageUsed = ($tire->current_km / $tire->lifespan_km) * 100;
+
+        if ($percentageUsed >= 90) {
+            return 'Crítico';
+        } elseif ($percentageUsed >= 70) {
+            return 'Atenção';
+        } elseif ($percentageUsed >= 30) {
+            return 'Bom';
+        } else {
+            return 'Novo';
+        }
+    }
+
+    /**
+     * Atualizar quilometragem de todos os pneus de um veículo
+     */
+    public function updateVehicleTiresKm($vehicleId, $currentKm, $previousKm)
+    {
+        $kmDiff = $currentKm - $previousKm;
+
+        if ($kmDiff <= 0) {
+            return;
+        }
+
+        $tires = Tire::where('current_vehicle_id', $vehicleId)
+            ->where('status', 'Em Uso')
+            ->get();
+
+        foreach ($tires as $tire) {
+            $newKm = $tire->current_km + $kmDiff;
+            $tire->update([
+                'current_km' => $newKm,
+                'condition' => $this->calculateCondition($tire),
+            ]);
+        }
     }
 }

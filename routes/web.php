@@ -123,14 +123,35 @@ Route::middleware('auth')->group(function () {
 
 // MÓDULO DE PNEUS
     Route::middleware(['auth'])->prefix('tires')->name('tires.')->group(function () {
-        Route::get('/dashboard', [App\Http\Controllers\TireDashboardController::class, 'index'])->name('dashboard');
+        // Dashboard
+        Route::get('/', [\App\Http\Controllers\TireController::class, 'index'])->name('index');
 
-        // CRUD para o Estoque de Pneus Físicos
-        Route::resource('/', App\Http\Controllers\TireController::class)->parameters(['' => 'tire']);
+        // Gestão de Veículos
+        Route::get('/vehicles', [\App\Http\Controllers\TireController::class, 'vehicles'])->name('vehicles');
+        Route::get('/vehicles/{vehicle}', [\App\Http\Controllers\TireController::class, 'showVehicle'])->name('vehicles.show');
+
+        // Estoque de Pneus
+        Route::get('/stock', [\App\Http\Controllers\TireController::class, 'stock'])->name('stock');
+        Route::get('/create', [\App\Http\Controllers\TireController::class, 'create'])->name('create');
+        Route::post('/store', [\App\Http\Controllers\TireController::class, 'store'])->name('store');
+
+        // Ações de Manutenção
+        Route::post('/rotate', [\App\Http\Controllers\TireController::class, 'rotate'])->name('rotate');
+        Route::post('/replace', [\App\Http\Controllers\TireController::class, 'replace'])->name('replace');
+        Route::post('/remove', [\App\Http\Controllers\TireController::class, 'remove'])->name('remove');
+        Route::post('/register-event', [\App\Http\Controllers\TireController::class, 'registerEvent'])->name('register-event');
+
+        // Histórico
+        Route::get('/history/{tire}', [\App\Http\Controllers\TireController::class, 'history'])->name('history');
+
+        // Atualizar condição
+        Route::post('/{tire}/update-condition', [\App\Http\Controllers\TireController::class, 'updateCondition'])->name('update-condition');
     });
 
-// Rota para a tela de gerenciamento visual de um veículo
-    Route::middleware(['auth'])->get('/vehicles/{vehicle}/tires', [App\Http\Controllers\VehicleTireController::class, 'show'])->name('vehicles.tires.show');
+    // API para pneus
+    Route::get('/api/tires/{tire}', function($id) {
+        return \App\Models\Tire::findOrFail($id);
+    })->middleware('auth');
 
 
     // Manutenção - Troca de Óleo

@@ -83,6 +83,11 @@ class Vehicle extends Model
         return $this->hasMany(OilChange::class);
     }
 
+    public function tires()
+    {
+        return $this->hasMany(Tire::class, 'current_vehicle_id');
+    }
+
     /**
      * Relação com a secretaria
      */
