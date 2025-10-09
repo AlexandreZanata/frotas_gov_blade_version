@@ -33,7 +33,11 @@ class ChatSeeder extends Seeder
             'type' => 'private',
         ]);
 
-        $chatRoom1->participants()->attach([$user1->id, $user2->id]);
+        // Usar sync ao invés de attach para evitar erro de UUID
+        $chatRoom1->participants()->sync([
+            $user1->id => ['created_at' => now(), 'updated_at' => now()],
+            $user2->id => ['created_at' => now(), 'updated_at' => now()]
+        ]);
 
         // Criar algumas mensagens de teste
         ChatMessage::create([
@@ -69,7 +73,12 @@ class ChatSeeder extends Seeder
                 'type' => 'group',
             ]);
 
-            $chatRoom2->participants()->attach([$user1->id, $user2->id, $user3->id]);
+            // Usar sync para grupos também
+            $chatRoom2->participants()->sync([
+                $user1->id => ['created_at' => now(), 'updated_at' => now()],
+                $user2->id => ['created_at' => now(), 'updated_at' => now()],
+                $user3->id => ['created_at' => now(), 'updated_at' => now()]
+            ]);
 
             ChatMessage::create([
                 'chat_room_id' => $chatRoom2->id,
@@ -102,4 +111,3 @@ class ChatSeeder extends Seeder
         $this->command->info("   - Mensagens criadas: " . ChatMessage::count());
     }
 }
-

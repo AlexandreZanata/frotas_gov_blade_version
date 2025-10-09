@@ -62,6 +62,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/group/create', [\App\Http\Controllers\ChatController::class, 'createGroup'])->name('group.create');
     });
 
+    // Mensagens em Massa (apenas para general_manager e sector_manager)
+    Route::prefix('broadcast-messages')->name('broadcast-messages.')->middleware('auth')->group(function () {
+        Route::get('/', [\App\Http\Controllers\BroadcastMessageController::class, 'index'])->name('index');
+        Route::post('/send-individual', [\App\Http\Controllers\BroadcastMessageController::class, 'sendIndividual'])->name('send-individual');
+        Route::post('/create-group', [\App\Http\Controllers\BroadcastMessageController::class, 'createGroup'])->name('create-group');
+        Route::post('/users-by-secretariat', [\App\Http\Controllers\BroadcastMessageController::class, 'getUsersBySecretariat'])->name('users-by-secretariat');
+    });
+
     Route::resource('users', UserController::class);
     Route::resource('default-passwords', DefaultPasswordController::class);
 

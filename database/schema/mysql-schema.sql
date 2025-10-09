@@ -175,11 +175,18 @@ CREATE TABLE `checklists` (
   `run_id` char(36) NOT NULL,
   `user_id` char(36) NOT NULL,
   `notes` text DEFAULT NULL,
+  `has_defects` tinyint(1) NOT NULL DEFAULT 0,
+  `approval_status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `approver_id` char(36) DEFAULT NULL,
+  `approver_comment` text DEFAULT NULL,
+  `approved_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `checklists_run_id_foreign` (`run_id`),
   KEY `checklists_user_id_foreign` (`user_id`),
+  KEY `checklists_approver_id_foreign` (`approver_id`),
+  CONSTRAINT `checklists_approver_id_foreign` FOREIGN KEY (`approver_id`) REFERENCES `users` (`id`),
   CONSTRAINT `checklists_run_id_foreign` FOREIGN KEY (`run_id`) REFERENCES `runs` (`id`) ON DELETE CASCADE,
   CONSTRAINT `checklists_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -435,6 +442,7 @@ CREATE TABLE `inventory_items` (
   `description` text DEFAULT NULL,
   `quantity_on_hand` int(10) unsigned NOT NULL DEFAULT 0,
   `unit_of_measure` varchar(255) NOT NULL,
+  `unit_cost` decimal(10,2) DEFAULT NULL,
   `reorder_level` int(10) unsigned NOT NULL DEFAULT 5,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -568,6 +576,49 @@ CREATE TABLE `notifications` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `notifications_notifiable_type_notifiable_id_index` (`notifiable_type`,`notifiable_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `oil_change_settings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `oil_change_settings` (
+  `id` char(36) NOT NULL,
+  `vehicle_category_id` char(36) DEFAULT NULL,
+  `km_interval` int(10) unsigned NOT NULL DEFAULT 10000,
+  `days_interval` int(10) unsigned NOT NULL DEFAULT 180,
+  `default_liters` decimal(8,2) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `oil_change_settings_vehicle_category_id_foreign` (`vehicle_category_id`),
+  CONSTRAINT `oil_change_settings_vehicle_category_id_foreign` FOREIGN KEY (`vehicle_category_id`) REFERENCES `vehicle_categories` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `oil_changes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `oil_changes` (
+  `id` char(36) NOT NULL,
+  `vehicle_id` char(36) NOT NULL,
+  `user_id` char(36) NOT NULL,
+  `inventory_item_id` char(36) DEFAULT NULL,
+  `km_at_change` int(10) unsigned NOT NULL,
+  `change_date` date NOT NULL,
+  `liters_used` decimal(8,2) DEFAULT NULL,
+  `cost` decimal(10,2) DEFAULT NULL,
+  `next_change_km` int(10) unsigned NOT NULL,
+  `next_change_date` date NOT NULL,
+  `notes` text DEFAULT NULL,
+  `service_provider` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `oil_changes_vehicle_id_foreign` (`vehicle_id`),
+  KEY `oil_changes_user_id_foreign` (`user_id`),
+  KEY `oil_changes_inventory_item_id_foreign` (`inventory_item_id`),
+  CONSTRAINT `oil_changes_inventory_item_id_foreign` FOREIGN KEY (`inventory_item_id`) REFERENCES `inventory_items` (`id`),
+  CONSTRAINT `oil_changes_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  CONSTRAINT `oil_changes_vehicle_id_foreign` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `password_reset_tokens`;
@@ -806,6 +857,58 @@ CREATE TABLE `sessions` (
   CONSTRAINT `sessions_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `tire_events`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tire_events` (
+  `id` char(36) NOT NULL,
+  `tire_id` char(36) NOT NULL,
+  `user_id` char(36) NOT NULL,
+  `vehicle_id` char(36) DEFAULT NULL,
+  `event_type` enum('Cadastro','Instalação','Rodízio','Troca','Manutenção','Recapagem','Descarte') NOT NULL,
+  `description` text NOT NULL,
+  `km_at_event` int(11) DEFAULT NULL COMMENT 'KM do veículo no momento do evento',
+  `event_date` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `tire_events_tire_id_foreign` (`tire_id`),
+  KEY `tire_events_user_id_foreign` (`user_id`),
+  KEY `tire_events_vehicle_id_foreign` (`vehicle_id`),
+  CONSTRAINT `tire_events_tire_id_foreign` FOREIGN KEY (`tire_id`) REFERENCES `tires` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `tire_events_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  CONSTRAINT `tire_events_vehicle_id_foreign` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `tires`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tires` (
+  `id` char(36) NOT NULL,
+  `inventory_item_id` char(36) NOT NULL,
+  `brand` varchar(255) NOT NULL COMMENT 'Marca do pneu',
+  `model` varchar(255) NOT NULL COMMENT 'Modelo do pneu',
+  `serial_number` varchar(255) NOT NULL COMMENT 'Número de série ou de fogo',
+  `dot_number` varchar(255) DEFAULT NULL COMMENT 'Código DOT do pneu',
+  `purchase_date` date NOT NULL COMMENT 'Data da compra',
+  `purchase_price` decimal(10,2) DEFAULT NULL COMMENT 'Valor de compra',
+  `lifespan_km` int(11) NOT NULL COMMENT 'Vida útil estimada em KM',
+  `current_km` int(11) NOT NULL DEFAULT 0 COMMENT 'KM rodados pelo pneu',
+  `status` enum('Em Estoque','Em Uso','Em Manutenção','Recapagem','Descartado') NOT NULL DEFAULT 'Em Estoque',
+  `condition` enum('Novo','Bom','Atenção','Crítico') NOT NULL DEFAULT 'Novo',
+  `current_vehicle_id` char(36) DEFAULT NULL,
+  `current_position` int(11) DEFAULT NULL COMMENT 'Posição no veículo (ex: 1=D.E, 2=D.D, ...)',
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `tires_serial_number_unique` (`serial_number`),
+  KEY `tires_inventory_item_id_foreign` (`inventory_item_id`),
+  KEY `tires_current_vehicle_id_foreign` (`current_vehicle_id`),
+  CONSTRAINT `tires_current_vehicle_id_foreign` FOREIGN KEY (`current_vehicle_id`) REFERENCES `vehicles` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `tires_inventory_item_id_foreign` FOREIGN KEY (`inventory_item_id`) REFERENCES `inventory_items` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `user_photos`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -872,6 +975,18 @@ CREATE TABLE `vehicle_statuses` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `vehicle_statuses_name_unique` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `vehicle_tire_layouts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `vehicle_tire_layouts` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL COMMENT 'Ex: Carro (4 Pneus), Caminhão Truck (10 Pneus)',
+  `layout_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'Estrutura JSON com posições e coordenadas para o diagrama' CHECK (json_valid(`layout_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `vehicle_transfer_histories`;
@@ -1022,3 +1137,10 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (52,'2025_10_08_130
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (54,'2025_10_08_140000_create_logbook_permissions_table',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (55,'2025_10_08_171500_add_multiple_secretariats_to_logbook_permissions',3);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (56,'2025_10_08_171537_add_multiple_secretariats_to_logbook_permissions',3);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (57,'2025_10_08_150216_add_approval_fields_to_checklists_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (58,'2025_10_08_210000_add_unit_cost_to_inventory_items_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (59,'2025_10_08_220000_create_oil_changes_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (60,'2025_10_08_220001_create_oil_change_settings_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (61,'2025_10_09_075137_create_tires_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (62,'2025_10_09_075138_create_tire_events_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (63,'2025_10_09_075138_create_vehicle_tire_layouts_table',4);

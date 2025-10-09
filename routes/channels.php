@@ -13,3 +13,11 @@ Broadcast::channel('chat.{roomId}', function ($user, $roomId) {
         ->where('chat_room_id', $roomId)
         ->exists();
 });
+
+Broadcast::channel('online-status', function ($user) {
+    return [
+        'id' => $user->id,
+        'name' => $user->name,
+        'avatar_url' => 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=3b82f6&color=fff&size=128',
+    ];
+});

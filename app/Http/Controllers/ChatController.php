@@ -117,9 +117,14 @@ class ChatController extends Controller
         }
 
         $request->validate([
-            'message' => 'required_without:attachment|string|max:5000',
+            'message' => 'nullable|string|max:5000',
             'attachment' => 'nullable|file|max:10240', // 10MB
         ]);
+
+        // Validar que pelo menos mensagem ou anexo foi fornecido
+        if (!$request->message && !$request->hasFile('attachment')) {
+            return response()->json(['error' => 'Você deve fornecer uma mensagem ou um anexo.'], 422);
+        }
 
         $attachmentPath = null;
         $attachmentType = null;
@@ -154,6 +159,8 @@ class ChatController extends Controller
         // Broadcast para outros usuários
         broadcast(new ChatMessageSent($message))->toOthers();
 
+        $readStatus = $message->getReadStatus();
+
         return response()->json([
             'id' => $message->id,
             'user_id' => $message->user_id,
@@ -169,7 +176,9 @@ class ChatController extends Controller
             'created_at' => $message->created_at->toISOString(),
             'formatted_time' => $message->formatted_time,
             'formatted_date' => $message->formatted_date,
-            'read_status' => $message->getReadStatus(),
+            'read_status' => $readStatus['status'],
+            'read_count' => $readStatus['read_count'],
+            'total_count' => $readStatus['total_count'],
         ], 201);
     }
 
@@ -200,8 +209,11 @@ class ChatController extends Controller
                 'type' => 'private',
             ]);
 
-            // Adicionar os dois participantes
-            $chatRoom->participants()->attach([$currentUser->id, $user->id]);
+            // Adicionar os dois participantes usando sync ao invés de attach
+            $chatRoom->participants()->sync([
+                $currentUser->id => ['created_at' => now(), 'updated_at' => now()],
+                $user->id => ['created_at' => now(), 'updated_at' => now()]
+            ]);
         }
 
         return redirect()->route('chat.index', ['room' => $chatRoom->id]);

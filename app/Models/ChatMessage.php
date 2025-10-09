@@ -17,8 +17,8 @@ class ChatMessage extends Model {
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime'
     ];
-    protected $with = ['user', 'readReceipts'];
-    protected $appends = ['attachment_url', 'is_image', 'is_file'];
+    protected $with = ['user'];
+    protected $appends = ['attachment_url', 'is_image', 'is_file', 'formatted_time', 'formatted_date', 'is_today'];
 
     public function chatRoom(): BelongsTo {
         return $this->belongsTo(ChatRoom::class);
@@ -82,28 +82,36 @@ class ChatMessage extends Model {
     }
 
     /**
-     * Obter status de leitura da mensagem
-     * - 'sent': Enviada
-     * - 'delivered': Entregue (todos os participantes receberam)
+     * Obter status de leitura da mensagem com contagem
+     * - 'sent': Enviada (nenhum recebeu)
+     * - 'delivered': Entregue (pelo menos um recebeu)
      * - 'read': Lida (todos leram)
      */
-    public function getReadStatus(): string
+    public function getReadStatus(): array
     {
-        $roomParticipantsCount = $this->chatRoom->participants()->count() - 1; // Excluir o remetente
+        $roomParticipantsCount = $this->chatRoom->participants()
+            ->where('user_id', '!=', $this->user_id)
+            ->count();
 
         if ($roomParticipantsCount === 0) {
-            return 'sent';
+            return ['status' => 'sent', 'read_count' => 0, 'total_count' => 0];
         }
 
         $readCount = $this->readReceipts()->count();
 
         if ($readCount === $roomParticipantsCount) {
-            return 'read';
+            $status = 'read';
         } elseif ($readCount > 0) {
-            return 'delivered';
+            $status = 'delivered';
+        } else {
+            $status = 'sent';
         }
 
-        return 'sent';
+        return [
+            'status' => $status,
+            'read_count' => $readCount,
+            'total_count' => $roomParticipantsCount
+        ];
     }
 
     /**

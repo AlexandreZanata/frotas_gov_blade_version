@@ -90,4 +90,16 @@ class ChatRoom extends Model {
 
         return $this->participants->firstWhere('id', '!=', $currentUserId);
     }
+
+    /**
+     * Obter avatar URL com cache para evitar regeneração
+     */
+    public function getAvatarUrlAttribute(): string
+    {
+        if ($this->type === 'group') {
+            return 'https://ui-avatars.com/api/?name=' . urlencode($this->name ?? 'Group') . '&background=10b981&color=fff&size=128';
+        }
+
+        return 'https://ui-avatars.com/api/?name=Chat&background=3b82f6&color=fff&size=128';
+    }
 }

@@ -137,6 +137,7 @@
                         <!-- Mensagens -->
                         <div
                             x-ref="messagesContainer"
+                            @scroll="handleScroll"
                             class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-100 dark:bg-navy-900"
                             style="background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iYSIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVHJhbnNmb3JtPSJyb3RhdGUoNDUpIj48cGF0aCBkPSJNLTEwIDMwaDYwdjJoLTYweiIgZmlsbD0icmdiYSgwLDAsMCwwLjAyKSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNhKSIvPjwvc3ZnPg==');">
 
@@ -210,16 +211,34 @@
 
                                             <div class="flex items-center justify-end gap-1 mt-1">
                                                 <span class="text-xs opacity-90" x-text="message.formatted_time"></span>
-                                                <!-- Check de Leitura -->
-                                                <svg x-show="message.read_status === 'read'" class="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7M5 13l4 4L19 7"/>
-                                                </svg>
-                                                <svg x-show="message.read_status === 'delivered'" class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                </svg>
-                                                <svg x-show="message.read_status === 'sent'" class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                </svg>
+                                                <!-- Double Check Azul quando lido -->
+                                                <template x-if="getMessageReadStatus(message) === 'read'">
+                                                    <div class="flex -space-x-1">
+                                                        <svg class="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                                        </svg>
+                                                        <svg class="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                                        </svg>
+                                                    </div>
+                                                </template>
+                                                <!-- Double Check Cinza quando entregue -->
+                                                <template x-if="getMessageReadStatus(message) === 'delivered'">
+                                                    <div class="flex -space-x-1">
+                                                        <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                                        </svg>
+                                                        <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                                        </svg>
+                                                    </div>
+                                                </template>
+                                                <!-- Check simples quando enviado -->
+                                                <template x-if="getMessageReadStatus(message) === 'sent'">
+                                                    <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                                    </svg>
+                                                </template>
                                             </div>
                                         </div>
                                     </div>
@@ -263,8 +282,8 @@
                                 <button
                                     type="button"
                                     @click="sendMessage"
-                                    :disabled="!newMessage.trim() && !uploadedFile"
-                                    :class="newMessage.trim() || uploadedFile ? 'bg-primary-600 hover:bg-primary-700' : 'bg-gray-400'"
+                                    :disabled="!canSendMessage()"
+                                    :class="canSendMessage() ? 'bg-primary-600 hover:bg-primary-700' : 'bg-gray-400 cursor-not-allowed'"
                                     class="p-3 text-white rounded-full transition">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
@@ -275,7 +294,7 @@
                             <!-- Preview de Arquivo -->
                             <div x-show="uploadedFile" class="mt-2 flex items-center gap-2 p-2 bg-primary-100 dark:bg-primary-900/20 rounded">
                                 <span class="text-sm text-gray-700 dark:text-gray-300" x-text="uploadedFile?.name"></span>
-                                <button @click="uploadedFile = null" class="ml-auto text-red-600 hover:text-red-700">
+                                <button @click="clearUploadedFile()" class="ml-auto text-red-600 hover:text-red-700">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
@@ -321,7 +340,7 @@
                         <input
                             type="text"
                             x-model="userSearchQuery"
-                            @input="searchUsers"
+                            @input.debounce.300ms="searchUsers"
                             placeholder="Buscar usuários..."
                             class="w-full mb-4 rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
 
@@ -378,6 +397,7 @@
                 searchedUsers: [],
                 typingUsers: [],
                 onlineUsers: [],
+                lastSeen: {},
                 uploadedFile: null,
                 imageModalUrl: null,
                 typingTimeout: null,
@@ -401,50 +421,15 @@
                     this.initWebSocket();
                     this.listenToOnlineStatus();
 
-                    // Desabilitar page loading COMPLETAMENTE para a página de chat
+                    // Desabilitar page loading para a página de chat
                     this.disablePageLoadingForChat();
                 },
 
                 disablePageLoadingForChat() {
-                    // Desabilitar o page loading imediatamente
-                    const setLoadingOff = () => {
-                        const layoutData = Alpine.$data(document.documentElement);
-                        if (layoutData && layoutData.pageLoading !== undefined) {
-                            layoutData.pageLoading = false;
-                        }
-                    };
-
-                    setLoadingOff();
-
-                    // Monitorar mudanças no pageLoading e forçar para false
-                    setInterval(setLoadingOff, 100);
-
-                    // Interceptar todos os eventos que ativam o loading
-                    document.addEventListener('submit', (e) => {
-                        // Se for o formulário do chat, prevenir comportamento padrão
-                        const form = e.target;
-                        if (form && form.closest('[x-data*="chatApp"]')) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.stopImmediatePropagation();
-                        }
-                        setLoadingOff();
-                        return false;
-                    }, true);
-
-                    document.addEventListener('click', (e) => {
-                        setLoadingOff();
-                    }, true);
-
-                    // Sobrescrever o fetch para garantir que o loading nunca seja ativado
-                    const originalFetch = window.fetch;
-                    window.fetch = (...args) => {
-                        setLoadingOff();
-                        setTimeout(setLoadingOff, 0);
-                        setTimeout(setLoadingOff, 50);
-                        setTimeout(setLoadingOff, 100);
-                        return originalFetch.apply(window, args);
-                    };
+                    const layoutData = Alpine.$data(document.documentElement);
+                    if (layoutData && typeof layoutData.disablePageLoading === 'function') {
+                        layoutData.disablePageLoading();
+                    }
                 },
 
                 initWebSocket() {
@@ -467,47 +452,51 @@
 
                     this.currentChannel = roomId;
 
-                    // Conectar ao canal privado da sala - USAR OS NOMES CORRETOS DOS EVENTOS
+                    // Conectar ao canal privado da sala
                     window.Echo.private(`chat.${roomId}`)
                         .listen('.message.sent', (e) => {
                             console.log('Nova mensagem recebida via WebSocket:', e);
 
-                            // Verificar se a mensagem já existe (evitar duplicatas)
                             const exists = this.messages.some(m => m.id === e.message.id);
                             if (!exists) {
-                                this.messages.push(e.message);
+                                const message = this.formatMessage(e.message);
+                                this.messages.push(message);
                                 this.$nextTick(() => this.scrollToBottom());
 
-                                // Só marcar como lida se não for do usuário atual
                                 if (e.message.user_id !== this.currentUserId) {
                                     this.markMessagesAsRead();
                                 }
 
-                                // Atualizar a sala na lista
-                                this.updateRoomLastMessage(roomId, e.message);
+                                this.updateRoomLastMessage(roomId, message);
                             }
                         })
                         .listen('.message.read', (e) => {
                             console.log('Mensagem lida:', e);
                             this.updateMessageReadStatus(e.messageId, e.userId);
                         })
-                        .listen('.user.typing', (e) => {
+                        .listenForWhisper('typing', (e) => {
                             console.log('Usuário digitando:', e);
                             this.handleUserTyping(e);
                         });
                 },
 
                 listenToOnlineStatus() {
-                    window.Echo.channel('online-status')
-                        .listen('.user.status', (e) => {
-                            console.log('Status do usuário:', e);
-                            if (e.isOnline) {
-                                if (!this.onlineUsers.includes(e.userId)) {
-                                    this.onlineUsers.push(e.userId);
-                                }
-                            } else {
-                                this.onlineUsers = this.onlineUsers.filter(id => id !== e.userId);
+                    window.Echo.join('online-status')
+                        .here((users) => {
+                            this.onlineUsers = users.map(u => u.id);
+                            console.log('Usuários online:', this.onlineUsers);
+                        })
+                        .joining((user) => {
+                            if (!this.onlineUsers.includes(user.id)) {
+                                this.onlineUsers.push(user.id);
                             }
+                        })
+                        .leaving((user) => {
+                            this.onlineUsers = this.onlineUsers.filter(id => id !== user.id);
+                            this.lastSeen[user.id] = new Date().toISOString();
+                        })
+                        .error((error) => {
+                            console.error('Erro no canal de presença:', error);
                         });
                 },
 
@@ -525,13 +514,14 @@
                 },
 
                 async loadMessages() {
-                    if (this.isLoadingMessages) return;
+                    if (this.isLoadingMessages || !this.activeRoomId) return;
 
                     this.isLoadingMessages = true;
                     try {
                         const response = await fetch(`/chat/room/${this.activeRoomId}/messages`);
                         if (response.ok) {
-                            this.messages = await response.json();
+                            const messages = await response.json();
+                            this.messages = messages.map(m => this.formatMessage(m));
                             console.log('Mensagens carregadas:', this.messages.length);
                             this.$nextTick(() => this.scrollToBottom());
                         }
@@ -545,18 +535,12 @@
                 async sendMessage() {
                     if (!this.newMessage.trim() && !this.uploadedFile) return;
 
-                    // IMPORTANTE: Prevenir qualquer comportamento padrão
-                    const layoutData = Alpine.$data(document.documentElement);
-                    if (layoutData) {
-                        layoutData.pageLoading = false;
-                    }
-
                     const tempMessage = this.newMessage;
                     const tempFile = this.uploadedFile;
 
-                    // Limpar input imediatamente para melhor UX
                     this.newMessage = '';
                     this.uploadedFile = null;
+                    this.$refs.fileInput.value = '';
 
                     const formData = new FormData();
                     formData.append('message', tempMessage);
@@ -569,69 +553,36 @@
                         const response = await fetch(`/chat/room/${this.activeRoomId}/send`, {
                             method: 'POST',
                             headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                // Removing Content-Type header - browser will set the correct multipart/form-data with boundary
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Accept': 'application/json',
                             },
                             body: formData
                         });
 
-                        if (response.ok) {
-                            let message;
-                            try {
-                                message = await response.json();
-                            } catch (jsonError) {
-                                console.error('Erro ao processar resposta:', jsonError);
-                                throw new Error('Resposta inválida do servidor');
-                            }
-                            console.log('Mensagem enviada com sucesso:', message);
-
-                            // Adicionar a mensagem localmente (será confirmada via WebSocket)
-                            const exists = this.messages.some(m => m.id === message.id);
-                            if (!exists) {
-                                // Garantir que a mensagem tenha o formato de data e hora imediatamente
-                                if (!message.formatted_time) {
-                                    message.formatted_time = this.formatTime(message.created_at);
-                                }
-                                if (!message.formatted_date) {
-                                    message.formatted_date = new Date(message.created_at).toLocaleDateString('pt-BR', {
-                                        day: 'numeric',
-                                        month: 'long',
-                                        year: 'numeric'
-                                    });
-                                }
-
-                                this.messages.push(message);
-                                this.$nextTick(() => this.scrollToBottom());
-                            }
-
-                            // Atualizar última mensagem na lista
-                            this.updateRoomLastMessage(this.activeRoomId, message);
-
-                            // Garantir que o loading está desabilitado
-                            if (layoutData) {
-                                layoutData.pageLoading = false;
-                            }
-                        } else {
-                            console.error('Erro ao enviar mensagem:', response.status);
-                            // Restaurar mensagem em caso de erro
-                            this.newMessage = tempMessage;
-                            this.uploadedFile = tempFile;
-                            alert('Erro ao enviar mensagem. Tente novamente.');
+                        if (!response.ok) {
+                            const errorData = await response.text();
+                            console.error('Erro ao enviar mensagem:', response.status, errorData);
+                            throw new Error('Falha no envio da mensagem');
                         }
+
+                        const message = await response.json();
+                        console.log('Mensagem enviada com sucesso:', message);
+
+                        const exists = this.messages.some(m => m.id === message.id);
+                        if (!exists) {
+                            const formattedMessage = this.formatMessage(message);
+                            this.messages.push(formattedMessage);
+                            this.$nextTick(() => this.scrollToBottom());
+                        }
+
+                        this.updateRoomLastMessage(this.activeRoomId, message);
+
                     } catch (error) {
                         console.error('Erro ao enviar mensagem:', error);
                         this.newMessage = tempMessage;
                         this.uploadedFile = tempFile;
-                        alert('Erro ao enviar mensagem. Verifique sua conexão.');
-                    } finally {
-                        // Garantir que o loading está desabilitado
-                        if (layoutData) {
-                            layoutData.pageLoading = false;
-                        }
+                        alert('Erro ao enviar mensagem. Verifique sua conexão e tente novamente.');
                     }
-
-                    // Prevenir propagação
-                    return false;
                 },
 
                 updateRoomLastMessage(roomId, message) {
@@ -655,25 +606,34 @@
                     if (!this.activeRoomId) return;
 
                     const unreadMessageIds = this.messages
-                        .filter(m => m.user_id !== this.currentUserId && !m.read_receipts.some(r => r.user_id === this.currentUserId))
+                        .filter(m => m.user_id !== this.currentUserId && m.read_status !== 'read')
                         .map(m => m.id);
 
                     if (unreadMessageIds.length === 0) return;
 
                     try {
-                        await fetch(`/chat/room/${this.activeRoomId}/mark-read`, {
+                        const response = await fetch(`/chat/room/${this.activeRoomId}/mark-read`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                             },
                             body: JSON.stringify({ message_ids: unreadMessageIds })
                         });
 
-                        // Atualizar contagem de não lidas
-                        const room = this.rooms.find(r => r.id === this.activeRoomId);
-                        if (room) {
-                            room.unread_count = 0;
+                        if (response.ok) {
+                            // Atualizar status localmente
+                            this.messages.forEach(message => {
+                                if (unreadMessageIds.includes(message.id)) {
+                                    message.read_status = 'read';
+                                }
+                            });
+
+                            // Atualizar contagem de não lidas
+                            const room = this.rooms.find(r => r.id === this.activeRoomId);
+                            if (room) {
+                                room.unread_count = 0;
+                            }
                         }
                     } catch (error) {
                         console.error('Erro ao marcar como lida:', error);
@@ -683,45 +643,34 @@
                 handleTyping() {
                     if (!this.activeRoomId) return;
 
-                    if (this.typingTimeout) {
-                        clearTimeout(this.typingTimeout);
+                    try {
+                        window.Echo.private(`chat.${this.activeRoomId}`)
+                            .whisper('typing', {
+                                userId: this.currentUserId,
+                                userName: '{{ auth()->user()->name }}',
+                                isTyping: this.newMessage.length > 0,
+                            });
+                    } catch (error) {
+                        console.error('Erro ao enviar evento de digitação:', error);
                     }
-
-                    fetch(`/chat/room/${this.activeRoomId}/typing`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        },
-                        body: JSON.stringify({ typing: true })
-                    }).catch(err => console.error('Erro ao enviar typing:', err));
-
-                    this.typingTimeout = setTimeout(() => {
-                        fetch(`/chat/room/${this.activeRoomId}/typing`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            },
-                            body: JSON.stringify({ typing: false })
-                        }).catch(err => console.error('Erro ao enviar typing:', err));
-                    }, 3000);
                 },
 
                 handleUserTyping(data) {
-                    if (data.userId === this.currentUserId) return;
+                    if (data.userId == this.currentUserId) return;
 
-                    if (data.isTyping) {
-                        if (!this.typingUsers.includes(data.userName)) {
-                            this.typingUsers.push(data.userName);
-                        }
+                    const userName = data.userName;
+                    const isTyping = data.isTyping;
 
-                        setTimeout(() => {
-                            this.typingUsers = this.typingUsers.filter(u => u !== data.userName);
-                        }, 4000);
-                    } else {
-                        this.typingUsers = this.typingUsers.filter(u => u !== data.userName);
+                    if (isTyping && !this.typingUsers.includes(userName)) {
+                        this.typingUsers.push(userName);
+                    } else if (!isTyping) {
+                        this.typingUsers = this.typingUsers.filter(u => u !== userName);
                     }
+
+                    // Remover usuário da lista após um tempo para evitar que fique "digitando" para sempre
+                    setTimeout(() => {
+                        this.typingUsers = this.typingUsers.filter(u => u !== userName);
+                    }, 3000);
                 },
 
                 async handleFileUpload(event) {
@@ -760,11 +709,6 @@
 
                 async startChatWithUser(userId) {
                     console.log('Iniciando chat com usuário:', userId);
-                    // Desabilitar loading antes de navegar
-                    const layoutData = Alpine.$data(document.documentElement);
-                    if (layoutData) {
-                        layoutData.pageLoading = false;
-                    }
                     window.location.href = `/chat/start/${userId}`;
                 },
 
@@ -783,28 +727,40 @@
                 updateMessageReadStatus(messageId, userId) {
                     const message = this.messages.find(m => m.id === messageId);
                     if (message) {
-                        if (!message.read_receipts.some(r => r.user_id === userId)) {
-                            message.read_receipts.push({ user_id: userId, read_at: new Date().toISOString() });
-                        }
+                        message.read_status = 'read';
                     }
                 },
 
                 isUserOnline(userId) {
-                    return this.onlineUsers.includes(userId);
+                    return this.onlineUsers.includes(parseInt(userId));
                 },
 
                 getTypingText() {
+                    if (this.typingUsers.length === 0) {
+                        return '';
+                    }
                     if (this.typingUsers.length === 1) {
                         return `${this.typingUsers[0]} está digitando...`;
-                    } else if (this.typingUsers.length > 1) {
-                        return 'Várias pessoas estão digitando...';
                     }
-                    return '';
+                    return 'Vários usuários estão digitindo...';
                 },
 
                 getLastSeenText(userId) {
-                    // Implementar lógica de "visto por último"
-                    return 'offline';
+                    const lastSeenTimestamp = this.lastSeen[userId];
+                    if (!lastSeenTimestamp) return 'Offline';
+
+                    const now = new Date();
+                    const lastSeenDate = new Date(lastSeenTimestamp);
+                    const diffSeconds = Math.round((now - lastSeenDate) / 1000);
+                    const diffMinutes = Math.round(diffSeconds / 60);
+                    const diffHours = Math.round(diffMinutes / 60);
+                    const diffDays = Math.round(diffHours / 24);
+
+                    if (diffSeconds < 60) return `Visto por último há alguns segundos`;
+                    if (diffMinutes < 60) return `Visto por último há ${diffMinutes} min`;
+                    if (diffHours < 24) return `Visto por último há ${diffHours}h`;
+                    if (diffDays === 1) return `Visto por último ontem`;
+                    return `Visto por último há ${diffDays} dias`;
                 },
 
                 shouldShowDateSeparator(index) {
@@ -814,6 +770,13 @@
                     const previousDate = this.messages[index - 1].formatted_date;
 
                     return currentDate !== previousDate;
+                },
+
+                formatMessage(message) {
+                    const date = new Date(message.created_at);
+                    message.formatted_time = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    message.formatted_date = date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+                    return message;
                 },
 
                 formatTime(timestamp) {
@@ -837,6 +800,7 @@
                 // Funcionalidade: Copiar mensagem
                 copyMessage(message) {
                     navigator.clipboard.writeText(message.message).then(() => {
+                        // Opcional: mostrar uma notificação de sucesso
                         console.log('Mensagem copiada!');
                     });
                 },
@@ -849,7 +813,7 @@
                         const response = await fetch(`/chat/room/${this.activeRoomId}/message/${messageId}`, {
                             method: 'DELETE',
                             headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                             }
                         });
 
@@ -859,6 +823,33 @@
                     } catch (error) {
                         console.error('Erro ao deletar mensagem:', error);
                     }
+                },
+
+                // Nova função para verificar se pode enviar mensagem
+                canSendMessage() {
+                    return (this.newMessage && this.newMessage.trim().length > 0) || this.uploadedFile !== null;
+                },
+
+                // Nova função para limpar arquivo uploadado
+                clearUploadedFile() {
+                    this.uploadedFile = null;
+                    if (this.$refs.fileInput) {
+                        this.$refs.fileInput.value = '';
+                    }
+                },
+
+                // Nova função para obter status de leitura da mensagem
+                getMessageReadStatus(message) {
+                    if (message.read_status && typeof message.read_status === 'object') {
+                        return message.read_status.status || 'sent';
+                    }
+                    return message.read_status || 'sent';
+                },
+
+                // Nova função para lidar com scroll
+                handleScroll() {
+                    // Pode ser usado para implementar carregamento de mensagens antigas
+                    // quando o usuário rolar para o topo
                 }
             }
         }
