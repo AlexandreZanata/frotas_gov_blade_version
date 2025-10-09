@@ -127,8 +127,8 @@
                                 <p class="text-xs text-gray-500 dark:text-navy-400">
                                     <span x-show="typingUsers.length > 0" x-text="getTypingText()"></span>
                                     <span x-show="typingUsers.length === 0 && activeRoom?.other_user">
-                                        <span x-show="isUserOnline(activeRoom.other_user.id)" class="text-green-600 dark:text-green-400">● Online</span>
-                                        <span x-show="!isUserOnline(activeRoom.other_user.id)" x-text="getLastSeenText(activeRoom.other_user.id)"></span>
+                                        <span x-show="activeRoom?.other_user && isUserOnline(activeRoom.other_user.id)" class="text-green-600 dark:text-green-400">● Online</span>
+                                        <span x-show="activeRoom?.other_user && !isUserOnline(activeRoom.other_user.id)" x-text="activeRoom?.other_user ? getLastSeenText(activeRoom.other_user.id) : ''"></span>
                                     </span>
                                 </p>
                             </div>
@@ -229,7 +229,7 @@
 
                         <!-- Input de Mensagem -->
                         <div class="bg-gray-50 dark:bg-navy-800 px-4 py-3 border-t border-gray-200 dark:border-navy-700">
-                            <form @submit.prevent="sendMessage" class="flex items-end gap-2">
+                            <div class="flex items-end gap-2">
                                 <!-- Upload de Arquivo -->
                                 <input
                                     type="file"
@@ -261,7 +261,8 @@
 
                                 <!-- Botão Enviar -->
                                 <button
-                                    type="submit"
+                                    type="button"
+                                    @click="sendMessage"
                                     :disabled="!newMessage.trim() && !uploadedFile"
                                     :class="newMessage.trim() || uploadedFile ? 'bg-primary-600 hover:bg-primary-700' : 'bg-gray-400'"
                                     class="p-3 text-white rounded-full transition">
@@ -269,7 +270,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                                     </svg>
                                 </button>
-                            </form>
+                            </div>
 
                             <!-- Preview de Arquivo -->
                             <div x-show="uploadedFile" class="mt-2 flex items-center gap-2 p-2 bg-primary-100 dark:bg-primary-900/20 rounded">
@@ -288,9 +289,12 @@
                 <template x-if="!activeRoomId">
                     <div class="flex-1 hidden md:flex items-center justify-center bg-gray-50 dark:bg-navy-900">
                         <div class="text-center">
-                            <svg class="w-24 h-24 mx-auto mb-4 text-gray-300 dark:text-navy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                            </svg>
+                            <!-- Placeholder user icon -->
+                            <div class="w-24 h-24 bg-gray-200 dark:bg-navy-700 rounded-full mx-auto mb-4 flex items-center justify-center">
+                                <svg class="w-16 h-16 text-gray-400 dark:text-navy-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
                             <h3 class="text-xl font-semibold text-gray-700 dark:text-navy-300 mb-2">Selecione uma conversa</h3>
                             <p class="text-gray-500 dark:text-navy-400">Escolha uma conversa existente ou inicie uma nova</p>
                         </div>
@@ -566,17 +570,36 @@
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                // Removing Content-Type header - browser will set the correct multipart/form-data with boundary
                             },
                             body: formData
                         });
 
                         if (response.ok) {
-                            const message = await response.json();
+                            let message;
+                            try {
+                                message = await response.json();
+                            } catch (jsonError) {
+                                console.error('Erro ao processar resposta:', jsonError);
+                                throw new Error('Resposta inválida do servidor');
+                            }
                             console.log('Mensagem enviada com sucesso:', message);
 
                             // Adicionar a mensagem localmente (será confirmada via WebSocket)
                             const exists = this.messages.some(m => m.id === message.id);
                             if (!exists) {
+                                // Garantir que a mensagem tenha o formato de data e hora imediatamente
+                                if (!message.formatted_time) {
+                                    message.formatted_time = this.formatTime(message.created_at);
+                                }
+                                if (!message.formatted_date) {
+                                    message.formatted_date = new Date(message.created_at).toLocaleDateString('pt-BR', {
+                                        day: 'numeric',
+                                        month: 'long',
+                                        year: 'numeric'
+                                    });
+                                }
+
                                 this.messages.push(message);
                                 this.$nextTick(() => this.scrollToBottom());
                             }
