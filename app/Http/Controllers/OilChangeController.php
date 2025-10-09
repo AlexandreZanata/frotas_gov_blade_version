@@ -25,23 +25,31 @@ class OilChangeController extends Controller
         $vehicles = $query->get()->map(function($vehicle) {
             $lastOilChange = $vehicle->oilChanges->first();
 
-            // Se não houver troca de óleo, considerar como vencido
+            // Se não houver troca de óleo, considerar como sem registro
             if (!$lastOilChange) {
                 $vehicle->oil_status = 'sem_registro';
                 $vehicle->km_progress = 0;
                 $vehicle->date_progress = 0;
+                $vehicle->current_km = 0;
+                $vehicle->last_oil_change = null;
                 return $vehicle;
             }
 
-            // Calcular o progresso (assumindo KM atual = último KM registrado + 1000 para exemplo)
-            // Em produção, você deve ter uma forma de rastrear o KM atual do veículo
-            $currentKm = $lastOilChange->km_at_change + 1000; // Exemplo
+            // Calcular o progresso (assumindo KM atual = último KM registrado + estimativa)
+            // Em produção, você deve ter uma forma real de rastrear o KM atual do veículo
+            $kmInterval = $lastOilChange->next_change_km - $lastOilChange->km_at_change;
+            $daysInterval = $lastOilChange->change_date->diffInDays($lastOilChange->next_change_date);
+            $daysPassed = $lastOilChange->change_date->diffInDays(now());
 
-            $vehicle->oil_status = $lastOilChange->getStatus($currentKm);
-            $vehicle->km_progress = $lastOilChange->getKmProgressPercentage($currentKm);
+            // Estimar KM atual baseado no tempo passado (média de km/dia)
+            $estimatedKmPerDay = $kmInterval / max($daysInterval, 1);
+            $currentKm = $lastOilChange->km_at_change + ($estimatedKmPerDay * $daysPassed);
+
+            $vehicle->oil_status = $lastOilChange->getStatus((int)$currentKm);
+            $vehicle->km_progress = $lastOilChange->getKmProgressPercentage((int)$currentKm);
             $vehicle->date_progress = $lastOilChange->getDateProgressPercentage();
             $vehicle->last_oil_change = $lastOilChange;
-            $vehicle->current_km = $currentKm;
+            $vehicle->current_km = (int)$currentKm;
 
             return $vehicle;
         });
@@ -54,21 +62,47 @@ class OilChangeController extends Controller
         }
 
         // Estatísticas
+        $allVehicles = $query->get()->map(function($vehicle) {
+            $lastOilChange = $vehicle->oilChanges->first();
+            if (!$lastOilChange) {
+                $vehicle->oil_status = 'sem_registro';
+                return $vehicle;
+            }
+
+            $kmInterval = $lastOilChange->next_change_km - $lastOilChange->km_at_change;
+            $daysInterval = $lastOilChange->change_date->diffInDays($lastOilChange->next_change_date);
+            $daysPassed = $lastOilChange->change_date->diffInDays(now());
+            $estimatedKmPerDay = $kmInterval / max($daysInterval, 1);
+            $currentKm = $lastOilChange->km_at_change + ($estimatedKmPerDay * $daysPassed);
+
+            $vehicle->oil_status = $lastOilChange->getStatus((int)$currentKm);
+            return $vehicle;
+        });
+
         $stats = [
-            'total' => $vehicles->count(),
-            'em_dia' => $vehicles->where('oil_status', 'em_dia')->count(),
-            'atencao' => $vehicles->where('oil_status', 'atencao')->count(),
-            'critico' => $vehicles->where('oil_status', 'critico')->count(),
-            'vencido' => $vehicles->where('oil_status', 'vencido')->count(),
-            'sem_registro' => $vehicles->where('oil_status', 'sem_registro')->count(),
+            'total' => $allVehicles->count(),
+            'em_dia' => $allVehicles->where('oil_status', 'em_dia')->count(),
+            'atencao' => $allVehicles->where('oil_status', 'atencao')->count(),
+            'critico' => $allVehicles->where('oil_status', 'critico')->count(),
+            'vencido' => $allVehicles->where('oil_status', 'vencido')->count(),
+            'sem_registro' => $allVehicles->where('oil_status', 'sem_registro')->count(),
         ];
 
         // Verificar estoque baixo de óleo
         $lowStockOils = InventoryItem::whereHas('category', function($q) {
-            $q->where('name', 'LIKE', '%óleo%')->orWhere('name', 'LIKE', '%oil%');
+            $q->where('name', 'LIKE', '%óleo%')
+              ->orWhere('name', 'LIKE', '%oil%')
+              ->orWhere('name', 'LIKE', '%lubrificante%');
         })->whereRaw('quantity_on_hand <= reorder_level')->get();
 
-        return view('oil-changes.index', compact('vehicles', 'stats', 'lowStockOils'));
+        // Buscar itens de óleo para o formulário
+        $oilItems = InventoryItem::whereHas('category', function($q) {
+            $q->where('name', 'LIKE', '%óleo%')
+              ->orWhere('name', 'LIKE', '%oil%')
+              ->orWhere('name', 'LIKE', '%lubrificante%');
+        })->orderBy('name')->get();
+
+        return view('oil-changes.index', compact('vehicles', 'stats', 'lowStockOils', 'oilItems', 'allVehicles'));
     }
 
     public function store(Request $request)
@@ -155,8 +189,53 @@ class OilChangeController extends Controller
 
     public function settings()
     {
-        $settings = OilChangeSetting::with('vehicleCategory')->get();
-        return view('oil-changes.settings', compact('settings'));
+        // Apenas administrador geral pode acessar
+        if (!auth()->user()->isGeneralManager()) {
+            abort(403, 'Acesso negado. Apenas administradores gerais podem acessar esta página.');
+        }
+
+        $categories = \App\Models\VehicleCategory::withCount('vehicles')->orderBy('name')->get();
+        $settings = OilChangeSetting::all()->keyBy('vehicle_category_id');
+
+        return view('oil-changes.settings', compact('categories', 'settings'));
+    }
+
+    public function storeSettings(Request $request)
+    {
+        // Apenas administrador geral pode salvar
+        if (!auth()->user()->isGeneralManager()) {
+            abort(403, 'Acesso negado.');
+        }
+
+        $validated = $request->validate([
+            'settings' => 'required|array',
+            'settings.*.vehicle_category_id' => 'required|exists:vehicle_categories,id',
+            'settings.*.km_interval' => 'required|integer|min:1000',
+            'settings.*.days_interval' => 'required|integer|min:30',
+            'settings.*.default_liters' => 'nullable|numeric|min:0',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            foreach ($validated['settings'] as $categoryId => $settingData) {
+                OilChangeSetting::updateOrCreate(
+                    ['vehicle_category_id' => $settingData['vehicle_category_id']],
+                    [
+                        'km_interval' => $settingData['km_interval'],
+                        'days_interval' => $settingData['days_interval'],
+                        'default_liters' => $settingData['default_liters'] ?? null,
+                    ]
+                );
+            }
+
+            DB::commit();
+
+            return redirect()->route('oil-changes.settings')
+                ->with('success', 'Configurações salvas com sucesso!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Erro ao salvar configurações: ' . $e->getMessage());
+        }
     }
 
     public function updateSettings(Request $request, $id)
@@ -174,4 +253,3 @@ class OilChangeController extends Controller
             ->with('success', 'Configurações atualizadas com sucesso!');
     }
 }
-

@@ -126,6 +126,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [\App\Http\Controllers\OilChangeController::class, 'store'])->name('store');
         Route::get('/vehicle/{vehicle}/history', [\App\Http\Controllers\OilChangeController::class, 'history'])->name('history');
         Route::get('/settings', [\App\Http\Controllers\OilChangeController::class, 'settings'])->name('settings');
+        Route::post('/settings', [\App\Http\Controllers\OilChangeController::class, 'storeSettings'])->name('settings.store');
         Route::put('/settings/{setting}', [\App\Http\Controllers\OilChangeController::class, 'updateSettings'])->name('settings.update');
     });
 

@@ -372,13 +372,22 @@
         <ul id="nav-maintenance-submenu" x-show="maintenanceOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition" style="display: none;">
             <li>
                 <a href="{{ route('oil-changes.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
-                    {{ request()->routeIs('oil-changes.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                    {{ request()->routeIs('oil-changes.index') || request()->routeIs('oil-changes.history') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
                     </svg>
                     <span>Troca de Óleo</span>
                 </a>
             </li>
+            @if(auth()->user()->isGeneralManager())
+            <li>
+                <a href="{{ route('oil-changes.settings') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                    {{ request()->routeIs('oil-changes.settings') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                    <x-icon name="settings" class="w-3.5 h-3.5" />
+                    <span>Configurações</span>
+                </a>
+            </li>
+            @endif
         </ul>
 
         <!-- Submenu popup quando colapsada -->
@@ -395,12 +404,19 @@
                 Manutenção
             </div>
             <a href="{{ route('oil-changes.index') }}"
-               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('oil-changes.*') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('oil-changes.index') || request()->routeIs('oil-changes.history') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
                 </svg>
                 <span>Troca de Óleo</span>
             </a>
+            @if(auth()->user()->isGeneralManager())
+            <a href="{{ route('oil-changes.settings') }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('oil-changes.settings') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                <x-icon name="settings" class="w-4 h-4" />
+                <span>Configurações</span>
+            </a>
+            @endif
         </div>
     </li>
     @endif

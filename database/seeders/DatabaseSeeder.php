@@ -42,6 +42,10 @@ class DatabaseSeeder extends Seeder
             FineSeeder::class,
             VehicleTransferSeeder::class,
             ServiceOrderSeeder::class,
+            VehicleTireLayoutSeeder::class,
+            TireInventorySeeder::class,
+            TireSeeder::class,
+            OilChangeSettingSeeder::class,
         ]);
     }
 }

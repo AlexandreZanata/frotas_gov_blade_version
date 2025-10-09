@@ -3,6 +3,7 @@
     id="sidebar"
     class="hidden lg:flex flex-col h-screen fixed top-0 left-0 z-40 border-r border-gray-200 dark:border-navy-700 bg-white dark:bg-navy-800 bg-gradient-to-b from-white to-primary-50/40 dark:from-navy-900 dark:to-navy-800 transition-all duration-300 ease-in-out shadow-sm"
     x-bind:class="isSidebarCollapsed ? 'w-16' : 'w-64'"
+    x-cloak
 >
     <!-- Top (Brand + Collapse) -->
     <div class="flex items-center h-16 px-4 gap-2 border-b border-gray-200 dark:border-navy-700">
