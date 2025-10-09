@@ -18,4 +18,14 @@ class FuelType extends Model
     protected $fillable = [
         'name',
     ];
+
+    public function calculationMethods()
+    {
+        return $this->hasMany(FuelCalculationMethod::class);
+    }
+
+    public function discountSettings()
+    {
+        return $this->hasMany(FuelDiscountSetting::class);
+    }
 }

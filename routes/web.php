@@ -141,8 +141,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{checklist}/reject', [\App\Http\Controllers\ChecklistController::class, 'reject'])->name('reject');
     });
 
-
-// MÓDULO DE PNEUS
+    // MÓDULO DE PNEUS
     Route::middleware(['auth'])->prefix('tires')->name('tires.')->group(function () {
         // Dashboard
         Route::get('/', [\App\Http\Controllers\TireController::class, 'index'])->name('index');
@@ -174,7 +173,6 @@ Route::middleware('auth')->group(function () {
         return \App\Models\Tire::findOrFail($id);
     })->middleware('auth');
 
-
     // Manutenção - Troca de Óleo
     Route::prefix('oil-changes')->name('oil-changes.')->group(function () {
         Route::get('/', [\App\Http\Controllers\OilChangeController::class, 'index'])->name('index');
@@ -204,9 +202,42 @@ Route::middleware('auth')->group(function () {
 
         // API
         Route::post('/calculate-averages', [\App\Http\Controllers\FuelQuotationController::class, 'calculateAverages'])->name('calculate-averages');
+        Route::post('/delete-image', [\App\Http\Controllers\FuelQuotationController::class, 'deleteImage'])->name('delete-image');
+
+        // Configurações (apenas para gestores gerais)
+        Route::get('/settings', [\App\Http\Controllers\FuelQuotationSettingsController::class, 'index'])->name('settings')->middleware('can:isGeneralManager');
+        Route::post('/settings/calculation-methods', [\App\Http\Controllers\FuelQuotationSettingsController::class, 'storeCalculationMethod'])->name('settings.calculation-methods.store');
+        Route::put('/settings/calculation-methods/{method}', [\App\Http\Controllers\FuelQuotationSettingsController::class, 'updateCalculationMethod'])->name('settings.calculation-methods.update');
+        Route::delete('/settings/calculation-methods/{method}', [\App\Http\Controllers\FuelQuotationSettingsController::class, 'destroyCalculationMethod'])->name('settings.calculation-methods.destroy');
+        Route::post('/settings/discount-settings', [\App\Http\Controllers\FuelQuotationSettingsController::class, 'storeDiscountSetting'])->name('settings.discount-settings.store');
+        Route::put('/settings/discount-settings/{discount}', [\App\Http\Controllers\FuelQuotationSettingsController::class, 'updateDiscountSetting'])->name('settings.discount-settings.update');
+        Route::delete('/settings/discount-settings/{discount}', [\App\Http\Controllers\FuelQuotationSettingsController::class, 'destroyDiscountSetting'])->name('settings.discount-settings.destroy');
     });
-});
 
+    // Multas
+    Route::prefix('fines')->name('fines.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\FineController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\FineController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\FineController::class, 'store'])->name('store');
+        Route::get('/{fine}', [\App\Http\Controllers\FineController::class, 'show'])->name('show');
+        Route::get('/{fine}/edit', [\App\Http\Controllers\FineController::class, 'edit'])->name('edit');
+        Route::put('/{fine}', [\App\Http\Controllers\FineController::class, 'update'])->name('update');
+        Route::delete('/{fine}', [\App\Http\Controllers\FineController::class, 'destroy'])->name('destroy');
+        Route::patch('/{fine}/status', [\App\Http\Controllers\FineController::class, 'updateStatus'])->name('update-status');
+        Route::get('/{fine}/pdf', [\App\Http\Controllers\FineController::class, 'generatePdf'])->name('pdf');
+    });
 
+    // API para busca de multas
+    Route::get('/api/fines/search-vehicles', [\App\Http\Controllers\FineController::class, 'searchVehicles'])->name('api.fines.search-vehicles');
+    Route::get('/api/fines/search-drivers', [\App\Http\Controllers\FineController::class, 'searchDrivers'])->name('api.fines.search-drivers');
+    Route::get('/api/fines/search-notices', [\App\Http\Controllers\FineController::class, 'searchInfractionNotices'])->name('api.fines.search-notices');
+
+}); // <--- ESTA É A CHAVE DE FECHAMENTO CORRETA PARA O GRUPO DE AUTH
+
+// Verificação de Autenticidade de Multas (Público)
+Route::get('/fines/verify', function() {
+    return view('fines.verify');
+})->name('fines.verify.form');
+Route::post('/fines/verify', [\App\Http\Controllers\FineController::class, 'verify'])->name('fines.verify');
 
 require __DIR__.'/auth.php';

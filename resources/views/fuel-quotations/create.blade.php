@@ -1,666 +1,498 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-ui.page-header title="Nova Cotação de Combustível" subtitle="Registro de preços e cálculo de médias" hide-title-mobile icon="trending-up" />
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                Nova Cotação de Combustível
+            </h2>
+            <a href="{{ route('fuel-quotations.index') }}"
+               class="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-md transition">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Voltar
+            </a>
+        </div>
     </x-slot>
 
-    <div x-data="fuelQuotationApp()" x-init="init()" class="space-y-6">
-        <!-- Informações Básicas -->
-        <x-ui.card title="Informações da Cotação">
-            <form @submit.prevent="submitForm" id="quotationForm" class="space-y-6">
+    <div class="py-6" x-data="quotationForm()">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <form @submit.prevent="submitForm" enctype="multipart/form-data">
                 @csrf
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Nome da Cotação -->
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-navy-200 mb-2">
-                            Nome da Cotação <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text"
-                               x-model="formData.name"
-                               @input="autoSave"
-                               required
-                               class="w-full rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
+                <!-- Informações Básicas -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Informações da Cotação</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Cotação *</label>
+                            <input type="text" x-model="formData.name" required
+                                   class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                                   placeholder="Ex: Cotação Janeiro 2025">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data da Cotação *</label>
+                            <input type="date" x-model="formData.quotation_date" required
+                                   class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observações</label>
+                            <textarea x-model="formData.notes" rows="3"
+                                      class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                                      placeholder="Observações sobre esta cotação"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Postos e Preços -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Postos e Preços</h3>
+                        <button type="button" @click="addStation()"
+                                class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Adicionar Posto
+                        </button>
                     </div>
 
-                    <!-- Data da Cotação -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-navy-200 mb-2">
-                            Data da Cotação <span class="text-red-500">*</span>
-                        </label>
-                        <input type="date"
-                               x-model="formData.quotation_date"
-                               @input="autoSave"
-                               required
-                               class="w-full rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
+                    <div class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <div class="flex">
+                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div class="text-sm text-blue-800 dark:text-blue-300">
+                                <p class="font-semibold mb-1">Instruções:</p>
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>Preencha o preço para cada combustível disponível no posto</li>
+                                    <li>Deixe em branco ou "0" para combustíveis não disponíveis</li>
+                                    <li>Você pode adicionar até 2 imagens por posto (comprovantes)</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Método de Cálculo -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-navy-200 mb-2">
-                            Método de Cálculo <span class="text-red-500">*</span>
-                        </label>
-                        <select x-model="formData.calculation_method"
-                                @change="calculateAverages(); autoSave()"
-                                required
-                                class="w-full rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
-                            <option value="simple_average">Média Aritmética Simples</option>
-                            <option value="custom">Método Personalizado</option>
-                        </select>
+                    <!-- Lista de Postos -->
+                    <div class="space-y-6">
+                        <template x-for="(station, stationIndex) in formData.stations" :key="stationIndex">
+                            <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="font-medium text-gray-900 dark:text-gray-100">
+                                        Posto <span x-text="stationIndex + 1"></span>
+                                    </h4>
+                                    <button type="button" @click="removeStation(stationIndex)"
+                                            class="text-red-600 hover:text-red-700 transition">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- Seleção do Posto -->
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Selecione o Posto *</label>
+                                    <select x-model="station.gas_station_id" required
+                                            class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
+                                        <option value="">Selecione...</option>
+                                        @foreach($gasStations as $gasStation)
+                                            <option value="{{ $gasStation->id }}">{{ $gasStation->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- Preços por Combustível -->
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                    <h5 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Preços dos Combustíveis</h5>
+                                    <div class="space-y-4">
+                                        <template x-for="(price, priceIndex) in station.prices" :key="priceIndex">
+                                            <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <!-- Combustível -->
+                                                    <div>
+                                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                            <span x-text="price.fuel_name"></span>
+                                                        </label>
+                                                        <input type="hidden" :name="`stations[${stationIndex}][prices][${priceIndex}][fuel_type_id]`" x-model="price.fuel_type_id">
+                                                    </div>
+
+                                                    <!-- Preço -->
+                                                    <div>
+                                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Preço (R$)</label>
+                                                        <input type="number"
+                                                               :name="`stations[${stationIndex}][prices][${priceIndex}][price]`"
+                                                               x-model="price.price"
+                                                               step="0.001"
+                                                               min="0"
+                                                               placeholder="0.000"
+                                                               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 text-sm">
+                                                        <p class="text-xs text-gray-500 mt-1">Deixe em branco ou "0" para não considerar</p>
+                                                    </div>
+
+                                                    <!-- Imagens -->
+                                                    <div>
+                                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Imagens</label>
+                                                        <div class="flex gap-2">
+                                                            <!-- Imagem 1 -->
+                                                            <div class="flex-1">
+                                                                <label class="cursor-pointer">
+                                                                    <input type="file"
+                                                                           :name="`stations[${stationIndex}][prices][${priceIndex}][image_1]`"
+                                                                           @change="handleImageUpload($event, stationIndex, priceIndex, 1)"
+                                                                           accept="image/*"
+                                                                           class="hidden">
+                                                                    <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded p-2 text-center hover:border-blue-500 transition">
+                                                                        <template x-if="price.image_1_preview">
+                                                                            <div class="relative">
+                                                                                <img :src="price.image_1_preview" class="w-full h-16 object-cover rounded">
+                                                                                <button type="button"
+                                                                                        @click.stop="removeImage(stationIndex, priceIndex, 1)"
+                                                                                        class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1">
+                                                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                                    </svg>
+                                                                                </button>
+                                                                            </div>
+                                                                        </template>
+                                                                        <template x-if="!price.image_1_preview">
+                                                                            <svg class="w-8 h-8 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                                                            </svg>
+                                                                        </template>
+                                                                    </div>
+                                                                </label>
+                                                            </div>
+
+                                                            <!-- Imagem 2 -->
+                                                            <div class="flex-1">
+                                                                <label class="cursor-pointer">
+                                                                    <input type="file"
+                                                                           :name="`stations[${stationIndex}][prices][${priceIndex}][image_2]`"
+                                                                           @change="handleImageUpload($event, stationIndex, priceIndex, 2)"
+                                                                           accept="image/*"
+                                                                           class="hidden">
+                                                                    <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded p-2 text-center hover:border-blue-500 transition">
+                                                                        <template x-if="price.image_2_preview">
+                                                                            <div class="relative">
+                                                                                <img :src="price.image_2_preview" class="w-full h-16 object-cover rounded">
+                                                                                <button type="button"
+                                                                                        @click.stop="removeImage(stationIndex, priceIndex, 2)"
+                                                                                        class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1">
+                                                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                                    </svg>
+                                                                                </button>
+                                                                            </div>
+                                                                        </template>
+                                                                        <template x-if="!price.image_2_preview">
+                                                                            <svg class="w-8 h-8 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                                                            </svg>
+                                                                        </template>
+                                                                    </div>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-if="formData.stations.length === 0">
+                            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                </svg>
+                                <p>Nenhum posto adicionado. Clique em "Adicionar Posto" para começar.</p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Preços de Bomba (Opcional) -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Preços de Bomba (Opcional)</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Registre os preços reais praticados nos postos de combustível</p>
+                        </div>
+                        <button type="button" @click="addPumpPrice()"
+                                class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Adicionar Preço de Bomba
+                        </button>
                     </div>
 
-                    <!-- Observações -->
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-navy-200 mb-2">
-                            Observações
-                        </label>
-                        <textarea x-model="formData.notes"
-                                  @input="autoSave"
-                                  rows="3"
-                                  class="w-full rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500"></textarea>
+                    <!-- Lista de Preços de Bomba -->
+                    <div class="space-y-4">
+                        <template x-for="(pumpPrice, pumpIndex) in formData.pumpPrices" :key="pumpIndex">
+                            <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h5 class="font-medium text-gray-900 dark:text-gray-100">Preço <span x-text="pumpIndex + 1"></span></h5>
+                                    <button type="button" @click="removePumpPrice(pumpIndex)"
+                                            class="text-red-600 hover:text-red-700 transition">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <!-- Posto -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Posto *</label>
+                                        <select :name="`pump_prices[${pumpIndex}][gas_station_id]`" x-model="pumpPrice.gas_station_id" required
+                                                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
+                                            <option value="">Selecione...</option>
+                                            @foreach($gasStations as $gasStation)
+                                                <option value="{{ $gasStation->id }}">{{ $gasStation->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <!-- Combustível -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Combustível *</label>
+                                        <select :name="`pump_prices[${pumpIndex}][fuel_type_id]`" x-model="pumpPrice.fuel_type_id" required
+                                                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
+                                            <option value="">Selecione...</option>
+                                            @foreach($fuelTypes as $fuelType)
+                                                <option value="{{ $fuelType->id }}">{{ $fuelType->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <!-- Preço -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Preço (R$) *</label>
+                                        <input type="number"
+                                               :name="`pump_prices[${pumpIndex}][pump_price]`"
+                                               x-model="pumpPrice.pump_price"
+                                               step="0.001"
+                                               min="0"
+                                               required
+                                               placeholder="0.000"
+                                               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
+                                    </div>
+
+                                    <!-- Comprovante -->
+                                    <div class="md:col-span-3">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Comprovante (Opcional)</label>
+                                        <label class="cursor-pointer">
+                                            <input type="file"
+                                                   :name="`pump_prices[${pumpIndex}][evidence]`"
+                                                   @change="handlePumpImageUpload($event, pumpIndex)"
+                                                   accept="image/*"
+                                                   class="hidden">
+                                            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-green-500 transition">
+                                                <template x-if="pumpPrice.evidence_preview">
+                                                    <div class="relative inline-block">
+                                                        <img :src="pumpPrice.evidence_preview" class="h-32 object-cover rounded">
+                                                        <button type="button"
+                                                                @click.stop="removePumpImage(pumpIndex)"
+                                                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </template>
+                                                <template x-if="!pumpPrice.evidence_preview">
+                                                    <div class="py-4">
+                                                        <svg class="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                        </svg>
+                                                        <p class="text-sm text-gray-600 dark:text-gray-400">Clique para adicionar comprovante</p>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-if="formData.pumpPrices.length === 0">
+                            <div class="text-center py-6 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <svg class="w-10 h-10 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                                <p class="text-sm">Nenhum preço de bomba adicionado. Esta seção é opcional.</p>
+                            </div>
+                        </template>
                     </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="flex justify-end gap-3">
+                    <a href="{{ route('fuel-quotations.index') }}"
+                       class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md transition">
+                        Cancelar
+                    </a>
+                    <button type="submit"
+                            :disabled="submitting"
+                            :class="submitting ? 'opacity-50 cursor-not-allowed' : ''"
+                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition">
+                        <span x-show="!submitting">Salvar Cotação</span>
+                        <span x-show="submitting">Salvando...</span>
+                    </button>
                 </div>
             </form>
-        </x-ui.card>
-
-        <!-- Coleta de Preços -->
-        <x-ui.card title="1. Coleta de Preços (Base para Cálculo de Média)">
-            <div class="space-y-4">
-                <!-- Botão Adicionar Preço -->
-                <button @click="addPrice"
-                        type="button"
-                        class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Adicionar Posto
-                </button>
-
-                <!-- Lista de Preços -->
-                <div class="space-y-3">
-                    <template x-for="(price, index) in prices" :key="index">
-                        <div class="p-4 bg-gray-50 dark:bg-navy-900/50 rounded-lg border border-gray-200 dark:border-navy-700">
-                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                                <!-- Posto -->
-                                <div class="md:col-span-3">
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-navy-200 mb-1">
-                                        Posto <span class="text-red-500">*</span>
-                                    </label>
-                                    <select x-model="price.gas_station_id"
-                                            @change="autoSave"
-                                            required
-                                            class="w-full text-sm rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
-                                        <option value="">Selecione...</option>
-                                        <template x-for="station in gasStations" :key="station.id">
-                                            <option :value="station.id" x-text="station.name"></option>
-                                        </template>
-                                    </select>
-                                </div>
-
-                                <!-- Tipo de Combustível -->
-                                <div class="md:col-span-2">
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-navy-200 mb-1">
-                                        Combustível <span class="text-red-500">*</span>
-                                    </label>
-                                    <select x-model="price.fuel_type_id"
-                                            @change="calculateAverages(); autoSave()"
-                                            required
-                                            class="w-full text-sm rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
-                                        <option value="">Selecione...</option>
-                                        <template x-for="fuel in fuelTypes" :key="fuel.id">
-                                            <option :value="fuel.id" x-text="fuel.name"></option>
-                                        </template>
-                                    </select>
-                                </div>
-
-                                <!-- Preço -->
-                                <div class="md:col-span-2">
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-navy-200 mb-1">
-                                        Preço (R$/L) <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="number"
-                                           x-model="price.price"
-                                           @input="calculateAverages(); autoSave()"
-                                           step="0.001"
-                                           min="0"
-                                           required
-                                           class="w-full text-sm rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
-                                </div>
-
-                                <!-- Upload de Comprovante -->
-                                <div class="md:col-span-3">
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-navy-200 mb-1">
-                                        Comprovante
-                                    </label>
-                                    <input type="file"
-                                           @change="handleFileUpload($event, 'price', index)"
-                                           accept="image/*"
-                                           class="w-full text-xs rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
-                                    <p x-show="price.evidencePreview" class="mt-1 text-xs text-green-600 dark:text-green-400">
-                                        ✓ Arquivo anexado
-                                    </p>
-                                </div>
-
-                                <!-- Botão Remover -->
-                                <div class="md:col-span-2">
-                                    <button @click="removePrice(index)"
-                                            type="button"
-                                            class="w-full px-3 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 text-sm rounded-lg transition">
-                                        Remover
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-
-                    <div x-show="prices.length === 0" class="p-8 text-center text-gray-500 dark:text-navy-400">
-                        Nenhum preço adicionado. Clique em "Adicionar Posto" para começar.
-                    </div>
-                </div>
-            </div>
-        </x-ui.card>
-
-        <!-- Médias Calculadas e Descontos -->
-        <x-ui.card title="2. Médias Calculadas e Aplicação de Descontos">
-            <div class="space-y-4">
-                <template x-for="(avg, fuelTypeId) in averages" :key="fuelTypeId">
-                    <div class="p-4 bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
-                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                            <!-- Tipo de Combustível -->
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 dark:text-navy-200 mb-1">
-                                    Combustível
-                                </label>
-                                <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="getFuelTypeName(fuelTypeId)"></p>
-                            </div>
-
-                            <!-- Média Calculada -->
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 dark:text-navy-200 mb-1">
-                                    Preço Médio
-                                </label>
-                                <p class="text-lg font-bold text-primary-600 dark:text-primary-400">
-                                    R$ <span x-text="avg.toFixed(3).replace('.', ',')"></span>
-                                </p>
-                            </div>
-
-                            <!-- Percentual de Desconto -->
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 dark:text-navy-200 mb-1">
-                                    Desconto (%)
-                                </label>
-                                <input type="number"
-                                       x-model="discounts[fuelTypeId]"
-                                       @input="calculateFinalPrices(); autoSave()"
-                                       step="0.01"
-                                       min="0"
-                                       max="100"
-                                       class="w-full text-sm rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
-                            </div>
-
-                            <!-- Valor do Desconto -->
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 dark:text-navy-200 mb-1">
-                                    Valor Desc.
-                                </label>
-                                <p class="text-sm font-medium text-gray-700 dark:text-navy-200">
-                                    - R$ <span x-text="((avg * (discounts[fuelTypeId] || 0)) / 100).toFixed(3).replace('.', ',')"></span>
-                                </p>
-                            </div>
-
-                            <!-- Preço Final -->
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 dark:text-navy-200 mb-1">
-                                    Preço Final
-                                </label>
-                                <p class="text-lg font-bold text-green-600 dark:text-green-400">
-                                    R$ <span x-text="finalPrices[fuelTypeId]?.toFixed(3).replace('.', ',') || '0,000'"></span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-
-                <div x-show="Object.keys(averages).length === 0" class="p-8 text-center text-gray-500 dark:text-navy-400">
-                    As médias serão calculadas automaticamente após adicionar preços.
-                </div>
-            </div>
-        </x-ui.card>
-
-        <!-- Preços de Bomba (Opcional) -->
-        <x-ui.card title="3. Preços de Bomba para Comparação (Opcional)">
-            <div class="space-y-4">
-                <!-- Botão Adicionar Preço de Bomba -->
-                <button @click="addPumpPrice"
-                        type="button"
-                        class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Adicionar Preço de Bomba
-                </button>
-
-                <!-- Lista de Preços de Bomba -->
-                <div class="space-y-3">
-                    <template x-for="(pumpPrice, index) in pumpPrices" :key="index">
-                        <div class="p-4 bg-gray-50 dark:bg-navy-900/50 rounded-lg border border-gray-200 dark:border-navy-700">
-                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                                <!-- Posto -->
-                                <div class="md:col-span-3">
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-navy-200 mb-1">
-                                        Posto <span class="text-red-500">*</span>
-                                    </label>
-                                    <select x-model="pumpPrice.gas_station_id"
-                                            @change="autoSave"
-                                            required
-                                            class="w-full text-sm rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
-                                        <option value="">Selecione...</option>
-                                        <template x-for="station in gasStations" :key="station.id">
-                                            <option :value="station.id" x-text="station.name"></option>
-                                        </template>
-                                    </select>
-                                </div>
-
-                                <!-- Tipo de Combustível -->
-                                <div class="md:col-span-2">
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-navy-200 mb-1">
-                                        Combustível <span class="text-red-500">*</span>
-                                    </label>
-                                    <select x-model="pumpPrice.fuel_type_id"
-                                            @change="autoSave"
-                                            required
-                                            class="w-full text-sm rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
-                                        <option value="">Selecione...</option>
-                                        <template x-for="fuel in fuelTypes" :key="fuel.id">
-                                            <option :value="fuel.id" x-text="fuel.name"></option>
-                                        </template>
-                                    </select>
-                                </div>
-
-                                <!-- Preço de Bomba -->
-                                <div class="md:col-span-2">
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-navy-200 mb-1">
-                                        Preço (R$/L) <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="number"
-                                           x-model="pumpPrice.pump_price"
-                                           @input="autoSave"
-                                           step="0.001"
-                                           min="0"
-                                           required
-                                           class="w-full text-sm rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
-                                </div>
-
-                                <!-- Upload de Comprovante -->
-                                <div class="md:col-span-3">
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-navy-200 mb-1">
-                                        Comprovante
-                                    </label>
-                                    <input type="file"
-                                           @change="handleFileUpload($event, 'pump', index)"
-                                           accept="image/*"
-                                           class="w-full text-xs rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
-                                    <p x-show="pumpPrice.evidencePreview" class="mt-1 text-xs text-green-600 dark:text-green-400">
-                                        ✓ Arquivo anexado
-                                    </p>
-                                </div>
-
-                                <!-- Botão Remover -->
-                                <div class="md:col-span-2">
-                                    <button @click="removePumpPrice(index)"
-                                            type="button"
-                                            class="w-full px-3 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 text-sm rounded-lg transition">
-                                        Remover
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-            </div>
-        </x-ui.card>
-
-        <!-- Tabela Comparativa -->
-        <x-ui.card title="4. Tabela Comparativa Final" x-show="Object.keys(finalPrices).length > 0">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-navy-700">
-                    <thead class="bg-gray-50 dark:bg-navy-900">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-navy-300 uppercase">Combustível</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-navy-300 uppercase">Preço Médio</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-navy-300 uppercase">Desconto</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-navy-300 uppercase">Preço Final</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-navy-300 uppercase">Preços de Bomba</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-navy-300 uppercase">Resultado</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white dark:bg-navy-800 divide-y divide-gray-200 dark:divide-navy-700">
-                        <template x-for="(finalPrice, fuelTypeId) in finalPrices" :key="fuelTypeId">
-                            <tr>
-                                <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white" x-text="getFuelTypeName(fuelTypeId)"></td>
-                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-navy-200">
-                                    R$ <span x-text="averages[fuelTypeId]?.toFixed(3).replace('.', ',')"></span>
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-navy-200">
-                                    <span x-text="(discounts[fuelTypeId] || 0)"></span>%
-                                </td>
-                                <td class="px-4 py-3 text-sm font-bold text-green-600 dark:text-green-400">
-                                    R$ <span x-text="finalPrice.toFixed(3).replace('.', ',')"></span>
-                                </td>
-                                <td class="px-4 py-3 text-sm">
-                                    <template x-for="pump in getPumpPricesByFuel(fuelTypeId)">
-                                        <div class="mb-1">
-                                            <span class="text-gray-700 dark:text-navy-200" x-text="getStationName(pump.gas_station_id)"></span>:
-                                            <span class="font-medium">R$ <span x-text="parseFloat(pump.pump_price).toFixed(3).replace('.', ',')"></span></span>
-                                        </div>
-                                    </template>
-                                    <span x-show="getPumpPricesByFuel(fuelTypeId).length === 0" class="text-gray-400">—</span>
-                                </td>
-                                <td class="px-4 py-3 text-sm">
-                                    <template x-for="pump in getPumpPricesByFuel(fuelTypeId)">
-                                        <div class="mb-1">
-                                            <span :class="parseFloat(pump.pump_price) > finalPrice ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold'">
-                                                <span x-text="parseFloat(pump.pump_price) > finalPrice ? '✓ Favorável' : '✗ Desfavorável'"></span>
-                                                (<span x-text="(((parseFloat(pump.pump_price) - finalPrice) / finalPrice) * 100).toFixed(2)"></span>%)
-                                            </span>
-                                        </div>
-                                    </template>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
-            </div>
-        </x-ui.card>
-
-        <!-- Botões de Ação -->
-        <div class="flex items-center justify-between bg-white dark:bg-navy-800 p-6 rounded-lg shadow">
-            <div>
-                <p class="text-sm text-gray-600 dark:text-navy-300">
-                    <span x-show="lastSaved">Salvo automaticamente às <span x-text="lastSaved"></span></span>
-                    <span x-show="!lastSaved">Os dados são salvos automaticamente</span>
-                </p>
-            </div>
-            <div class="flex items-center gap-3">
-                <a href="{{ route('fuel-quotations.index') }}"
-                   class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-navy-200 bg-white dark:bg-navy-700 border border-gray-300 dark:border-navy-600 rounded-lg hover:bg-gray-50 dark:hover:bg-navy-600 transition">
-                    Cancelar
-                </a>
-                <button @click="clearLocalStorage"
-                        type="button"
-                        class="px-4 py-2 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition">
-                    Limpar Dados
-                </button>
-                <button @click="submitForm"
-                        type="button"
-                        :disabled="!canSubmit()"
-                        :class="canSubmit() ? 'bg-primary-600 hover:bg-primary-700' : 'bg-gray-400 cursor-not-allowed'"
-                        class="px-6 py-2 text-sm font-medium text-white rounded-lg shadow transition">
-                    Finalizar Cotação
-                </button>
-            </div>
         </div>
     </div>
 
     @push('scripts')
     <script>
-        function fuelQuotationApp() {
+        function quotationForm() {
             return {
-                // Dados
-                gasStations: @json($gasStations),
-                fuelTypes: @json($fuelTypes),
-
-                // Formulário
                 formData: {
                     name: '',
-                    quotation_date: new Date().toISOString().split('T')[0],
-                    calculation_method: 'simple_average',
-                    notes: ''
+                    quotation_date: '',
+                    notes: '',
+                    stations: [],
+                    pumpPrices: []
                 },
-
-                // Preços coletados
-                prices: [],
-
-                // Preços de bomba
-                pumpPrices: [],
-
-                // Médias calculadas
-                averages: {},
-
-                // Descontos
-                discounts: {},
-
-                // Preços finais
-                finalPrices: {},
-
-                // Controle
-                lastSaved: null,
-                autoSaveTimeout: null,
+                fuelTypes: @json($fuelTypes),
+                submitting: false,
 
                 init() {
-                    this.loadFromLocalStorage();
-                    console.log('Fuel Quotation App initialized');
+                    // Inicializar com data atual
+                    const today = new Date().toISOString().split('T')[0];
+                    this.formData.quotation_date = today;
                 },
 
-                addPrice() {
-                    this.prices.push({
+                addStation() {
+                    const prices = this.fuelTypes.map(fuel => ({
+                        fuel_type_id: fuel.id,
+                        fuel_name: fuel.name,
+                        price: null,
+                        image_1_preview: null,
+                        image_2_preview: null
+                    }));
+
+                    this.formData.stations.push({
                         gas_station_id: '',
-                        fuel_type_id: '',
-                        price: '',
-                        evidence: null,
-                        evidencePreview: null
+                        prices: prices
                     });
-                    this.autoSave();
                 },
 
-                removePrice(index) {
-                    this.prices.splice(index, 1);
-                    this.calculateAverages();
-                    this.autoSave();
+                removeStation(index) {
+                    if (confirm('Tem certeza que deseja remover este posto?')) {
+                        this.formData.stations.splice(index, 1);
+                    }
                 },
 
                 addPumpPrice() {
-                    this.pumpPrices.push({
+                    this.formData.pumpPrices.push({
                         gas_station_id: '',
                         fuel_type_id: '',
-                        pump_price: '',
-                        evidence: null,
-                        evidencePreview: null
+                        pump_price: null,
+                        evidence_preview: null
                     });
-                    this.autoSave();
                 },
 
                 removePumpPrice(index) {
-                    this.pumpPrices.splice(index, 1);
-                    this.autoSave();
+                    if (confirm('Tem certeza que deseja remover este preço de bomba?')) {
+                        this.formData.pumpPrices.splice(index, 1);
+                    }
                 },
 
-                handleFileUpload(event, type, index) {
+                handleImageUpload(event, stationIndex, priceIndex, imageNumber) {
                     const file = event.target.files[0];
-                    if (!file) return;
-
-                    if (type === 'price') {
-                        this.prices[index].evidence = file;
-                        this.prices[index].evidencePreview = URL.createObjectURL(file);
-                    } else {
-                        this.pumpPrices[index].evidence = file;
-                        this.pumpPrices[index].evidencePreview = URL.createObjectURL(file);
-                    }
-
-                    this.autoSave();
-                },
-
-                calculateAverages() {
-                    this.averages = {};
-
-                    // Agrupar preços por tipo de combustível
-                    const pricesByFuel = {};
-
-                    this.prices.forEach(price => {
-                        if (price.fuel_type_id && price.price) {
-                            if (!pricesByFuel[price.fuel_type_id]) {
-                                pricesByFuel[price.fuel_type_id] = [];
-                            }
-                            pricesByFuel[price.fuel_type_id].push(parseFloat(price.price));
-                        }
-                    });
-
-                    // Calcular média
-                    Object.keys(pricesByFuel).forEach(fuelTypeId => {
-                        const prices = pricesByFuel[fuelTypeId];
-                        const sum = prices.reduce((a, b) => a + b, 0);
-                        this.averages[fuelTypeId] = sum / prices.length;
-
-                        // Inicializar desconto se não existir
-                        if (!this.discounts[fuelTypeId]) {
-                            this.discounts[fuelTypeId] = 0;
-                        }
-                    });
-
-                    this.calculateFinalPrices();
-                },
-
-                calculateFinalPrices() {
-                    this.finalPrices = {};
-
-                    Object.keys(this.averages).forEach(fuelTypeId => {
-                        const avg = this.averages[fuelTypeId];
-                        const discount = this.discounts[fuelTypeId] || 0;
-                        this.finalPrices[fuelTypeId] = avg - (avg * (discount / 100));
-                    });
-                },
-
-                getFuelTypeName(fuelTypeId) {
-                    const fuel = this.fuelTypes.find(f => f.id === fuelTypeId);
-                    return fuel ? fuel.name : '';
-                },
-
-                getStationName(stationId) {
-                    const station = this.gasStations.find(s => s.id === stationId);
-                    return station ? station.name : '';
-                },
-
-                getPumpPricesByFuel(fuelTypeId) {
-                    return this.pumpPrices.filter(p => p.fuel_type_id === fuelTypeId && p.pump_price);
-                },
-
-                canSubmit() {
-                    return this.formData.name &&
-                           this.formData.quotation_date &&
-                           this.prices.length > 0 &&
-                           Object.keys(this.averages).length > 0;
-                },
-
-                autoSave() {
-                    clearTimeout(this.autoSaveTimeout);
-                    this.autoSaveTimeout = setTimeout(() => {
-                        this.saveToLocalStorage();
-                        this.lastSaved = new Date().toLocaleTimeString('pt-BR');
-                    }, 1000);
-                },
-
-                saveToLocalStorage() {
-                    const data = {
-                        formData: this.formData,
-                        prices: this.prices.map(p => ({
-                            gas_station_id: p.gas_station_id,
-                            fuel_type_id: p.fuel_type_id,
-                            price: p.price
-                        })),
-                        pumpPrices: this.pumpPrices.map(p => ({
-                            gas_station_id: p.gas_station_id,
-                            fuel_type_id: p.fuel_type_id,
-                            pump_price: p.pump_price
-                        })),
-                        discounts: this.discounts
-                    };
-
-                    localStorage.setItem('fuelQuotationDraft', JSON.stringify(data));
-                },
-
-                loadFromLocalStorage() {
-                    const saved = localStorage.getItem('fuelQuotationDraft');
-                    if (saved) {
-                        try {
-                            const data = JSON.parse(saved);
-                            this.formData = data.formData || this.formData;
-                            this.prices = data.prices || [];
-                            this.pumpPrices = data.pumpPrices || [];
-                            this.discounts = data.discounts || {};
-                            this.calculateAverages();
-                        } catch (e) {
-                            console.error('Erro ao carregar dados salvos:', e);
-                        }
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.formData.stations[stationIndex].prices[priceIndex][`image_${imageNumber}_preview`] = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
                     }
                 },
 
-                clearLocalStorage() {
-                    if (confirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.')) {
-                        localStorage.removeItem('fuelQuotationDraft');
-                        location.reload();
+                removeImage(stationIndex, priceIndex, imageNumber) {
+                    this.formData.stations[stationIndex].prices[priceIndex][`image_${imageNumber}_preview`] = null;
+                    // Limpar o input de arquivo
+                    const input = document.querySelector(`input[name="stations[${stationIndex}][prices][${priceIndex}][image_${imageNumber}]"]`);
+                    if (input) input.value = '';
+                },
+
+                handlePumpImageUpload(event, pumpIndex) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.formData.pumpPrices[pumpIndex].evidence_preview = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
                     }
                 },
 
-                async submitForm() {
-                    if (!this.canSubmit()) {
-                        alert('Preencha todos os campos obrigatórios antes de finalizar.');
+                removePumpImage(pumpIndex) {
+                    this.formData.pumpPrices[pumpIndex].evidence_preview = null;
+                    // Limpar o input de arquivo
+                    const input = document.querySelector(`input[name="pump_prices[${pumpIndex}][evidence]"]`);
+                    if (input) input.value = '';
+                },
+
+                async submitForm(event) {
+                    if (this.submitting) return;
+
+                    if (this.formData.stations.length === 0) {
+                        alert('Adicione pelo menos um posto para continuar.');
                         return;
                     }
 
-                    const formData = new FormData();
-
-                    // Dados básicos
-                    formData.append('name', this.formData.name);
-                    formData.append('quotation_date', this.formData.quotation_date);
-                    formData.append('calculation_method', this.formData.calculation_method);
-                    formData.append('notes', this.formData.notes || '');
-
-                    // Preços
-                    this.prices.forEach((price, index) => {
-                        formData.append(`prices[${index}][gas_station_id]`, price.gas_station_id);
-                        formData.append(`prices[${index}][fuel_type_id]`, price.fuel_type_id);
-                        formData.append(`prices[${index}][price]`, price.price);
-                        if (price.evidence) {
-                            formData.append(`prices[${index}][evidence]`, price.evidence);
-                        }
-                    });
-
-                    // Descontos
-                    Object.keys(this.discounts).forEach((fuelTypeId, index) => {
-                        formData.append(`discounts[${index}][fuel_type_id]`, fuelTypeId);
-                        formData.append(`discounts[${index}][discount_percentage]`, this.discounts[fuelTypeId]);
-                    });
-
-                    // Preços de bomba
-                    this.pumpPrices.forEach((pump, index) => {
-                        if (pump.gas_station_id && pump.fuel_type_id && pump.pump_price) {
-                            formData.append(`pump_prices[${index}][gas_station_id]`, pump.gas_station_id);
-                            formData.append(`pump_prices[${index}][fuel_type_id]`, pump.fuel_type_id);
-                            formData.append(`pump_prices[${index}][pump_price]`, pump.pump_price);
-                            if (pump.evidence) {
-                                formData.append(`pump_prices[${index}][evidence]`, pump.evidence);
-                            }
-                        }
-                    });
+                    this.submitting = true;
 
                     try {
-                        const response = await fetch('{{ route("fuel-quotations.store") }}', {
+                        const formElement = event.target;
+                        const formData = new FormData(formElement);
+
+                        // Adicionar dados básicos
+                        formData.append('name', this.formData.name);
+                        formData.append('quotation_date', this.formData.quotation_date);
+                        formData.append('notes', this.formData.notes);
+
+                        // Adicionar hidden inputs para stations
+                        this.formData.stations.forEach((station, si) => {
+                            formData.append(`stations[${si}][gas_station_id]`, station.gas_station_id);
+                        });
+
+                        // Adicionar hidden inputs para pumpPrices
+                        this.formData.pumpPrices.forEach((pumpPrice, pi) => {
+                            formData.append(`pump_prices[${pi}][gas_station_id]`, pumpPrice.gas_station_id);
+                            formData.append(`pump_prices[${pi}][fuel_type_id]`, pumpPrice.fuel_type_id);
+                            formData.append(`pump_prices[${pi}][pump_price]`, pumpPrice.pump_price);
+                        });
+
+                        const response = await fetch('{{ route('fuel-quotations.store') }}', {
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json',
                             },
                             body: formData
                         });
 
-                        if (response.ok) {
-                            localStorage.removeItem('fuelQuotationDraft');
-                            window.location.href = '{{ route("fuel-quotations.index") }}';
+                        const data = await response.json();
+
+                        if (data.success) {
+                            window.location.href = data.redirect;
                         } else {
-                            const error = await response.text();
-                            alert('Erro ao salvar cotação: ' + error);
+                            alert('Erro ao salvar cotação: ' + data.message);
                         }
                     } catch (error) {
                         console.error('Erro:', error);
-                        alert('Erro ao salvar cotação. Verifique sua conexão e tente novamente.');
+                        alert('Erro ao salvar cotação: ' + error.message);
+                    } finally {
+                        this.submitting = false;
                     }
                 }
             }

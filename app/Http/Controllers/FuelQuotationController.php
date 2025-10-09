@@ -52,20 +52,16 @@ class FuelQuotationController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'quotation_date' => 'required|date',
-            'calculation_method' => 'required|in:simple_average,custom',
             'notes' => 'nullable|string',
 
-            // Preços coletados
-            'prices' => 'required|array|min:1',
-            'prices.*.gas_station_id' => 'required|exists:gas_stations,id',
-            'prices.*.fuel_type_id' => 'required|exists:fuel_types,id',
-            'prices.*.price' => 'required|numeric|min:0',
-            'prices.*.evidence' => 'nullable|image|max:5120',
-
-            // Descontos
-            'discounts' => 'required|array|min:1',
-            'discounts.*.fuel_type_id' => 'required|exists:fuel_types,id',
-            'discounts.*.discount_percentage' => 'required|numeric|min:0|max:100',
+            // Nova estrutura: preços por posto (cada posto tem todos os combustíveis)
+            'stations' => 'required|array|min:1',
+            'stations.*.gas_station_id' => 'required|exists:gas_stations,id',
+            'stations.*.prices' => 'required|array',
+            'stations.*.prices.*.fuel_type_id' => 'required|exists:fuel_types,id',
+            'stations.*.prices.*.price' => 'nullable|numeric|min:0',
+            'stations.*.prices.*.image_1' => 'nullable|image|max:5120',
+            'stations.*.prices.*.image_2' => 'nullable|image|max:5120',
 
             // Preços de bomba (opcionais)
             'pump_prices' => 'nullable|array',
@@ -83,50 +79,47 @@ class FuelQuotationController extends Controller
                 'user_id' => Auth::id(),
                 'name' => $request->name,
                 'quotation_date' => $request->quotation_date,
-                'calculation_method' => $request->calculation_method,
+                'calculation_method' => 'simple_average',
                 'notes' => $request->notes,
                 'status' => 'completed',
             ]);
 
-            // Salvar preços coletados
-            foreach ($request->prices as $index => $priceData) {
-                $evidencePath = null;
-                if (isset($priceData['evidence'])) {
-                    $evidencePath = $priceData['evidence']->store('fuel-quotations/evidence', 'public');
+            // Salvar preços por posto
+            foreach ($request->stations as $stationData) {
+                foreach ($stationData['prices'] as $priceData) {
+                    // Ignorar se preço não foi informado ou é 0
+                    if (empty($priceData['price']) || $priceData['price'] == 0) {
+                        continue;
+                    }
+
+                    $image1Path = null;
+                    $image2Path = null;
+
+                    if (isset($priceData['image_1'])) {
+                        $image1Path = $priceData['image_1']->store('fuel-quotations/images', 'public');
+                    }
+
+                    if (isset($priceData['image_2'])) {
+                        $image2Path = $priceData['image_2']->store('fuel-quotations/images', 'public');
+                    }
+
+                    FuelQuotationPrice::create([
+                        'fuel_quotation_id' => $quotation->id,
+                        'gas_station_id' => $stationData['gas_station_id'],
+                        'fuel_type_id' => $priceData['fuel_type_id'],
+                        'price' => $priceData['price'],
+                        'image_1' => $image1Path,
+                        'image_2' => $image2Path,
+                    ]);
                 }
-
-                FuelQuotationPrice::create([
-                    'fuel_quotation_id' => $quotation->id,
-                    'gas_station_id' => $priceData['gas_station_id'],
-                    'fuel_type_id' => $priceData['fuel_type_id'],
-                    'price' => $priceData['price'],
-                    'evidence_path' => $evidencePath,
-                ]);
             }
 
-            // Calcular médias e salvar descontos
-            $averages = $quotation->calculateAverages();
-
-            foreach ($request->discounts as $discountData) {
-                $fuelTypeId = $discountData['fuel_type_id'];
-                $averagePrice = $averages[$fuelTypeId] ?? 0;
-                $discountPercentage = $discountData['discount_percentage'];
-                $finalPrice = $averagePrice - ($averagePrice * ($discountPercentage / 100));
-
-                FuelQuotationDiscount::create([
-                    'fuel_quotation_id' => $quotation->id,
-                    'fuel_type_id' => $fuelTypeId,
-                    'average_price' => $averagePrice,
-                    'discount_percentage' => $discountPercentage,
-                    'final_price' => round($finalPrice, 3),
-                ]);
-            }
-
-            // Salvar preços de bomba se fornecidos
-            if ($request->has('pump_prices')) {
+            // Salvar preços de bomba (se fornecidos)
+            if ($request->has('pump_prices') && is_array($request->pump_prices)) {
                 foreach ($request->pump_prices as $pumpData) {
                     $evidencePath = null;
-                    if (isset($pumpData['evidence'])) {
+
+                    if (isset($pumpData['evidence']) && $pumpData['evidence']) {
                         $evidencePath = $pumpData['evidence']->store('fuel-quotations/pump-evidence', 'public');
                     }
 
@@ -140,14 +133,79 @@ class FuelQuotationController extends Controller
                 }
             }
 
+            // Calcular médias e aplicar descontos usando configurações
+            $this->calculateAndApplyDiscounts($quotation);
+
             DB::commit();
 
-            return redirect()->route('fuel-quotations.show', $quotation)
-                ->with('success', 'Cotação criada com sucesso!');
+            return response()->json([
+                'success' => true,
+                'message' => 'Cotação criada com sucesso!',
+                'redirect' => route('fuel-quotations.show', $quotation)
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'Erro ao criar cotação: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao salvar cotação: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Calcular médias e aplicar descontos baseados nas configurações
+     */
+    private function calculateAndApplyDiscounts(FuelQuotation $quotation)
+    {
+        $fuelTypes = FuelType::with(['calculationMethods' => function($query) {
+            $query->where('is_active', true)->orderBy('order');
+        }, 'discountSettings' => function($query) {
+            $query->where('is_active', true)->orderBy('order');
+        }])->get();
+
+        foreach ($fuelTypes as $fuelType) {
+            // Calcular média de preços para este tipo de combustível
+            $prices = $quotation->prices()
+                ->where('fuel_type_id', $fuelType->id)
+                ->pluck('price');
+
+            if ($prices->isEmpty()) {
+                continue;
+            }
+
+            // Usar método de cálculo configurado ou média simples
+            $calculationMethod = $fuelType->calculationMethods->first();
+
+            if ($calculationMethod && $calculationMethod->calculation_type === 'weighted_average') {
+                // Implementar média ponderada se necessário
+                $averagePrice = $prices->avg();
+            } else {
+                $averagePrice = $prices->avg();
+            }
+
+            // Aplicar descontos configurados
+            $discountSetting = $fuelType->discountSettings->first();
+            $discountPercentage = 0;
+            $finalPrice = $averagePrice;
+
+            if ($discountSetting) {
+                if ($discountSetting->discount_type === 'percentage') {
+                    $discountPercentage = $discountSetting->percentage;
+                    $finalPrice = $averagePrice - ($averagePrice * ($discountPercentage / 100));
+                } elseif ($discountSetting->discount_type === 'fixed') {
+                    $finalPrice = $averagePrice - $discountSetting->fixed_value;
+                    $discountPercentage = (($averagePrice - $finalPrice) / $averagePrice) * 100;
+                }
+            }
+
+            FuelQuotationDiscount::create([
+                'fuel_quotation_id' => $quotation->id,
+                'fuel_type_id' => $fuelType->id,
+                'average_price' => round($averagePrice, 3),
+                'discount_percentage' => round($discountPercentage, 2),
+                'final_price' => round($finalPrice, 3),
+            ]);
         }
     }
 
@@ -288,7 +346,7 @@ class FuelQuotationController extends Controller
 
         // Calcular média
         foreach ($pricesByFuelType as $fuelTypeId => $prices) {
-            if ($request->method === 'simple_average') {
+            if ($request->input('method') === 'simple_average') {
                 $average = array_sum($prices) / count($prices);
             } else {
                 // Método personalizado
@@ -300,5 +358,36 @@ class FuelQuotationController extends Controller
 
         return response()->json($averages);
     }
-}
 
+    /**
+     * Deletar imagem de um preço
+     */
+    public function deleteImage(Request $request)
+    {
+        $request->validate([
+            'price_id' => 'required|exists:fuel_quotation_prices,id',
+            'image_field' => 'required|in:image_1,image_2',
+        ]);
+
+        try {
+            $price = FuelQuotationPrice::findOrFail($request->price_id);
+            $imageField = $request->image_field;
+
+            if ($price->$imageField) {
+                Storage::disk('public')->delete($price->$imageField);
+                $price->$imageField = null;
+                $price->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Imagem removida com sucesso!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao remover imagem: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+}

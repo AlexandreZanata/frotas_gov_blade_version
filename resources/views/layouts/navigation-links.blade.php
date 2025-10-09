@@ -7,6 +7,7 @@
 @php($reportsGroupActive = request()->routeIs('backup-reports.*') || request()->routeIs('pdf-templates.*'))
 @php($usersGroupActive = request()->routeIs('users.*') || request()->routeIs('default-passwords.*'))
 @php($auditGroupActive = request()->routeIs('audit-logs.*'))
+@php($finesGroupActive = request()->routeIs('fines.*'))
 {{-- CSS inline para controle visual --}}
 <style>
     /* Apenas aplicar transformações visuais que não conflitam com Alpine */
@@ -53,6 +54,7 @@
         reportsOpen: {{ $reportsGroupActive ? 'true' : 'false' }},
         usersOpen: {{ $usersGroupActive ? 'true' : 'false' }},
         auditOpen: {{ $auditGroupActive ? 'true' : 'false' }},
+        finesOpen: {{ $finesGroupActive ? 'true' : 'false' }},
         // Adicionar estas variáveis para controlar submenus quando colapsado
         logbookSubmenuOpen: false,
         checklistSubmenuOpen: false,
@@ -62,9 +64,10 @@
         reportsSubmenuOpen: false,
         usersSubmenuOpen: false,
         auditSubmenuOpen: false,
+        finesSubmenuOpen: false,
         // Função para fechar outros menus quando um abre
         closeOtherMenus(except) {
-            const menus = ['vehicles', 'logbook', 'checklist', 'maintenance', 'fuel', 'reports', 'users', 'audit'];
+            const menus = ['vehicles', 'logbook', 'checklist', 'maintenance', 'fuel', 'reports', 'users', 'audit', 'fines'];
             menus.forEach(menu => {
                 if (menu !== except) {
                     this[menu + 'Open'] = false;
@@ -146,6 +149,10 @@
     $watch('auditOpen', value => {
         if (!{{ $auditGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-audit-open', value);
         if (value) this.closeOtherMenus('audit');
+    });
+    $watch('finesOpen', value => {
+        if (!{{ $finesGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-fines-open', value);
+        if (value) this.closeOtherMenus('fines');
     });
 }"
 >
@@ -523,6 +530,16 @@
                         <span>Postos</span>
                     </a>
                 </li>
+                @if(auth()->user()->isGeneralManager())
+                    <li>
+                        <a href="{{ route('fuel-quotations.settings') }}"
+                           class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                    {{ request()->routeIs('fuel-quotations.settings') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                            <x-icon name="settings" class="w-3.5 h-3.5" />
+                            <span>Configurações</span>
+                        </a>
+                    </li>
+                @endif
             </ul>
             <!-- Submenu popup quando colapsada -->
             <div x-cloak
@@ -554,6 +571,63 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
                     <span>Postos</span>
+                </a>
+                @if(auth()->user()->isGeneralManager())
+                    <a href="{{ route('fuel-quotations.settings') }}"
+                       class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('fuel-quotations.settings') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                        <x-icon name="settings" class="w-4 h-4" />
+                        <span>Configurações</span>
+                    </a>
+                @endif
+            </div>
+        </li>
+    @endif
+
+    {{-- Insira este bloco no local desejado na sua lista <ul> --}}
+    @if(auth()->user()->isManager())
+        <li class="relative group">
+            @if($finesGroupActive)
+                <span class="absolute inset-y-0 left-0 w-1 bg-primary-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"></span>
+            @endif
+            <button type="button"
+                    @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ finesSubmenuOpen = !finesSubmenuOpen; } else { finesOpen = !finesOpen; }"
+                    @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ finesSubmenuOpen = false; }"
+                    class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
+        {{ $finesGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
+                <x-icon name="speed-camera" class="w-5 h-5 shrink-0" />
+                <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Multas</span>
+                <x-icon name="chevron-down" id="nav-fines-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="finesOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+            </button>
+            <ul id="nav-fines-submenu" x-show="finesOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition">
+                <li>
+                    <a href="{{ route('fines.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                {{ request()->routeIs('fines.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                        <x-icon name="list" class="w-3.5 h-3.5" /> <span>Gerenciar</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('fines.create') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                {{ request()->routeIs('fines.create') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                        <x-icon name="plus" class="w-3.5 h-3.5" /> <span>Cadastrar</span>
+                    </a>
+                </li>
+            </ul>
+            <div x-cloak
+                 x-show="finesSubmenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
+                 x-transition
+                 class="absolute left-full top-0 ml-2 w-56 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-gray-200 dark:border-navy-700 py-2 z-50">
+                <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-navy-300 uppercase tracking-wider border-b border-gray-200 dark:border-navy-700 mb-1">
+                    Multas
+                </div>
+                <a href="{{ route('fines.index') }}"
+                   class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('fines.index') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                    <x-icon name="list" class="w-4 h-4" />
+                    <span>Gerenciar</span>
+                </a>
+                <a href="{{ route('fines.create') }}"
+                   class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('fines.create') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                    <x-icon name="plus" class="w-4 h-4" />
+                    <span>Cadastrar</span>
                 </a>
             </div>
         </li>
@@ -780,4 +854,3 @@
         </a>
     </li>
 </ul>
-

@@ -100,6 +100,17 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M10 8l6 4-6 4V8z"/>
         </svg>
         @break
+    @case('speed-camera')
+        <svg {{ $attributes->merge(['class'=>$classes]) }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            {{-- Corpo da câmera/radar --}}
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"/>
+            {{-- Lente e flash --}}
+            <circle cx="12" cy="11" r="3"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 7h.01"/>
+            {{-- Poste de suporte --}}
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v4"/>
+        </svg>
+        @break
     @case('play')
         <svg {{ $attributes->merge(['class'=>$classes]) }} fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 3l14 9-14 9V3z"/>
