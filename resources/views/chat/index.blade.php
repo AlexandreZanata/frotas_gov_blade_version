@@ -379,6 +379,7 @@
                 typingTimeout: null,
                 echo: null,
                 currentChannel: null,
+                isLoadingMessages: false,
 
                 init() {
                     console.log('Chat App iniciando...', {
@@ -396,22 +397,48 @@
                     this.initWebSocket();
                     this.listenToOnlineStatus();
 
-                    // Desabilitar page loading para requisições do chat
+                    // Desabilitar page loading COMPLETAMENTE para a página de chat
                     this.disablePageLoadingForChat();
                 },
 
                 disablePageLoadingForChat() {
-                    // Interceptar fetch para desabilitar loading
+                    // Desabilitar o page loading imediatamente
+                    const setLoadingOff = () => {
+                        const layoutData = Alpine.$data(document.documentElement);
+                        if (layoutData && layoutData.pageLoading !== undefined) {
+                            layoutData.pageLoading = false;
+                        }
+                    };
+
+                    setLoadingOff();
+
+                    // Monitorar mudanças no pageLoading e forçar para false
+                    setInterval(setLoadingOff, 100);
+
+                    // Interceptar todos os eventos que ativam o loading
+                    document.addEventListener('submit', (e) => {
+                        // Se for o formulário do chat, prevenir comportamento padrão
+                        const form = e.target;
+                        if (form && form.closest('[x-data*="chatApp"]')) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                        }
+                        setLoadingOff();
+                        return false;
+                    }, true);
+
+                    document.addEventListener('click', (e) => {
+                        setLoadingOff();
+                    }, true);
+
+                    // Sobrescrever o fetch para garantir que o loading nunca seja ativado
                     const originalFetch = window.fetch;
                     window.fetch = (...args) => {
-                        const url = args[0];
-                        // Se a URL contém '/chat/', desabilitar o loading temporariamente
-                        if (typeof url === 'string' && url.includes('/chat/')) {
-                            const layoutData = Alpine.$data(document.documentElement);
-                            if (layoutData) {
-                                layoutData.pageLoading = false;
-                            }
-                        }
+                        setLoadingOff();
+                        setTimeout(setLoadingOff, 0);
+                        setTimeout(setLoadingOff, 50);
+                        setTimeout(setLoadingOff, 100);
                         return originalFetch.apply(window, args);
                     };
                 },
@@ -427,6 +454,8 @@
                 },
 
                 subscribeToRoom(roomId) {
+                    console.log('Inscrevendo no canal:', roomId);
+
                     // Deixar canal anterior
                     if (this.currentChannel) {
                         window.Echo.leave(`chat.${this.currentChannel}`);
@@ -434,13 +463,25 @@
 
                     this.currentChannel = roomId;
 
-                    // Conectar ao canal privado da sala
+                    // Conectar ao canal privado da sala - USAR OS NOMES CORRETOS DOS EVENTOS
                     window.Echo.private(`chat.${roomId}`)
                         .listen('.message.sent', (e) => {
-                            console.log('Nova mensagem recebida:', e);
-                            this.messages.push(e.message);
-                            this.$nextTick(() => this.scrollToBottom());
-                            this.markMessagesAsRead();
+                            console.log('Nova mensagem recebida via WebSocket:', e);
+
+                            // Verificar se a mensagem já existe (evitar duplicatas)
+                            const exists = this.messages.some(m => m.id === e.message.id);
+                            if (!exists) {
+                                this.messages.push(e.message);
+                                this.$nextTick(() => this.scrollToBottom());
+
+                                // Só marcar como lida se não for do usuário atual
+                                if (e.message.user_id !== this.currentUserId) {
+                                    this.markMessagesAsRead();
+                                }
+
+                                // Atualizar a sala na lista
+                                this.updateRoomLastMessage(roomId, e.message);
+                            }
                         })
                         .listen('.message.read', (e) => {
                             console.log('Mensagem lida:', e);
@@ -467,6 +508,7 @@
                 },
 
                 async selectRoom(roomId) {
+                    console.log('Selecionando sala:', roomId);
                     this.activeRoomId = roomId;
                     this.activeRoom = this.rooms.find(r => r.id === roomId);
 
@@ -479,23 +521,44 @@
                 },
 
                 async loadMessages() {
+                    if (this.isLoadingMessages) return;
+
+                    this.isLoadingMessages = true;
                     try {
                         const response = await fetch(`/chat/room/${this.activeRoomId}/messages`);
-                        this.messages = await response.json();
-                        this.$nextTick(() => this.scrollToBottom());
+                        if (response.ok) {
+                            this.messages = await response.json();
+                            console.log('Mensagens carregadas:', this.messages.length);
+                            this.$nextTick(() => this.scrollToBottom());
+                        }
                     } catch (error) {
                         console.error('Erro ao carregar mensagens:', error);
+                    } finally {
+                        this.isLoadingMessages = false;
                     }
                 },
 
                 async sendMessage() {
                     if (!this.newMessage.trim() && !this.uploadedFile) return;
 
-                    const formData = new FormData();
-                    formData.append('message', this.newMessage);
+                    // IMPORTANTE: Prevenir qualquer comportamento padrão
+                    const layoutData = Alpine.$data(document.documentElement);
+                    if (layoutData) {
+                        layoutData.pageLoading = false;
+                    }
 
-                    if (this.uploadedFile) {
-                        formData.append('attachment', this.uploadedFile);
+                    const tempMessage = this.newMessage;
+                    const tempFile = this.uploadedFile;
+
+                    // Limpar input imediatamente para melhor UX
+                    this.newMessage = '';
+                    this.uploadedFile = null;
+
+                    const formData = new FormData();
+                    formData.append('message', tempMessage);
+
+                    if (tempFile) {
+                        formData.append('attachment', tempFile);
                     }
 
                     try {
@@ -507,19 +570,61 @@
                             body: formData
                         });
 
-                        const message = await response.json();
-                        this.messages.push(message);
-                        this.newMessage = '';
-                        this.uploadedFile = null;
-                        this.$nextTick(() => this.scrollToBottom());
+                        if (response.ok) {
+                            const message = await response.json();
+                            console.log('Mensagem enviada com sucesso:', message);
 
-                        // Atualizar última mensagem na lista
-                        const room = this.rooms.find(r => r.id === this.activeRoomId);
-                        if (room) {
-                            room.latest_message = message;
+                            // Adicionar a mensagem localmente (será confirmada via WebSocket)
+                            const exists = this.messages.some(m => m.id === message.id);
+                            if (!exists) {
+                                this.messages.push(message);
+                                this.$nextTick(() => this.scrollToBottom());
+                            }
+
+                            // Atualizar última mensagem na lista
+                            this.updateRoomLastMessage(this.activeRoomId, message);
+
+                            // Garantir que o loading está desabilitado
+                            if (layoutData) {
+                                layoutData.pageLoading = false;
+                            }
+                        } else {
+                            console.error('Erro ao enviar mensagem:', response.status);
+                            // Restaurar mensagem em caso de erro
+                            this.newMessage = tempMessage;
+                            this.uploadedFile = tempFile;
+                            alert('Erro ao enviar mensagem. Tente novamente.');
                         }
                     } catch (error) {
                         console.error('Erro ao enviar mensagem:', error);
+                        this.newMessage = tempMessage;
+                        this.uploadedFile = tempFile;
+                        alert('Erro ao enviar mensagem. Verifique sua conexão.');
+                    } finally {
+                        // Garantir que o loading está desabilitado
+                        if (layoutData) {
+                            layoutData.pageLoading = false;
+                        }
+                    }
+
+                    // Prevenir propagação
+                    return false;
+                },
+
+                updateRoomLastMessage(roomId, message) {
+                    const room = this.rooms.find(r => r.id === roomId);
+                    if (room) {
+                        room.latest_message = message;
+                        room.updated_at = message.created_at;
+
+                        // Reordenar salas por última mensagem
+                        this.rooms.sort((a, b) => {
+                            const dateA = a.latest_message ? new Date(a.latest_message.created_at) : new Date(a.updated_at);
+                            const dateB = b.latest_message ? new Date(b.latest_message.created_at) : new Date(b.updated_at);
+                            return dateB - dateA;
+                        });
+
+                        this.filterChats();
                     }
                 },
 
@@ -553,6 +658,8 @@
                 },
 
                 handleTyping() {
+                    if (!this.activeRoomId) return;
+
                     if (this.typingTimeout) {
                         clearTimeout(this.typingTimeout);
                     }
@@ -564,7 +671,7 @@
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         },
                         body: JSON.stringify({ typing: true })
-                    });
+                    }).catch(err => console.error('Erro ao enviar typing:', err));
 
                     this.typingTimeout = setTimeout(() => {
                         fetch(`/chat/room/${this.activeRoomId}/typing`, {
@@ -574,7 +681,7 @@
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                             },
                             body: JSON.stringify({ typing: false })
-                        });
+                        }).catch(err => console.error('Erro ao enviar typing:', err));
                     }, 3000);
                 },
 
@@ -600,6 +707,7 @@
 
                     if (file.size > 10 * 1024 * 1024) {
                         alert('Arquivo muito grande! Máximo 10MB.');
+                        event.target.value = '';
                         return;
                     }
 
@@ -614,13 +722,26 @@
 
                     try {
                         const response = await fetch(`/chat/search-users?q=${encodeURIComponent(this.userSearchQuery)}`);
-                        this.searchedUsers = await response.json();
+                        if (response.ok) {
+                            this.searchedUsers = await response.json();
+                            console.log('Usuários encontrados:', this.searchedUsers);
+                        } else {
+                            console.error('Erro ao buscar usuários:', response.status);
+                            this.searchedUsers = [];
+                        }
                     } catch (error) {
                         console.error('Erro ao buscar usuários:', error);
+                        this.searchedUsers = [];
                     }
                 },
 
                 async startChatWithUser(userId) {
+                    console.log('Iniciando chat com usuário:', userId);
+                    // Desabilitar loading antes de navegar
+                    const layoutData = Alpine.$data(document.documentElement);
+                    if (layoutData) {
+                        layoutData.pageLoading = false;
+                    }
                     window.location.href = `/chat/start/${userId}`;
                 },
 
@@ -639,7 +760,9 @@
                 updateMessageReadStatus(messageId, userId) {
                     const message = this.messages.find(m => m.id === messageId);
                     if (message) {
-                        message.read_receipts.push({ user_id: userId, read_at: new Date().toISOString() });
+                        if (!message.read_receipts.some(r => r.user_id === userId)) {
+                            message.read_receipts.push({ user_id: userId, read_at: new Date().toISOString() });
+                        }
                     }
                 },
 
@@ -678,12 +801,41 @@
                 scrollToBottom() {
                     const container = this.$refs.messagesContainer;
                     if (container) {
-                        container.scrollTop = container.scrollHeight;
+                        setTimeout(() => {
+                            container.scrollTop = container.scrollHeight;
+                        }, 100);
                     }
                 },
 
                 openImageModal(url) {
                     this.imageModalUrl = url;
+                },
+
+                // Funcionalidade: Copiar mensagem
+                copyMessage(message) {
+                    navigator.clipboard.writeText(message.message).then(() => {
+                        console.log('Mensagem copiada!');
+                    });
+                },
+
+                // Funcionalidade: Deletar mensagem (apenas suas próprias)
+                async deleteMessage(messageId) {
+                    if (!confirm('Deseja realmente deletar esta mensagem?')) return;
+
+                    try {
+                        const response = await fetch(`/chat/room/${this.activeRoomId}/message/${messageId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            }
+                        });
+
+                        if (response.ok) {
+                            this.messages = this.messages.filter(m => m.id !== messageId);
+                        }
+                    } catch (error) {
+                        console.error('Erro ao deletar mensagem:', error);
+                    }
                 }
             }
         }
