@@ -8,6 +8,7 @@
         />
     </x-slot>
 
+    <div class="py-6">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             <!-- Informações do Veículo -->
@@ -16,6 +17,7 @@
                     <div>
                         <p class="text-sm text-gray-500 dark:text-navy-300">Prefixo</p>
                         <p class="font-semibold text-gray-900 dark:text-navy-50">{{ $vehicle->prefix->name ?? 'N/A' }}</p>
+                    </div>
                     <div>
                         <p class="text-sm text-gray-500 dark:text-navy-300">Nome</p>
                         <p class="font-semibold text-gray-900 dark:text-navy-50">{{ $vehicle->name }}</p>
@@ -50,8 +52,8 @@
                                     'border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20': status === 'attention',
                                     'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20': status === 'problem',
                                     'border-gray-200 dark:border-navy-700 bg-white dark:bg-navy-800': !status
-                                }"
-                            >
+                                }">
+
                                 <div class="p-4 space-y-4">
                                     <!-- Item Header -->
                                     <div class="flex items-start justify-between">

@@ -6,12 +6,14 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ config('app.name', 'Laravel') }}</title>
         <script>/* Anti-flicker dark mode early apply */(function(){try{const s=localStorage.getItem('theme-dark');if(s==='true'||(s===null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
-        <script>/* Anti-flicker dark + sidebar width */(function(){try{var d=document.documentElement;const s=localStorage.getItem('theme-dark');if(s==='true'||(s===null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){d.classList.add('dark');}var c=localStorage.getItem('sidebar-collapsed')==='true';d.classList.add('pre-sidebar');d.style.setProperty('--sidebar-w', c? '4rem':'16rem');}catch(e){}})();</script>
+        <script>/* Anti-flicker dark + sidebar width unified */(function(){try{var d=document.documentElement;var s=localStorage.getItem('theme-dark');if(s==='true'||(s===null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){d.classList.add('dark');}var collapsed=localStorage.getItem('sidebar-collapsed')==='true';d.classList.add('pre-sidebar','no-transition');d.style.setProperty('--sidebar-w', collapsed? '4rem':'16rem');}catch(e){}})();</script>
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
         <style>
             :root { --sidebar-w:16rem; }
+            .layout-shell { min-height:100vh; }
+            @media (min-width:1024px){ .layout-shell { margin-left: var(--sidebar-w); transition: margin-left .3s ease-in-out; } }
             .pre-sidebar .layout-shell { margin-left: var(--sidebar-w); }
             @media (max-width:1023px){ .pre-sidebar .layout-shell { margin-left:0!important; } }
             [x-cloak]{display:none!important} .no-transition *{transition:none!important}
@@ -20,19 +22,23 @@
         <script>
             function layoutState() {
                 return {
-                    isSidebarCollapsed: false,
+                    // Inicializa diretamente evitando salto visual
+                    isSidebarCollapsed: (localStorage.getItem('sidebar-collapsed') === 'true'),
                     isMobileSidebarOpen: false,
                     darkMode: false,
                     pageLoading: false,
                     init() {
-                        const collapsedStored = localStorage.getItem('sidebar-collapsed');
-                        if (collapsedStored !== null) this.isSidebarCollapsed = collapsedStored === 'true';
+                        // Sidebar width já aplicada no script precoce; apenas garante variável quando Alpine assume
                         document.documentElement.style.setProperty('--sidebar-w', this.isSidebarCollapsed? '4rem':'16rem');
                         const stored = localStorage.getItem('theme-dark');
                         if (stored !== null) this.darkMode = stored === 'true'; else this.darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
                         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e)=>{ if(!localStorage.getItem('theme-dark')) this.darkMode=e.matches; });
                         this.setupPageTransitions();
-                        requestAnimationFrame(()=>document.documentElement.classList.remove('pre-sidebar'));
+                        // Remove classes anti-flicker sem animar primeira transição
+                        requestAnimationFrame(()=>{
+                            document.documentElement.classList.remove('pre-sidebar');
+                            document.documentElement.classList.remove('no-transition');
+                        });
                     },
                     toggleCollapse(){ this.isSidebarCollapsed=!this.isSidebarCollapsed; localStorage.setItem('sidebar-collapsed', this.isSidebarCollapsed); document.documentElement.style.setProperty('--sidebar-w', this.isSidebarCollapsed? '4rem':'16rem');},
                     openMobile(){ this.isMobileSidebarOpen=true; },
@@ -49,7 +55,6 @@
                             const a=e.target.closest('a');
                             if(!a) return; if(a.hasAttribute('data-no-progress')) return;
                             const url=a.getAttribute('href'); if(!url || url.startsWith('#') || a.target==='_blank' || url.startsWith('mailto:') || url.startsWith('tel:')) return;
-                            if(a.dataset?.turbo==='false'){} // placeholder
                             show();
                         });
                     }
@@ -90,7 +95,7 @@
         @include('layouts.sidebar')
 
         <!-- Main Wrapper ajusta margem conforme sidebar -->
-        <div class="min-h-screen flex flex-col transition-[margin] duration-300 ease-in-out layout-shell" x-bind:class="isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'">
+        <div class="layout-shell flex flex-col" >
             <!-- Top Bar -->
             <header class="sticky top-0 z-30 h-16 flex items-center gap-3 px-4 lg:px-6 bg-white/85 dark:bg-navy-800/90 backdrop-blur border-b border-gray-200 dark:border-navy-700 shadow-sm">
                 <!-- User Dropdown (mobile esquerda, desktop direita) -->

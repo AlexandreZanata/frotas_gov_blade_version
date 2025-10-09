@@ -119,6 +119,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/{checklist}/approve', [\App\Http\Controllers\ChecklistController::class, 'approve'])->name('approve');
         Route::post('/{checklist}/reject', [\App\Http\Controllers\ChecklistController::class, 'reject'])->name('reject');
     });
+
+    // Manutenção - Troca de Óleo
+    Route::prefix('oil-changes')->name('oil-changes.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\OilChangeController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\OilChangeController::class, 'store'])->name('store');
+        Route::get('/vehicle/{vehicle}/history', [\App\Http\Controllers\OilChangeController::class, 'history'])->name('history');
+        Route::get('/settings', [\App\Http\Controllers\OilChangeController::class, 'settings'])->name('settings');
+        Route::put('/settings/{setting}', [\App\Http\Controllers\OilChangeController::class, 'updateSettings'])->name('settings.update');
+    });
+
+    // API para dados do veículo (troca de óleo)
+    Route::get('/api/oil-changes/vehicle-data/{vehicle}', [\App\Http\Controllers\OilChangeController::class, 'getVehicleData'])->name('api.oil-changes.vehicle-data');
 });
 
 

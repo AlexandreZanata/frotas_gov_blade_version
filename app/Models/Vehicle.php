@@ -78,6 +78,11 @@ class Vehicle extends Model
         return $this->hasMany(VehicleTransfer::class);
     }
 
+    public function oilChanges()
+    {
+        return $this->hasMany(OilChange::class);
+    }
+
     /**
      * Relação com a secretaria
      */

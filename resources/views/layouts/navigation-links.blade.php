@@ -2,6 +2,7 @@
 @php($vehicleGroupActive = request()->routeIs('vehicles.*') || request()->routeIs('vehicle-categories.*') || request()->routeIs('prefixes.*') || request()->routeIs('vehicle-transfers.*'))
 @php($logbookGroupActive = request()->routeIs('logbook.*') || request()->routeIs('logbook-permissions.*'))
 @php($checklistGroupActive = request()->routeIs('checklists.*'))
+@php($maintenanceGroupActive = request()->routeIs('oil-changes.*'))
 @php($reportsGroupActive = request()->routeIs('backup-reports.*') || request()->routeIs('pdf-templates.*'))
 @php($usersGroupActive = request()->routeIs('users.*') || request()->routeIs('default-passwords.*'))
 @php($auditGroupActive = request()->routeIs('audit-logs.*'))
@@ -10,7 +11,7 @@
 <style>
     /* IMPORTANTE: Esconder TODOS os submenus por padrão para evitar flash visual */
 
-    /* Apenas aplicar transformações visuais que não conflitem com Alpine */
+    /* Apenas aplicar transformações visuais que não conflitam com Alpine */
     @if($vehicleGroupActive)
         #nav-vehicles-chevron { transform: rotate(180deg); }
     @endif
@@ -21,6 +22,10 @@
 
     @if($checklistGroupActive)
         #nav-checklist-chevron { transform: rotate(180deg); }
+    @endif
+
+    @if($maintenanceGroupActive)
+        #nav-maintenance-chevron { transform: rotate(180deg); }
     @endif
 
     @if($reportsGroupActive)
@@ -50,6 +55,7 @@
         vehiclesOpen: {{ $vehicleGroupActive ? 'true' : 'false' }},
         logbookOpen: {{ $logbookGroupActive ? 'true' : 'false' }},
         checklistOpen: {{ $checklistGroupActive ? 'true' : 'false' }},
+        maintenanceOpen: {{ $maintenanceGroupActive ? 'true' : 'false' }},
         reportsOpen: {{ $reportsGroupActive ? 'true' : 'false' }},
         usersOpen: {{ $usersGroupActive ? 'true' : 'false' }},
         auditOpen: {{ $auditGroupActive ? 'true' : 'false' }}
@@ -70,6 +76,12 @@
     @if(!$checklistGroupActive)
         if (localStorage.getItem('nav-checklist-open') !== null) {
             checklistOpen = localStorage.getItem('nav-checklist-open') === 'true';
+        }
+    @endif
+
+    @if(!$maintenanceGroupActive)
+        if (localStorage.getItem('nav-maintenance-open') !== null) {
+            maintenanceOpen = localStorage.getItem('nav-maintenance-open') === 'true';
         }
     @endif
 
@@ -94,6 +106,7 @@
     $watch('vehiclesOpen', value => { if (!{{ $vehicleGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-vehicles-open', value); });
     $watch('logbookOpen', value => { if (!{{ $logbookGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-logbook-open', value); });
     $watch('checklistOpen', value => { if (!{{ $checklistGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-checklist-open', value); });
+    $watch('maintenanceOpen', value => { if (!{{ $maintenanceGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-maintenance-open', value); });
     $watch('reportsOpen', value => { if (!{{ $reportsGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-reports-open', value); });
     $watch('usersOpen', value => { if (!{{ $usersGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-users-open', value); });
     $watch('auditOpen', value => { if (!{{ $auditGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-audit-open', value); });
@@ -196,7 +209,7 @@
             {{ $checklistGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="clipboard-check" class="w-5 h-5 shrink-0" />
             <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Checklists</span>
-            <x-icon name="chevron-down" id="nav-checklist-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="checklistOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+            <x-icon name="chevron-down" id="nav-checklist-chevron" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="checklistOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
         <ul id="nav-checklist-submenu" x-show="checklistOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition" style="display: none;">
@@ -255,8 +268,8 @@
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $vehicleGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="car" class="w-5 h-5 shrink-0" />
-            <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Veículos</span>
-            <x-icon name="chevron-down" id="nav-vehicles-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="vehiclesOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+            <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen">Veículos</span>
+            <x-icon name="chevron-down" id="nav-vehicles-chevron" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="vehiclesOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
         <ul id="nav-vehicles-submenu" x-show="vehiclesOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition" style="display: none;">
@@ -337,6 +350,61 @@
         </div>
     </li>
 
+    <!-- Manutenção -->
+    @if(auth()->user()->isManager())
+    <li class="relative group" x-data="{ submenuOpen: false }">
+        @if($maintenanceGroupActive)
+            <span class="absolute inset-y-0 left-0 w-1 bg-primary-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"></span>
+        @endif
+        <button type="button"
+                @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = !submenuOpen; } else { maintenanceOpen = !maintenanceOpen; }"
+                @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = false; }"
+                class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
+            {{ $maintenanceGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen">Manutenção</span>
+            <x-icon name="chevron-down" id="nav-maintenance-chevron" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="maintenanceOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+        </button>
+
+        <ul id="nav-maintenance-submenu" x-show="maintenanceOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition" style="display: none;">
+            <li>
+                <a href="{{ route('oil-changes.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                    {{ request()->routeIs('oil-changes.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                    </svg>
+                    <span>Troca de Óleo</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Submenu popup quando colapsada -->
+        <div x-cloak
+             x-show="submenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
+             x-transition:enter="transition ease-out duration-100"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-75"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="absolute left-full top-0 ml-2 w-56 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-gray-200 dark:border-navy-700 py-2 z-50">
+            <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-navy-300 uppercase tracking-wider border-b border-gray-200 dark:border-navy-700 mb-1">
+                Manutenção
+            </div>
+            <a href="{{ route('oil-changes.index') }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('oil-changes.*') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                </svg>
+                <span>Troca de Óleo</span>
+            </a>
+        </div>
+    </li>
+    @endif
+
     <!-- Relatórios / Backups -->
     <li class="relative group" x-data="{ submenuOpen: false }">
         @if($reportsGroupActive)
@@ -348,8 +416,8 @@
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $reportsGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="document" class="w-5 h-5 shrink-0" />
-            <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Relatórios</span>
-            <x-icon name="chevron-down" id="nav-reports-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="reportsOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
+            <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen">Relatórios</span>
+            <x-icon name="chevron-down" id="nav-reports-chevron" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="reportsOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
         <ul id="nav-reports-submenu" x-show="reportsOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition" style="display: none;">
@@ -413,7 +481,7 @@
             <x-icon name="chevron-down" id="nav-users-chevron" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="usersOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
 
-        <ul id="nav-users-submenu" x-show="usersOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition" style="display: none;">
+        <ul id="nav-users-submenu" x_show="usersOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition" style="display: none;">
             <li>
                 <a href="{{ route('users.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('users.*') && !request()->routeIs('users.create') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
