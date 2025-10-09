@@ -6,50 +6,39 @@
 @php($reportsGroupActive = request()->routeIs('backup-reports.*') || request()->routeIs('pdf-templates.*'))
 @php($usersGroupActive = request()->routeIs('users.*') || request()->routeIs('default-passwords.*'))
 @php($auditGroupActive = request()->routeIs('audit-logs.*'))
-
 {{-- CSS inline para controle visual --}}
 <style>
     /* Apenas aplicar transformações visuais que não conflitam com Alpine */
     @if($vehicleGroupActive)
         #nav-vehicles-chevron { transform: rotate(180deg); }
     @endif
-
     @if($logbookGroupActive)
         #nav-logbook-chevron { transform: rotate(180deg); }
     @endif
-
     @if($checklistGroupActive)
         #nav-checklist-chevron { transform: rotate(180deg); }
     @endif
-
     @if($maintenanceGroupActive)
         #nav-maintenance-chevron { transform: rotate(180deg); }
     @endif
-
     @if($reportsGroupActive)
         #nav-reports-chevron { transform: rotate(180deg); }
     @endif
-
     @if($usersGroupActive)
         #nav-users-chevron { transform: rotate(180deg); }
     @endif
-
     @if($auditGroupActive)
         #nav-audit-chevron { transform: rotate(180deg); }
     @endif
-
     /* Esconder elementos x-cloak ANTES do Alpine carregar */
     [x-cloak] { display: none !important; }
-
     /* Transições suaves para submenus */
     .submenu-transition {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         overflow: hidden;
     }
-
     /* REMOVIDO: CSS que escondia todos os submenus - isso estava impedindo a abertura */
 </style>
-
 <ul class="mt-4 space-y-1"
     x-data="{
         vehiclesOpen: {{ $vehicleGroupActive ? 'true' : 'false' }},
@@ -60,6 +49,14 @@
         usersOpen: {{ $usersGroupActive ? 'true' : 'false' }},
         auditOpen: {{ $auditGroupActive ? 'true' : 'false' }},
 
+        // Adicionar estas variáveis para controlar submenus quando colapsado
+        logbookSubmenuOpen: false,
+        checklistSubmenuOpen: false,
+        vehiclesSubmenuOpen: false,
+        maintenanceSubmenuOpen: false,
+        reportsSubmenuOpen: false,
+        usersSubmenuOpen: false,
+        auditSubmenuOpen: false,
         // Função para fechar outros menus quando um abre
         closeOtherMenus(except) {
             const menus = ['vehicles', 'logbook', 'checklist', 'maintenance', 'reports', 'users', 'audit'];
@@ -74,46 +71,39 @@
     // Inicialização do estado dos menus
     @if(!$vehicleGroupActive)
         if (localStorage.getItem('nav-vehicles-open') !== null) {
-            vehiclesOpen = localStorage.getItem('nav-vehicles-open') === 'true';
+            this.vehiclesOpen = localStorage.getItem('nav-vehicles-open') === 'true';
         }
     @endif
-
     @if(!$logbookGroupActive)
         if (localStorage.getItem('nav-logbook-open') !== null) {
-            logbookOpen = localStorage.getItem('nav-logbook-open') === 'true';
+            this.logbookOpen = localStorage.getItem('nav-logbook-open') === 'true';
         }
     @endif
-
     @if(!$checklistGroupActive)
         if (localStorage.getItem('nav-checklist-open') !== null) {
-            checklistOpen = localStorage.getItem('nav-checklist-open') === 'true';
+            this.checklistOpen = localStorage.getItem('nav-checklist-open') === 'true';
         }
     @endif
-
     @if(!$maintenanceGroupActive)
         if (localStorage.getItem('nav-maintenance-open') !== null) {
-            maintenanceOpen = localStorage.getItem('nav-maintenance-open') === 'true';
+            this.maintenanceOpen = localStorage.getItem('nav-maintenance-open') === 'true';
         }
     @endif
-
     @if(!$reportsGroupActive)
         if (localStorage.getItem('nav-reports-open') !== null) {
-            reportsOpen = localStorage.getItem('nav-reports-open') === 'true';
+            this.reportsOpen = localStorage.getItem('nav-reports-open') === 'true';
         }
     @endif
-
     @if(!$usersGroupActive)
         if (localStorage.getItem('nav-users-open') !== null) {
-            usersOpen = localStorage.getItem('nav-users-open') === 'true';
+            this.usersOpen = localStorage.getItem('nav-users-open') === 'true';
         }
     @endif
-
     @if(!$auditGroupActive)
         if (localStorage.getItem('nav-audit-open') !== null) {
-            auditOpen = localStorage.getItem('nav-audit-open') === 'true';
+            this.auditOpen = localStorage.getItem('nav-audit-open') === 'true';
         }
     @endif
-
     // Watchers para persistência e controle de menus
     $watch('vehiclesOpen', value => {
         if (!{{ $vehicleGroupActive ? 'true' : 'false' }}) localStorage.setItem('nav-vehicles-open', value);
@@ -158,22 +148,20 @@
             <span x-cloak x-show="isSidebarCollapsed && !isMobileSidebarOpen" class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 rounded bg-primary-600 text-white text-xs opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow z-50">Dashboard</span>
         </a>
     </li>
-
     <!-- Diário de Bordo -->
-    <li class="relative group" x-data="{ submenuOpen: false }">
+    <li class="relative group">
         @if($logbookGroupActive)
             <span class="absolute inset-y-0 left-0 w-1 bg-primary-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"></span>
         @endif
         <button type="button"
-                @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = !submenuOpen; } else { logbookOpen = !logbookOpen; }"
-                @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = false; }"
+                @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ logbookSubmenuOpen = !logbookSubmenuOpen; } else { logbookOpen = !logbookOpen; }"
+                @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ logbookSubmenuOpen = false; }"
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $logbookGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="clipboard" class="w-5 h-5 shrink-0" />
             <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Diário de Bordo</span>
             <x-icon name="chevron-down" id="nav-logbook-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="logbookOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
-
         <ul id="nav-logbook-submenu" x-show="logbookOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition">
             <li>
                 <a href="{{ route('logbook.start-flow') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
@@ -196,10 +184,9 @@
                 </li>
             @endif
         </ul>
-
         <!-- Submenu popup quando colapsada -->
         <div x-cloak
-             x-show="submenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
+             x-show="logbookSubmenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
              x-transition:enter="transition ease-out duration-100"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
@@ -229,22 +216,20 @@
             @endif
         </div>
     </li>
-
     <!-- Checklists (Notificações) -->
-    <li class="relative group" x-data="{ submenuOpen: false }">
+    <li class="relative group">
         @if($checklistGroupActive)
             <span class="absolute inset-y-0 left-0 w-1 bg-primary-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"></span>
         @endif
         <button type="button"
-                @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = !submenuOpen; } else { checklistOpen = !checklistOpen; }"
-                @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = false; }"
+                @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ checklistSubmenuOpen = !checklistSubmenuOpen; } else { checklistOpen = !checklistOpen; }"
+                @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ checklistSubmenuOpen = false; }"
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $checklistGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="clipboard-check" class="w-5 h-5 shrink-0" />
             <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Checklists</span>
             <x-icon name="chevron-down" id="nav-checklist-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="checklistOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
-
         <ul id="nav-checklist-submenu" x-show="checklistOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition">
             <li>
                 <a href="{{ route('checklists.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
@@ -261,10 +246,9 @@
                 </li>
             @endif
         </ul>
-
         <!-- Submenu popup quando colapsada -->
         <div x-cloak
-             x-show="submenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
+             x-show="checklistSubmenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
              x-transition:enter="transition ease-out duration-100"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
@@ -289,22 +273,20 @@
             @endif
         </div>
     </li>
-
     <!-- Grupo Veículos -->
-    <li class="relative group" x-data="{ submenuOpen: false }">
+    <li class="relative group">
         @if($vehicleGroupActive)
             <span class="absolute inset-y-0 left-0 w-1 bg-primary-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"></span>
         @endif
         <button type="button"
-                @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = !submenuOpen; } else { vehiclesOpen = !vehiclesOpen; }"
-                @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = false; }"
+                @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ vehiclesSubmenuOpen = !vehiclesSubmenuOpen; } else { vehiclesOpen = !vehiclesOpen; }"
+                @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ vehiclesSubmenuOpen = false; }"
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $vehicleGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="car" class="w-5 h-5 shrink-0" />
             <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Veículos</span>
             <x-icon name="chevron-down" id="nav-vehicles-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="vehiclesOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
-
         <ul id="nav-vehicles-submenu" x-show="vehiclesOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition">
             @if(!auth()->user()->hasRole('driver'))
                 <li>
@@ -339,10 +321,9 @@
                 </a>
             </li>
         </ul>
-
         <!-- Submenu popup quando colapsada -->
         <div x-cloak
-             x-show="submenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
+             x-show="vehiclesSubmenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
              x-transition:enter="transition ease-out duration-100"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
@@ -382,16 +363,15 @@
             </a>
         </div>
     </li>
-
     <!-- Manutenção -->
     @if(auth()->user()->isManager())
-        <li class="relative group" x-data="{ submenuOpen: false }">
+        <li class="relative group">
             @if($maintenanceGroupActive)
                 <span class="absolute inset-y-0 left-0 w-1 bg-primary-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"></span>
             @endif
             <button type="button"
-                    @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = !submenuOpen; } else { maintenanceOpen = !maintenanceOpen; }"
-                    @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = false; }"
+                    @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ maintenanceSubmenuOpen = !maintenanceSubmenuOpen; } else { maintenanceOpen = !maintenanceOpen; }"
+                    @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ maintenanceSubmenuOpen = false; }"
                     class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $maintenanceGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -401,7 +381,6 @@
                 <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Manutenção</span>
                 <x-icon name="chevron-down" id="nav-maintenance-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="maintenanceOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
             </button>
-
             <ul id="nav-maintenance-submenu" x-show="maintenanceOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition">
                 <!-- Troca de Óleo -->
                 <li>
@@ -413,7 +392,6 @@
                         <span>Troca de Óleo</span>
                     </a>
                 </li>
-
                 @if(auth()->user()->isGeneralManager())
                     <li>
                         <a href="{{ route('oil-changes.settings') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
@@ -423,7 +401,6 @@
                         </a>
                     </li>
                 @endif
-
                 <!-- Troca de Pneus -->
                 <li>
                     <a href="{{ route('tires.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
@@ -435,7 +412,6 @@
                         <span>Dashboard Pneus</span>
                     </a>
                 </li>
-
                 <li>
                     <a href="{{ route('tires.vehicles') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('tires.vehicles') || request()->routeIs('tires.vehicles.show') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
@@ -443,7 +419,6 @@
                         <span>Veículos</span>
                     </a>
                 </li>
-
                 <li>
                     <a href="{{ route('tires.stock') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('tires.stock') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
@@ -453,7 +428,6 @@
                         <span>Estoque</span>
                     </a>
                 </li>
-
                 <li>
                     <a href="{{ route('tires.create') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('tires.create') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
@@ -462,10 +436,9 @@
                     </a>
                 </li>
             </ul>
-
             <!-- Submenu popup quando colapsada -->
             <div x-cloak
-                 x-show="submenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
+                 x-show="maintenanceSubmenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
                  x-transition:enter="transition ease-out duration-100"
                  x-transition:enter-start="opacity-0 scale-95"
                  x-transition:enter-end="opacity-100 scale-100"
@@ -495,22 +468,20 @@
             </div>
         </li>
     @endif
-
     <!-- Relatórios / Backups -->
-    <li class="relative group" x-data="{ submenuOpen: false }">
+    <li class="relative group">
         @if($reportsGroupActive)
             <span class="absolute inset-y-0 left-0 w-1 bg-primary-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"></span>
         @endif
         <button type="button"
-                @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = !submenuOpen; } else { reportsOpen = !reportsOpen; }"
-                @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = false; }"
+                @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ reportsSubmenuOpen = !reportsSubmenuOpen; } else { reportsOpen = !reportsOpen; }"
+                @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ reportsSubmenuOpen = false; }"
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $reportsGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
             <x-icon name="document" class="w-5 h-5 shrink-0" />
             <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Relatórios</span>
             <x-icon name="chevron-down" id="nav-reports-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="reportsOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
         </button>
-
         <ul id="nav-reports-submenu" x-show="reportsOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition">
             <li>
                 <a href="{{ route('backup-reports.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
@@ -527,10 +498,9 @@
                 </li>
             @endif
         </ul>
-
         <!-- Submenu popup quando colapsada -->
         <div x-cloak
-             x-show="submenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
+             x-show="reportsSubmenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
              x-transition:enter="transition ease-out duration-100"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
@@ -555,23 +525,21 @@
             @endif
         </div>
     </li>
-
     <!-- Usuários -->
     @if(auth()->user()->isManager())
-        <li class="relative group" x-data="{ submenuOpen: false }">
+        <li class="relative group">
             @if($usersGroupActive)
                 <span class="absolute inset-y-0 left-0 w-1 bg-primary-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"></span>
             @endif
             <button type="button"
-                    @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = !submenuOpen; } else { usersOpen = !usersOpen; }"
-                    @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = false; }"
+                    @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ usersSubmenuOpen = !usersSubmenuOpen; } else { usersOpen = !usersOpen; }"
+                    @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ usersSubmenuOpen = false; }"
                     class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $usersGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
                 <x-icon name="users" class="w-5 h-5 shrink-0" />
                 <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen">Usuários</span>
                 <x-icon name="chevron-down" id="nav-users-chevron" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="usersOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
             </button>
-
             <ul id="nav-users-submenu" x-show="usersOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition">
                 <li>
                     <a href="{{ route('users.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
@@ -594,10 +562,9 @@
                     </li>
                 @endif
             </ul>
-
             <!-- Submenu popup quando colapsada -->
             <div x-cloak
-                 x-show="submenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
+                 x-show="usersSubmenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
                  x-transition:enter="transition ease-out duration-100"
                  x-transition:enter-start="opacity-0 scale-95"
                  x-transition:enter-end="opacity-100 scale-100"
@@ -628,23 +595,21 @@
             </div>
         </li>
     @endif
-
     <!-- Auditoria -->
     @if(auth()->user()->isGeneralManager())
-        <li class="relative group" x-data="{ submenuOpen: false }">
+        <li class="relative group">
             @if($auditGroupActive)
                 <span class="absolute inset-y-0 left-0 w-1 bg-primary-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"></span>
             @endif
             <button type="button"
-                    @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = !submenuOpen; } else { auditOpen = !auditOpen; }"
-                    @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ submenuOpen = false; }"
+                    @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ auditSubmenuOpen = !auditSubmenuOpen; } else { auditOpen = !auditOpen; }"
+                    @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ auditSubmenuOpen = false; }"
                     class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $auditGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
                 <x-icon name="clipboard" class="w-5 h-5 shrink-0" />
                 <span class="truncate flex-1 text-left" x_show="!isSidebarCollapsed || isMobileSidebarOpen">Auditoria</span>
                 <x-icon name="chevron-down" id="nav-audit-chevron" x_show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="auditOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
             </button>
-
             <ul id="nav-audit-submenu" x-show="auditOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition">
                 <li>
                     <a href="{{ route('audit-logs.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
@@ -671,42 +636,54 @@
                     </a>
                 </li>
             </ul>
-
-            <!-- Submenu popup quando colapsada -->
-            <div x-cloak
-                 x-show="submenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
-                 x-transition:enter="transition ease-out duration-100"
-                 x-transition:enter-start="opacity-0 scale-95"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-75"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95"
-                 class="absolute left-full top-0 ml-2 w-56 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-gray-200 dark:border-navy-700 py-2 z-50">
-                <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-navy-300 uppercase tracking-wider border-b border-gray-200 dark:border-navy-700 mb-1">
-                    Auditoria
-                </div>
-                <a href="{{ route('audit-logs.index') }}"
-                   class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('audit-logs.index') && !request()->input('type') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
-                    <x-icon name="list" class="w-4 h-4" />
-                    <span>Todos os Logs</span>
-                </a>
-                <a href="{{ route('audit-logs.index', ['type' => 'App\Models\User']) }}"
-                   class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->input('type') == 'App\Models\User' ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
-                    <x-icon name="users" class="w-4 h-4" />
-                    <span>Usuários</span>
-                </a>
-                <a href="{{ route('audit-logs.index', ['type' => 'App\Models\Vehicle']) }}"
-                   class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->input('type') == 'App\Models\Vehicle' ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
-                    <x-icon name="car" class="w-4 h-4" />
-                    <span>Veículos</span>
-                </a>
-                <a href="{{ route('audit-logs.index', ['type' => 'App\Models\Run']) }}"
-                   class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->input('type') == 'App\Models\Run' ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
-                    <x-icon name="route" class="w-4 h-4" />
-                    <span>Rodagens</span>
-                </a>
+        <li class="relative group">
+            @if(request()->routeIs('chat.*'))
+                <span class="absolute inset-y-0 left-0 w-1 bg-primary-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"></span>
+            @endif
+            <a href="{{ route('chat.index') }}"
+               class="flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200
+                  {{ request()->routeIs('chat.*') ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+                <span class="truncate" x_show="!isSidebarCollapsed || isMobileSidebarOpen">Chat</span>
+                <span x-cloak x-show="isSidebarCollapsed && !isMobileSidebarOpen" class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 rounded bg-primary-600 text-white text-xs opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow z-50">Chat</span>
+            </a>
+        </li>
+        <!-- Submenu popup quando colapsada -->
+        <div x-cloak
+             x-show="auditSubmenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
+             x-transition:enter="transition ease-out duration-100"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-75"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="absolute left-full top-0 ml-2 w-56 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-gray-200 dark:border-navy-700 py-2 z-50">
+            <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-navy-300 uppercase tracking-wider border-b border-gray-200 dark:border-navy-700 mb-1">
+                Auditoria
             </div>
+            <a href="{{ route('audit-logs.index') }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('audit-logs.index') && !request()->input('type') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                <x-icon name="list" class="w-4 h-4" />
+                <span>Todos os Logs</span>
+            </a>
+            <a href="{{ route('audit-logs.index', ['type' => 'App\Models\User']) }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->input('type') == 'App\Models\User' ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                <x-icon name="users" class="w-4 h-4" />
+                <span>Usuários</span>
+            </a>
+            <a href="{{ route('audit-logs.index', ['type' => 'App\Models\Vehicle']) }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->input('type') == 'App\Models\Vehicle' ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                <x-icon name="car" class="w-4 h-4" />
+                <span>Veículos</span>
+            </a>
+            <a href="{{ route('audit-logs.index', ['type' => 'App\Models\Run']) }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->input('type') == 'App\Models\Run' ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
+                <x-icon name="route" class="w-4 h-4" />
+                <span>Rodagens</span>
+            </a>
+        </div>
         </li>
     @endif
 </ul>
-

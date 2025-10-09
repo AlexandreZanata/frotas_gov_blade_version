@@ -1,50 +1,105 @@
 <?php
+
 namespace Database\Seeders;
 
-use App\Models\ChatMessage;
-use App\Models\ChatParticipant;
-use App\Models\ChatRoom;
 use App\Models\User;
+use App\Models\ChatRoom;
+use App\Models\ChatMessage;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class ChatSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
-        // 1. Encontra o Admin e cria um novo usuário "Motorista"
-        $adminUser = User::where('email', 'admin@frotas.gov')->firstOrFail();
-        $driverUser = User::firstOrCreate(
-            ['email' => 'motorista@frotas.gov'],
-            [
-                'name' => 'Motorista Teste',
-                'cpf' => '11122233344',
-                'password' => Hash::make('password'),
-                'role_id' => \App\Models\Role::where('name', 'driver')->first()->id,
-                'secretariat_id' => \App\Models\Secretariat::where('name', 'Obras')->first()->id,
-            ]
-        );
+        // Buscar 3 usuários para criar conversas de teste
+        $users = User::limit(3)->get();
 
-        // 2. Cria uma sala de chat privada entre eles
-        $room = ChatRoom::create(['type' => 'private']);
+        if ($users->count() < 2) {
+            $this->command->warn('⚠️  Não há usuários suficientes. Execute o UserSeeder primeiro.');
+            return;
+        }
 
-        // 3. Adiciona os dois usuários como participantes da sala
-        ChatParticipant::create(['chat_room_id' => $room->id, 'user_id' => $adminUser->id]);
-        ChatParticipant::create(['chat_room_id' => $room->id, 'user_id' => $driverUser->id]);
+        $user1 = $users[0];
+        $user2 = $users[1];
+        $user3 = $users->count() > 2 ? $users[2] : null;
 
-        // 4. Simula uma pequena conversa
-        $msg1 = ChatMessage::create([
-            'chat_room_id' => $room->id,
-            'user_id' => $adminUser->id,
-            'message' => 'Olá, Motorista. Por favor, lembre-se de calibrar os pneus do veículo BRA2E19.'
+        // Criar conversa privada entre user1 e user2
+        $this->command->info("Criando conversa entre {$user1->name} e {$user2->name}...");
+
+        $chatRoom1 = ChatRoom::create([
+            'type' => 'private',
         ]);
 
-        sleep(1); // Pequena pausa para diferenciar os timestamps
+        $chatRoom1->participants()->attach([$user1->id, $user2->id]);
 
-        $msg2 = ChatMessage::create([
-            'chat_room_id' => $room->id,
-            'user_id' => $driverUser->id,
-            'message' => 'Entendido, Gestor. Farei isso agora mesmo.'
+        // Criar algumas mensagens de teste
+        ChatMessage::create([
+            'chat_room_id' => $chatRoom1->id,
+            'user_id' => $user1->id,
+            'message' => 'Olá! Como você está?',
         ]);
+
+        sleep(1); // Pequeno delay para diferentes timestamps
+
+        ChatMessage::create([
+            'chat_room_id' => $chatRoom1->id,
+            'user_id' => $user2->id,
+            'message' => 'Oi! Estou bem, obrigado! E você?',
+        ]);
+
+        sleep(1);
+
+        ChatMessage::create([
+            'chat_room_id' => $chatRoom1->id,
+            'user_id' => $user1->id,
+            'message' => 'Também estou bem! Precisamos discutir sobre o projeto.',
+        ]);
+
+        $this->command->info('✓ Conversa privada criada com sucesso!');
+
+        // Se houver um terceiro usuário, criar um grupo
+        if ($user3) {
+            $this->command->info("Criando grupo de chat...");
+
+            $chatRoom2 = ChatRoom::create([
+                'name' => 'Equipe de Frotas',
+                'type' => 'group',
+            ]);
+
+            $chatRoom2->participants()->attach([$user1->id, $user2->id, $user3->id]);
+
+            ChatMessage::create([
+                'chat_room_id' => $chatRoom2->id,
+                'user_id' => $user1->id,
+                'message' => 'Bem-vindos ao grupo da equipe!',
+            ]);
+
+            sleep(1);
+
+            ChatMessage::create([
+                'chat_room_id' => $chatRoom2->id,
+                'user_id' => $user2->id,
+                'message' => 'Obrigado! Vamos trabalhar bem juntos.',
+            ]);
+
+            sleep(1);
+
+            ChatMessage::create([
+                'chat_room_id' => $chatRoom2->id,
+                'user_id' => $user3->id,
+                'message' => 'Ótimo! Estou animado para começar.',
+            ]);
+
+            $this->command->info('✓ Grupo de chat criado com sucesso!');
+        }
+
+        $this->command->info('');
+        $this->command->info('✅ Chat seeder executado com sucesso!');
+        $this->command->info("   - Conversas criadas: " . ChatRoom::count());
+        $this->command->info("   - Mensagens criadas: " . ChatMessage::count());
     }
 }
+

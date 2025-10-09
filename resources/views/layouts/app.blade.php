@@ -231,5 +231,8 @@
         {{ $slot }}
     </main>
 </div>
+
+{{-- Ensure page-level scripts pushed with @push('scripts') are injected --}}
+@stack('scripts')
 </body>
 </html>

@@ -97,7 +97,7 @@
                                 if (data.last_oil_change) {
                                     // Se já houve troca, usar o KM da última troca
                                     baseKm = data.last_oil_change.next_change_km ||
-                                            (data.last_oil_change.km_at_change + data.suggested_km_interval);
+                                        (data.last_oil_change.km_at_change + data.suggested_km_interval);
                                 } else if (kmAtChangeInput.value) {
                                     // Se é primeira troca, usar KM atual + intervalo
                                     baseKm = parseInt(kmAtChangeInput.value) + data.suggested_km_interval;

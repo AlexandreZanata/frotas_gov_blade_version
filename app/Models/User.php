@@ -199,7 +199,6 @@ class User extends Authenticatable
         }
 
         return Vehicle::whereIn('id', $vehicleIds)
-            ->with(['prefix', 'status', 'category', 'secretariat'])
             ->get();
     }
 
@@ -220,16 +219,42 @@ class User extends Authenticatable
     /**
      * Check if user has any active logbook permissions
      */
-    public function hasLogbookPermissions(): bool
+    public function chatRooms(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return LogbookPermission::userHasActivePermissions($this);
+        return $this->belongsToMany(ChatRoom::class, 'chat_participants', 'user_id', 'chat_room_id')
+            ->withPivot('last_read_at')
+            ->withTimestamps()
+            ->orderBy('updated_at', 'desc');
     }
 
     /**
-     * Get hierarchy level
+     * Get chat messages sent by the user
      */
-    public function getHierarchyLevel(): int
+    public function chatMessages(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->role?->hierarchy_level ?? 0;
+        return $this->hasMany(ChatMessage::class);
+    }
+
+    /**
+     * Check if user is online (can be extended with Redis later)
+     */
+    public function isOnline(): bool
+    {
+        // Por enquanto, retorna false. Pode ser implementado com cache/redis
+        return cache()->has('user-online-' . $this->id);
+    }
+
+    /**
+     * Get user's last seen time
+     */
+    public function getLastSeenAttribute(): ?string
+    {
+        $lastSeen = cache()->get('user-last-seen-' . $this->id);
+
+        if (!$lastSeen) {
+            return null;
+        }
+
+        return \Carbon\Carbon::parse($lastSeen)->diffForHumans();
     }
 }

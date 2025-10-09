@@ -49,6 +49,19 @@ Route::middleware('auth')->group(function () {
     // API Routes para secretarias
     Route::get('/api/secretariats/search', [\App\Http\Controllers\SecretariatController::class, 'search'])->name('api.secretariats.search');
 
+    // Rotas do Chat
+    Route::prefix('chat')->name('chat.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ChatController::class, 'index'])->name('index');
+        Route::get('/search-users', [\App\Http\Controllers\ChatController::class, 'searchUsers'])->name('search-users');
+        Route::get('/room/{chatRoom}/messages', [\App\Http\Controllers\ChatController::class, 'getMessages'])->name('messages');
+        Route::post('/room/{chatRoom}/send', [\App\Http\Controllers\ChatController::class, 'sendMessage'])->name('send');
+        Route::post('/room/{chatRoom}/mark-read', [\App\Http\Controllers\ChatController::class, 'markAsRead'])->name('mark-read');
+        Route::post('/room/{chatRoom}/typing', [\App\Http\Controllers\ChatController::class, 'typing'])->name('typing');
+        Route::post('/room/{chatRoom}/upload', [\App\Http\Controllers\ChatController::class, 'uploadAttachment'])->name('upload');
+        Route::get('/start/{user}', [\App\Http\Controllers\ChatController::class, 'getOrCreatePrivateChat'])->name('start');
+        Route::post('/group/create', [\App\Http\Controllers\ChatController::class, 'createGroup'])->name('group.create');
+    });
+
     Route::resource('users', UserController::class);
     Route::resource('default-passwords', DefaultPasswordController::class);
 
