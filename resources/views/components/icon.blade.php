@@ -14,6 +14,32 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M7 13h10M6.5 16.5h.01M17.5 16.5h.01" />
         </svg>
         @break
+
+    @case('chart-bar')
+        <!-- Ícone de gráfico de barras -->
+        <svg {{ $attributes->merge(['class'=>$classes]) }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        @break
+    @case('chart-pie')
+        <!-- Ícone de gráfico de pizza -->
+        <svg {{ $attributes->merge(['class'=>$classes]) }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>
+        </svg>
+        @break
+    @case('status-online')
+        <!-- Ícone de status online -->
+        <svg {{ $attributes->merge(['class'=>$classes]) }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"/>
+        </svg>
+        @break
+    @case('table')
+        <!-- Ícone de tabela -->
+        <svg {{ $attributes->merge(['class'=>$classes]) }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
+        @break
     @case('chevron-down')
         <svg {{ $attributes->merge(['class'=>$classes]) }} fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
         @break
@@ -109,6 +135,11 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M17 7h.01"/>
             {{-- Poste de suporte --}}
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v4"/>
+        </svg>
+        @break
+    @case('building-office')
+        <svg {{ $attributes->merge(['class'=>$classes]) }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 21V5a2 2 0 012-2h12a2 2 0 012 2v16m-4-18v2m-8-2v2m-4 4h16m-12 4h.01M8 13h.01M16 9h.01M16 13h.01M12 9h.01M12 13h.01M8 17h.01M12 17h.01M16 17h.01"/>
         </svg>
         @break
     @case('play')

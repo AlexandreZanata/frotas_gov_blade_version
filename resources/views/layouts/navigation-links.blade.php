@@ -1,5 +1,5 @@
 {{-- Links de Navegação Sidebar --}}
-@php($vehicleGroupActive = request()->routeIs('vehicles.*') || request()->routeIs('vehicle-categories.*') || request()->routeIs('prefixes.*') || request()->routeIs('vehicle-transfers.*'))
+@php($vehicleGroupActive = request()->routeIs('vehicles.*') || request()->routeIs('vehicle-categories.*') || request()->routeIs('prefixes.*') || request()->routeIs('vehicle-transfers.*') || request()->routeIs('vehicles.usage-panel'))
 @php($logbookGroupActive = request()->routeIs('logbook.*') || request()->routeIs('logbook-permissions.*'))
 @php($checklistGroupActive = request()->routeIs('checklists.*'))
 @php($maintenanceGroupActive = request()->routeIs('oil-changes.*') || request()->routeIs('tires.*'))
@@ -342,6 +342,14 @@
                     <x-icon name="swap" class="w-3.5 h-3.5" /> <span>Transferências</span>
                 </a>
             </li>
+                @if(auth()->user()->isManager())
+                    <li>
+                        <a href="{{ route('vehicles.usage-panel') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+            {{ request()->routeIs('vehicles.usage-panel') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                            <x-icon name="chart-bar" class="w-3.5 h-3.5" /> <span>Veículos em Uso</span>
+                        </a>
+                    </li>
+                @endif
         </ul>
         <!-- Submenu popup quando colapsada -->
         <div x-cloak

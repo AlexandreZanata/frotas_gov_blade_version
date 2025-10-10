@@ -14,7 +14,117 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $user = Auth::user();
+    $vehiclesInUse = collect();
+    $stats = [
+        'total' => 0,
+        'bySecretariat' => collect()
+    ];
+    $chartData = [
+        'series' => [],
+        'categories' => []
+    ];
+    $expensesData = [
+        'series' => [],
+        'categories' => []
+    ];
+    $fuelingsData = [
+        'series' => [],
+        'categories' => []
+    ];
+
+    // Dados apenas para general_manager e sector_manager
+    if ($user->hasAnyRole(['general_manager', 'sector_manager'])) {
+        $query = \App\Models\Vehicle::query();
+
+        // Filtra apenas veículos em uso (com diário de bordo em andamento)
+        $query->whereHas('runs', function($q) {
+            $q->whereNull('finished_at');
+        });
+
+        // Se for sector_manager, filtra pela secretaria
+        if ($user->hasRole('sector_manager')) {
+            $query->where('secretariat_id', $user->secretariat_id);
+        }
+
+        $vehiclesInUse = $query->with(['runs' => function($q) {
+            $q->whereNull('finished_at')->latest()->limit(1);
+        }, 'secretariat'])->limit(5)->get();
+
+        // Estatísticas
+        $totalInUse = $query->count();
+
+        $bySecretariat = $query->clone()
+            ->join('secretariats', 'vehicles.secretariat_id', '=', 'secretariats.id')
+            ->selectRaw('secretariats.name as secretariat_name, count(*) as total')
+            ->groupBy('secretariats.id', 'secretariats.name')
+            ->get();
+
+        $stats = [
+            'total' => $totalInUse,
+            'bySecretariat' => $bySecretariat
+        ];
+
+        // Dados para gráfico de veículos
+        if ($bySecretariat->isNotEmpty()) {
+            $chartData = [
+                'series' => [
+                    [
+                        'name' => 'Veículos em Uso',
+                        'data' => $bySecretariat->pluck('total')->toArray()
+                    ]
+                ],
+                'categories' => $bySecretariat->pluck('secretariat_name')->toArray()
+            ];
+        }
+
+        // Gráfico de Gastos do Mês (últimos 7 dias) - CORREÇÃO APLICADA AQUI
+        $startDate = now()->subDays(6)->startOfDay();
+        $expenses = \App\Models\Fueling::query()
+            ->whereBetween('created_at', [$startDate, now()])
+            ->selectRaw('DATE(created_at) as date, SUM(liters * value_per_liter) as total') // Correção: Trocado total_cost por liters * value_per_liter
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        if ($expenses->isNotEmpty()) {
+            $expensesData = [
+                'series' => [
+                    [
+                        'name' => 'Gastos (R$)',
+                        'data' => $expenses->pluck('total')->map(fn($v) => round($v, 2))->toArray()
+                    ]
+                ],
+                'categories' => $expenses->map(fn($e) => \Carbon\Carbon::parse($e->date)->format('d/m'))->toArray()
+            ];
+        }
+
+        // Gráfico de Abastecimentos Recentes (últimos 7 dias)
+        $fuelings = \App\Models\Fueling::query()
+            ->whereBetween('created_at', [$startDate, now()])
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as total, SUM(liters) as liters')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        if ($fuelings->isNotEmpty()) {
+            $fuelingsData = [
+                'series' => [
+                    [
+                        'name' => 'Quantidade',
+                        'data' => $fuelings->pluck('total')->toArray()
+                    ],
+                    [
+                        'name' => 'Litros',
+                        'data' => $fuelings->pluck('liters')->map(fn($v) => round($v, 2))->toArray()
+                    ]
+                ],
+                'categories' => $fuelings->map(fn($f) => \Carbon\Carbon::parse($f->date)->format('d/m'))->toArray()
+            ];
+        }
+    }
+
+    return view('dashboard', compact('vehiclesInUse', 'stats', 'chartData', 'expensesData', 'fuelingsData'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -30,6 +140,11 @@ Route::middleware('auth')->group(function () {
     // PDF Templates (apenas role 1)
     Route::resource('pdf-templates', \App\Http\Controllers\PdfTemplateController::class);
     Route::post('/pdf-templates/preview', [\App\Http\Controllers\PdfTemplateController::class, 'preview'])->name('pdf-templates.preview');
+
+    // Painel de Veículos em Uso (apenas para gestores) - CORREÇÃO DE POSIÇÃO DA ROTA
+    Route::get('/vehicles/usage-panel', [\App\Http\Controllers\VehiclesUsagePanelController::class, 'index'])
+        ->middleware(['auth', 'verified', 'role:general_manager,sector_manager'])
+        ->name('vehicles.usage-panel');
 
     Route::resource('vehicles', VehicleController::class);
     Route::resource('vehicle-categories', VehicleCategoryController::class);
