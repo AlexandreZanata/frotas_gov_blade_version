@@ -253,6 +253,39 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/vehicles', [VehicleController::class, 'apiSearch'])->name('api.vehicles.search');
     Route::get('/api/users', [UserController::class, 'search'])->name('api.users.search');
 
+    Route::post('/check-duplicate-rule', function (Request $request) {
+        $targetType = $request->target_type;
+        $targetId = $request->target_id;
+        $currentRuleId = $request->current_rule_id;
+
+        \Log::info("API Check: target_type={$targetType}, target_id={$targetId}, current_rule_id={$currentRuleId}");
+
+        $query = \App\Models\LogbookRule::where('target_type', $targetType)
+            ->where('is_active', true);
+
+        if ($targetType === 'global') {
+            $query->whereNull('target_id');
+        } else {
+            $query->where('target_id', $targetId);
+        }
+
+        if ($currentRuleId) {
+            $query->where('id', '!=', $currentRuleId);
+        }
+
+        $exists = $query->exists();
+        $existingRule = $query->first();
+
+        \Log::info("API Check Result: exists={$exists}, rule_id=" . ($existingRule ? $existingRule->id : 'null'));
+
+        return response()->json([
+            'valid' => !$exists,
+            'exists' => $exists,
+            'message' => $exists ? 'Já existe uma regra ativa para este alvo.' : 'Alvo disponível.',
+            'existing_rule_id' => $existingRule ? $existingRule->id : null
+        ]);
+    });
+
     Route::prefix('logbook-rules')->name('logbook-rules.')->group(function () {
         Route::get('/', [LogbookRuleController::class, 'index'])->name('index');
         Route::get('/create', [LogbookRuleController::class, 'create'])->name('create');

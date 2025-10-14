@@ -1,6 +1,6 @@
 {{-- Links de Navegação Sidebar --}}
 @php($vehicleGroupActive = request()->routeIs('vehicles.*') || request()->routeIs('vehicle-categories.*') || request()->routeIs('prefixes.*') || request()->routeIs('vehicle-transfers.*') || request()->routeIs('vehicles.usage-panel'))
-@php($logbookGroupActive = request()->routeIs('logbook.*') || request()->routeIs('logbook-permissions.*'))
+@php($logbookGroupActive = request()->routeIs('logbook.*') || request()->routeIs('logbook-permissions.*') || request()->routeIs('logbook-rules.*'))
 @php($checklistGroupActive = request()->routeIs('checklists.*'))
 @php($maintenanceGroupActive = request()->routeIs('oil-changes.*') || request()->routeIs('tires.*'))
 @php($fuelGroupActive = request()->routeIs('fuel-quotations.*') || request()->routeIs('gas-stations.*'))

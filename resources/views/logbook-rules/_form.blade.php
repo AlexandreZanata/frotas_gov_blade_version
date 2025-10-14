@@ -588,6 +588,165 @@
     document.addEventListener('DOMContentLoaded', function() {
         updateTargetOptions();
     });
+    // Função para verificar regra duplicada em tempo real
+    function checkDuplicateRule(targetType, targetId, currentRuleId = null) {
+        if (!targetType) return Promise.resolve(true);
+
+        // Se for global, targetId é null
+        const checkTargetId = targetType === 'global' ? null : targetId;
+
+        return fetch('/api/check-duplicate-rule', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                target_type: targetType,
+                target_id: checkTargetId,
+                current_rule_id: currentRuleId
+            })
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Erro na resposta da API');
+                return response.json();
+            })
+            .then(data => {
+                return data.valid;
+            })
+            .catch(error => {
+                console.error('Erro ao verificar regra duplicada:', error);
+                return true; // Em caso de erro, permite prosseguir
+            });
+    }
+
+    // Função para mostrar/ocultar mensagem de erro
+    function showDuplicateError(message) {
+        // Remove mensagem anterior se existir
+        hideDuplicateError();
+
+        const errorDiv = document.createElement('div');
+        errorDiv.id = 'duplicate-rule-error';
+        errorDiv.className = 'mt-2 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm';
+        errorDiv.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+            <span>${message}</span>
+        </div>
+    `;
+
+        // Insere após o campo target_type
+        const targetTypeField = document.getElementById('target_type');
+        targetTypeField.parentNode.appendChild(errorDiv);
+    }
+
+    function hideDuplicateError() {
+        const existingError = document.getElementById('duplicate-rule-error');
+        if (existingError) {
+            existingError.remove();
+        }
+    }
+
+    // Validação em tempo real quando o target_type muda
+    document.addEventListener('DOMContentLoaded', function() {
+        const targetTypeSelect = document.getElementById('target_type');
+        const targetIdInput = document.getElementById('target_id');
+        const currentRuleId = '{{ $logbookRule->id ?? null }}';
+
+        if (targetTypeSelect) {
+            targetTypeSelect.addEventListener('change', function() {
+                const targetType = this.value;
+
+                // Esconde mensagem de erro anterior
+                hideDuplicateError();
+
+                // Se for global, verifica imediatamente
+                if (targetType === 'global') {
+                    checkDuplicateRule(targetType, null, currentRuleId).then(isValid => {
+                        if (!isValid) {
+                            showDuplicateError('Já existe uma regra global ativa no sistema. Só é permitida uma regra global por vez.');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Validação quando um target específico é selecionado
+        if (targetIdInput) {
+            // Usando MutationObserver para detectar mudanças no target_id
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+                        const targetType = document.getElementById('target_type').value;
+                        const targetId = targetIdInput.value;
+
+                        if (targetType && targetType !== 'global' && targetId) {
+                            checkDuplicateRule(targetType, targetId, currentRuleId).then(isValid => {
+                                if (!isValid) {
+                                    const targetName = getTargetName(targetType, targetId);
+                                    showDuplicateError(`Já existe uma regra ativa para ${targetName}. Cada alvo só pode ter uma regra ativa.`);
+                                } else {
+                                    hideDuplicateError();
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+
+            observer.observe(targetIdInput, { attributes: true });
+        }
+
+        // Também valida no blur do campo de busca
+        const targetSearchInput = document.getElementById('target_search');
+        if (targetSearchInput) {
+            targetSearchInput.addEventListener('blur', function() {
+                setTimeout(() => {
+                    const targetType = document.getElementById('target_type').value;
+                    const targetId = document.getElementById('target_id').value;
+
+                    if (targetType && targetType !== 'global' && targetId) {
+                        checkDuplicateRule(targetType, targetId, currentRuleId).then(isValid => {
+                            if (!isValid) {
+                                const targetName = getTargetName(targetType, targetId);
+                                showDuplicateError(`Já existe uma regra ativa para ${targetName}. Cada alvo só pode ter uma regra ativa.`);
+                            }
+                        });
+                    }
+                }, 200);
+            });
+        }
+    });
+
+    // Função auxiliar para obter o nome do target (simulação)
+    function getTargetName(targetType, targetId) {
+        // Esta função precisaria ser implementada baseada nos dados carregados
+        // Por enquanto, retorna um texto genérico
+        switch(targetType) {
+            case 'vehicle_category': return 'esta categoria de veículo';
+            case 'user': return 'este usuário';
+            case 'vehicle': return 'este veículo';
+            default: return 'este alvo';
+        }
+    }
+
+    // Usar no evento change do target
+    document.getElementById('target_type').addEventListener('change', function() {
+        const targetType = this.value;
+        const targetId = document.getElementById('target_id').value;
+        const currentRuleId = '{{ $logbookRule->id ?? null }}';
+
+        if (targetType && targetId) {
+            checkDuplicateRule(targetType, targetId, currentRuleId).then(isValid => {
+                if (!isValid) {
+                    alert('Já existe uma regra ativa para este alvo!');
+                    document.getElementById('target_id').value = '';
+                }
+            });
+        }
+    });
 </script>
 
 <div class="flex items-center gap-3 pt-6">
