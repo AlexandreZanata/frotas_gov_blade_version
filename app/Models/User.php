@@ -257,4 +257,37 @@ class User extends Authenticatable
 
         return \Carbon\Carbon::parse($lastSeen)->diffForHumans();
     }
+
+    /**
+     * Relação com a foto principal do usuário
+     */
+    public function photo(): BelongsTo
+    {
+        return $this->belongsTo(UserPhoto::class, 'photo_id');
+    }
+
+    /**
+     * Relação com todas as fotos do usuário (se necessário manter)
+     */
+    public function photos(): HasMany
+    {
+        return $this->hasMany(UserPhoto::class);
+    }
+
+    /**
+     * Acessor para obter a URL da foto
+     */
+    public function getPhotoUrlAttribute(): ?string
+    {
+        return $this->photo ? asset('storage/' . $this->photo->path) : null;
+    }
+
+    /**
+     * Acessor para obter a URL da foto com fallback
+     */
+    public function getPhotoUrlWithFallbackAttribute(): string
+    {
+        return $this->photo_url ?? asset('images/default-avatar.png');
+    }
+
 }
