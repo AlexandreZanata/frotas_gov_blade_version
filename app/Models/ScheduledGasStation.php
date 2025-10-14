@@ -7,35 +7,27 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ScheduledPrice extends Model
+class ScheduledGasStation extends Model
 {
     use HasFactory, HasUuids;
 
     protected $fillable = [
         'gas_station_id',
-        'fuel_type_id',
-        'price',
+        'admin_id',
         'start_date',
         'end_date',
-        'is_active',
-        'admin_id',
+        'is_processed',
     ];
 
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
-        'is_active' => 'boolean',
-        'price' => 'decimal:3',
+        'is_processed' => 'boolean',
     ];
 
     public function gasStation(): BelongsTo
     {
         return $this->belongsTo(GasStation::class);
-    }
-
-    public function fuelType(): BelongsTo
-    {
-        return $this->belongsTo(FuelType::class);
     }
 
     public function admin(): BelongsTo

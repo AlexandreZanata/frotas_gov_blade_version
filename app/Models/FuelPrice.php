@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ScheduledPrice extends Model
+class FuelPrice extends Model
 {
     use HasFactory, HasUuids;
 
@@ -15,16 +15,11 @@ class ScheduledPrice extends Model
         'gas_station_id',
         'fuel_type_id',
         'price',
-        'start_date',
-        'end_date',
-        'is_active',
-        'admin_id',
+        'effective_date',
     ];
 
     protected $casts = [
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
-        'is_active' => 'boolean',
+        'effective_date' => 'datetime',
         'price' => 'decimal:3',
     ];
 
@@ -36,10 +31,5 @@ class ScheduledPrice extends Model
     public function fuelType(): BelongsTo
     {
         return $this->belongsTo(FuelType::class);
-    }
-
-    public function admin(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'admin_id');
     }
 }

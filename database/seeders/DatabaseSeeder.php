@@ -12,8 +12,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Este bloco é tudo o que precisa estar aqui.
-        // Ele chama os seeders na ordem correta.
         $this->call([
             RoleSeeder::class,
             SecretariatSeeder::class,
@@ -46,6 +44,11 @@ class DatabaseSeeder extends Seeder
             TireInventorySeeder::class,
             TireSeeder::class,
             OilChangeSettingSeeder::class,
+            ScheduledPriceSeeder::class,
+            FuelPriceSeeder::class,
+            ScheduledPriceMovementSeeder::class,
+            GasStationCurrentSeeder::class,
+            ScheduledGasStationSeeder::class,
         ]);
     }
 }

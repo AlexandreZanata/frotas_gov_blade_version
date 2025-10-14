@@ -11,11 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('scheduled_prices', function (Blueprint $table) {
+        Schema::create('gas_stations_current', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('gas_station_id')->constrained('gas_stations')->cascadeOnDelete();
-            $table->foreignUuid('fuel_type_id')->constrained('fuel_types')->cascadeOnDelete();
-            $table->decimal('price', 10, 3);
             $table->timestamp('start_date');
             $table->timestamp('end_date')->nullable();
             $table->boolean('is_active')->default(true);
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('scheduled_prices');
+        Schema::dropIfExists('gas_stations_current');
     }
 };
