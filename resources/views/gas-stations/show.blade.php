@@ -43,7 +43,9 @@
                     </div>
 
                     <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-navy-300">CNPJ</p>
+                        <p class="mt-1 text-base text-gray-900 dark:text-white">
+                            {{ $gasStation->cnpj ? \App\Http\Controllers\GasStationController::formatCnpj($gasStation->cnpj) : '—' }}
+                        </p>
                         <p class="mt-1 text-base text-gray-900 dark:text-white">{{ $gasStation->cnpj ?? '—' }}</p>
                     </div>
 

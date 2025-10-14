@@ -9,6 +9,10 @@ use App\Http\Controllers\BackupReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DefaultPasswordController;
 use App\Http\Controllers\LogbookRuleController;
+use App\Http\Controllers\ScheduledGasStationController;
+use App\Http\Controllers\GasStationCurrentController;
+use App\Http\Controllers\ScheduledPriceController;
+use App\Http\Controllers\FuelPriceController;
 
 
 Route::get('/', function () {
@@ -355,6 +359,20 @@ Route::middleware('auth')->group(function () {
     // Postos de Combustível
     Route::resource('gas-stations', \App\Http\Controllers\GasStationController::class);
     Route::get('/api/gas-stations/search', [\App\Http\Controllers\GasStationController::class, 'search'])->name('api.gas-stations.search');
+    //***** INICIO DO AGENDAMENTOS DE POSTOS *****//
+
+    // Rotas para o CRUD de Agendamento de Postos
+    Route::resource('scheduled_gas_stations', ScheduledGasStationController::class);
+
+    // Rota para a visualização dos Postos Atuais
+    Route::get('gas_stations_current', [GasStationCurrentController::class, 'index'])->name('gas_stations_current.index');
+
+    // Rotas para o CRUD de Agendamento de Preços
+    Route::resource('scheduled_prices', ScheduledPriceController::class);
+
+    // Rota para a visualização dos Preços Atuais
+    Route::get('fuel_prices', [FuelPriceController::class, 'index'])->name('fuel_prices.index');
+    //***** FIM DO AGENDAMENTOS DE POSTOS *****//
 
     // Cotação de Combustível
     Route::prefix('fuel-quotations')->name('fuel-quotations.')->group(function () {
@@ -378,7 +396,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/discount-settings', [\App\Http\Controllers\FuelQuotationSettingsController::class, 'storeDiscountSetting'])->name('settings.discount-settings.store');
         Route::put('/settings/discount-settings/{discount}', [\App\Http\Controllers\FuelQuotationSettingsController::class, 'updateDiscountSetting'])->name('settings.discount-settings.update');
         Route::delete('/settings/discount-settings/{discount}', [\App\Http\Controllers\FuelQuotationSettingsController::class, 'destroyDiscountSetting'])->name('settings.discount-settings.destroy');
+
     });
+
+    Route::post('/gas-stations/check-cnpj', [GasStationController::class, 'checkCnpj'])->name('gas-stations.check-cnpj');
 
     // Multas
     Route::prefix('fines')->name('fines.')->group(function () {

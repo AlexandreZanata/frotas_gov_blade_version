@@ -3,7 +3,7 @@
 @php($logbookGroupActive = request()->routeIs('logbook.*') || request()->routeIs('logbook-permissions.*') || request()->routeIs('logbook-rules.*'))
 @php($checklistGroupActive = request()->routeIs('checklists.*'))
 @php($maintenanceGroupActive = request()->routeIs('oil-changes.*') || request()->routeIs('tires.*'))
-@php($fuelGroupActive = request()->routeIs('fuel-quotations.*') || request()->routeIs('gas-stations.*'))
+@php($fuelGroupActive = request()->routeIs('fuel-quotations.*', 'gas-stations.*', 'scheduled_gas_stations.*', 'gas_stations_current.*', 'scheduled_prices.*', 'fuel_prices.*'))
 @php($reportsGroupActive = request()->routeIs('backup-reports.*') || request()->routeIs('pdf-templates.*'))
 @php($usersGroupActive = request()->routeIs('users.*') || request()->routeIs('default-passwords.*'))
 @php($auditGroupActive = request()->routeIs('audit-logs.*'))
@@ -517,7 +517,7 @@
                     @click="if(isSidebarCollapsed && !isMobileSidebarOpen){ fuelSubmenuOpen = !fuelSubmenuOpen; } else { fuelOpen = !fuelOpen; }"
                     @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ fuelSubmenuOpen = false; }"
                     class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
-            {{ $fuelGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
+        {{ $fuelGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                 </svg>
@@ -525,21 +525,10 @@
                 <x-icon name="chevron-down" id="nav-fuel-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen" x-bind:class="fuelOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" />
             </button>
             <ul id="nav-fuel-submenu" x-show="fuelOpen && (!isSidebarCollapsed || isMobileSidebarOpen)" class="mt-1 pl-3 pr-1 space-y-1 border-l border-gray-200 dark:border-navy-600 submenu-transition">
-                <li>
-                    <a href="{{ route('fuel-quotations.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
-                    {{ request()->routeIs('fuel-quotations.index') || request()->routeIs('fuel-quotations.show') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="list" class="w-3.5 h-3.5" /> <span>Cotações</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('fuel-quotations.create') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
-                    {{ request()->routeIs('fuel-quotations.create') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="plus" class="w-3.5 h-3.5" /> <span>Nova Cotação</span>
-                    </a>
-                </li>
+                {{-- Links existentes --}}
                 <li>
                     <a href="{{ route('gas-stations.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
-                    {{ request()->routeIs('gas-stations.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                {{ request()->routeIs('gas-stations.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -547,59 +536,64 @@
                         <span>Postos</span>
                     </a>
                 </li>
+
+                <li>
+                    <a href="{{ route('gas_stations_current.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                {{ request()->routeIs('gas_stations_current.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                        <x-icon name="clipboard-check" class="w-3.5 h-3.5" />
+                        <span>Postos Ativos</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ route('scheduled_gas_stations.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                {{ request()->routeIs('scheduled_gas_stations.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                        <x-icon name="calendar" class="w-3.5 h-3.5" />
+                        <span>Agendamentos</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('fuel_prices.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                {{ request()->routeIs('fuel_prices.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                        <x-icon name="currency-dollar" class="w-3.5 h-3.5" />
+                        <span>Preços Atuais</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ route('scheduled_prices.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                {{ request()->routeIs('scheduled_prices.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                        <x-icon name="calendar" class="w-3.5 h-3.5" />
+                        <span>Agendamento de Preços</span>
+                    </a>
+                </li>
+
+                {{-- Links existentes --}}
+                <li>
+                    <a href="{{ route('fuel-quotations.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                {{ request()->routeIs('fuel-quotations.index') || request()->routeIs('fuel-quotations.show') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                        <x-icon name="list" class="w-3.5 h-3.5" /> <span>Cotações</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('fuel-quotations.create') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                {{ request()->routeIs('fuel-quotations.create') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                        <x-icon name="plus" class="w-3.5 h-3.5" /> <span>Nova Cotação</span>
+                    </a>
+                </li>
                 @if(auth()->user()->isGeneralManager())
                     <li>
                         <a href="{{ route('fuel-quotations.settings') }}"
                            class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
-                    {{ request()->routeIs('fuel-quotations.settings') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                {{ request()->routeIs('fuel-quotations.settings') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
                             <x-icon name="settings" class="w-3.5 h-3.5" />
                             <span>Configurações</span>
                         </a>
                     </li>
                 @endif
             </ul>
-            <!-- Submenu popup quando colapsada -->
-            <div x-cloak
-                 x-show="fuelSubmenuOpen && isSidebarCollapsed && !isMobileSidebarOpen"
-                 x-transition:enter="transition ease-out duration-100"
-                 x-transition:enter-start="opacity-0 scale-95"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-75"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95"
-                 class="absolute left-full top-0 ml-2 w-56 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-gray-200 dark:border-navy-700 py-2 z-50">
-                <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-navy-300 uppercase tracking-wider border-b border-gray-200 dark:border-navy-700 mb-1">
-                    Combustível
-                </div>
-                <a href="{{ route('fuel-quotations.index') }}"
-                   class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('fuel-quotations.index') || request()->routeIs('fuel-quotations.show') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
-                    <x-icon name="list" class="w-4 h-4" />
-                    <span>Cotações</span>
-                </a>
-                <a href="{{ route('fuel-quotations.create') }}"
-                   class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('fuel-quotations.create') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
-                    <x-icon name="plus" class="w-4 h-4" />
-                    <span>Nova Cotação</span>
-                </a>
-                <a href="{{ route('gas-stations.index') }}"
-                   class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('gas-stations.*') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <span>Postos</span>
-                </a>
-                @if(auth()->user()->isGeneralManager())
-                    <a href="{{ route('fuel-quotations.settings') }}"
-                       class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-primary-50 dark:hover:bg-navy-700/60 transition {{ request()->routeIs('fuel-quotations.settings') ? 'bg-primary-50 dark:bg-navy-700 text-primary-700 dark:text-navy-50' : '' }}">
-                        <x-icon name="settings" class="w-4 h-4" />
-                        <span>Configurações</span>
-                    </a>
-                @endif
-            </div>
         </li>
     @endif
-
     {{-- Insira este bloco no local desejado na sua lista <ul> --}}
     @if(auth()->user()->isManager())
         <li class="relative group">
