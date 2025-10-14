@@ -341,13 +341,12 @@ class RunController extends Controller
                 $request->input('stop_point')
             );
 
-            // Se houver abastecimento, registra
             if ($request->has('add_fueling')) {
                 $fuelingData = [
                     'vehicle_id' => $run->vehicle_id,
                     'user_id' => Auth::id(),
                     'run_id' => $run->id,
-                    'fueling_km' => $request->input('fueling_km'),
+                    'km' => $request->input('fueling_km'),
                     'liters' => $request->input('liters'),
                     'fuel_type_id' => $request->input('fuel_type_id'),
                     'fueled_at' => now(),

@@ -47,12 +47,14 @@
         <form action="{{ route('logbook.store-finish', $run) }}" method="POST" enctype="multipart/form-data" class="space-y-6" x-data="{
             startKm: {{ $run->start_km }},
             endKm: {{ old('end_km', $run->start_km) }},
+            // ADIÇÃO AQUI: Inicializa o KM do abastecimento com o KM final
+            fuelingKm: {{ old('fueling_km', old('end_km', $run->start_km)) }},
             showFueling: {{ old('add_fueling') ? 'true' : 'false' }},
             fuelingType: '{{ old('fueling_type', 'credenciado') }}',
             get distance() {
                 return this.endKm > this.startKm ? this.endKm - this.startKm : 0;
             }
-        }">
+        }" x-init="$watch('endKm', value => fuelingKm = value)"
             @csrf
 
             <!-- End KM -->
@@ -169,7 +171,8 @@
                                 type="number"
                                 name="fueling_km"
                                 id="fueling_km"
-                                value="{{ old('fueling_km') }}"
+                                {{-- ADIÇÃO AQUI: Usa x-model para vincular o campo --}}
+                                x-model.number="fuelingKm"
                                 min="{{ $run->start_km }}"
                                 step="1"
                                 class="mt-2 block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"

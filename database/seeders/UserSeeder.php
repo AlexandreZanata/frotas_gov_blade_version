@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Secretariat;
+use App\Models\CnhCategory; // Adicione esta linha
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
@@ -29,6 +30,11 @@ class UserSeeder extends Seeder
         $saudeSecretariat = Secretariat::where('name', 'Saúde')->firstOrFail();
         $educacaoSecretariat = Secretariat::where('name', 'Educação')->firstOrFail();
 
+        // Buscar categorias CNH
+        $categoriaAB = CnhCategory::where('code', 'AB')->firstOrFail();
+        $categoriaB = CnhCategory::where('code', 'B')->firstOrFail();
+        $categoriaD = CnhCategory::where('code', 'D')->firstOrFail();
+
         // 1. Admin Geral
         $admin = User::create([
             'name' => 'Admin Geral',
@@ -37,7 +43,7 @@ class UserSeeder extends Seeder
             'phone' => '(11) 99999-0001',
             'cnh' => '12345678901',
             'cnh_expiration_date' => now()->addYears(2)->format('Y-m-d'),
-            'cnh_category' => 'AB',
+            'cnh_category_id' => $categoriaAB->id, // Alterado para cnh_category_id
             'password' => Hash::make('password'),
             'role_id' => $adminRole->id,
             'secretariat_id' => $adminSecretariat->id,
@@ -53,7 +59,7 @@ class UserSeeder extends Seeder
             'phone' => '(11) 99999-0002',
             'cnh' => '12345678902',
             'cnh_expiration_date' => now()->addYears(2)->format('Y-m-d'),
-            'cnh_category' => 'B',
+            'cnh_category_id' => $categoriaB->id, // Alterado para cnh_category_id
             'password' => Hash::make('password'),
             'role_id' => $sectorManagerRole->id,
             'secretariat_id' => $saudeSecretariat->id,
@@ -69,7 +75,7 @@ class UserSeeder extends Seeder
             'phone' => '(11) 99999-0003',
             'cnh' => '12345678903',
             'cnh_expiration_date' => now()->addYears(2)->format('Y-m-d'),
-            'cnh_category' => 'D',
+            'cnh_category_id' => $categoriaD->id, // Alterado para cnh_category_id
             'password' => Hash::make('password'),
             'role_id' => $driverRole->id,
             'secretariat_id' => $saudeSecretariat->id,
@@ -85,7 +91,7 @@ class UserSeeder extends Seeder
             'phone' => '(11) 99999-0004',
             'cnh' => '12345678904',
             'cnh_expiration_date' => now()->addYears(2)->format('Y-m-d'),
-            'cnh_category' => 'D',
+            'cnh_category_id' => $categoriaD->id, // Alterado para cnh_category_id
             'password' => Hash::make('password'),
             'role_id' => $driverRole->id,
             'secretariat_id' => $educacaoSecretariat->id,
@@ -101,7 +107,7 @@ class UserSeeder extends Seeder
             'phone' => '(11) 99999-0005',
             'cnh' => '12345678905',
             'cnh_expiration_date' => now()->addYears(2)->format('Y-m-d'),
-            'cnh_category' => 'B',
+            'cnh_category_id' => $categoriaB->id, // Alterado para cnh_category_id
             'password' => Hash::make('password'),
             'role_id' => $mechanicRole->id,
             'secretariat_id' => $adminSecretariat->id,

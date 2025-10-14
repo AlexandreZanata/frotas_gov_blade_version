@@ -44,14 +44,17 @@
 
     <!-- Categoria CNH -->
     <div>
-        <x-input-label for="cnh_category" value="Categoria CNH" />
-        <x-ui.select name="cnh_category" id="cnh_category" class="mt-1">
+        <x-input-label for="cnh_category_id" value="Categoria CNH" />
+        <x-ui.select name="cnh_category_id" id="cnh_category_id" class="mt-1">
             <option value="">Selecione...</option>
-            @foreach(['A', 'B', 'C', 'D', 'E', 'AB', 'AC', 'AD', 'AE'] as $category)
-                <option value="{{ $category }}" @selected(old('cnh_category', $user->cnh_category ?? '') == $category)>{{ $category }}</option>
+            @foreach($cnhCategories as $category)
+                <option value="{{ $category->id }}"
+                    @selected(old('cnh_category_id', $user->cnh_category_id ?? '') == $category->id)>
+                    {{ $category->code }} - {{ $category->name }}
+                </option>
             @endforeach
         </x-ui.select>
-        <x-input-error :messages="$errors->get('cnh_category')" class="mt-1" />
+        <x-input-error :messages="$errors->get('cnh_category_id')" class="mt-1" />
     </div>
 
     <!-- Role -->

@@ -44,6 +44,51 @@
                         </div>
                     </div>
 
+                    <!-- Foto da CNH -->
+                    <div class="md:col-span-2">
+                        <x-input-label for="cnh_photo" value="Foto da CNH" />
+                        <div class="flex items-center gap-4 mt-2">
+                            <div class="relative">
+                                @if(auth()->user()->photoCnh)
+                                    <img src="{{ auth()->user()->photo_cnh_url }}"
+                                         alt="Foto da CNH"
+                                         class="w-20 h-20 rounded object-cover border-2 border-gray-300">
+                                @else
+                                    <div class="w-20 h-20 rounded bg-gray-200 flex items-center justify-center border-2 border-gray-300">
+                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="flex-1">
+                                <input type="file"
+                                       id="cnh_photo"
+                                       name="cnh_photo"
+                                       accept="image/*"
+                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
+                                <x-input-error class="mt-2" :messages="$errors->get('cnh_photo')" />
+                                <p class="text-xs text-gray-500 mt-1">Formatos: JPG, PNG, GIF. Máximo: 5MB</p>
+
+                                @if(auth()->user()->photoCnh)
+                                    <button type="button"
+                                            onclick="event.preventDefault(); document.getElementById('remove-cnh-photo-form').submit();"
+                                            class="mt-2 text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                                        Remover foto da CNH
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulário para remover foto da CNH -->
+                    @if(auth()->user()->photoCnh)
+                        <form id="remove-cnh-photo-form" method="POST" action="{{ route('profile.remove-cnh-photo') }}" class="hidden">
+                            @csrf
+                            @method('DELETE')
+                        </form>
+                    @endif
+
                     <!-- Nome -->
                     <div>
                         <x-input-label for="name" value="Nome Completo *" />
@@ -128,18 +173,18 @@
 
                         <!-- Categoria -->
                         <div>
-                            <x-input-label for="cnh_category" value="Categoria" />
-                            <select id="cnh_category" name="cnh_category"
+                            <x-input-label for="cnh_category_id" value="Categoria" />
+                            <select id="cnh_category_id" name="cnh_category_id"
                                     class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-navy-800 dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 rounded-md shadow-sm">
                                 <option value="">Selecione</option>
-                                <option value="A" {{ old('cnh_category', $user->cnh_category) == 'A' ? 'selected' : '' }}>A - Moto</option>
-                                <option value="B" {{ old('cnh_category', $user->cnh_category) == 'B' ? 'selected' : '' }}>B - Carro</option>
-                                <option value="C" {{ old('cnh_category', $user->cnh_category) == 'C' ? 'selected' : '' }}>C - Caminhão</option>
-                                <option value="D" {{ old('cnh_category', $user->cnh_category) == 'D' ? 'selected' : '' }}>D - Ônibus</option>
-                                <option value="E" {{ old('cnh_category', $user->cnh_category) == 'E' ? 'selected' : '' }}>E - Reboque</option>
-                                <option value="AB" {{ old('cnh_category', $user->cnh_category) == 'AB' ? 'selected' : '' }}>AB - Moto e Carro</option>
+                                @foreach($cnhCategories as $category)
+                                    <option value="{{ $category->id }}"
+                                        {{ old('cnh_category_id', $user->cnh_category_id) == $category->id ? 'selected' : '' }}>
+                                        {{ $category->code }} - {{ $category->name }}
+                                    </option>
+                                @endforeach
                             </select>
-                            <x-input-error class="mt-2" :messages="$errors->get('cnh_category')" />
+                            <x-input-error class="mt-2" :messages="$errors->get('cnh_category_id')" />
                         </div>
                     </div>
                 </div>
@@ -255,6 +300,8 @@
             </x-modal>
         </x-ui.card>
     </div>
+    {{-- Incluir o editor de imagem SIMPLES --}}
+    @include('components.image-editor-simple')
 
     @push('scripts')
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -266,6 +313,53 @@
                     $('.cpf-mask').mask('000.000.000-00');
                     $('.phone-mask').mask('(00) 00000-0000');
                 }
+
+                // Configurar editor de imagem para foto do perfil e CNH
+                const setupImageEditor = () => {
+                    const photoInput = document.getElementById('photo');
+                    const cnhPhotoInput = document.getElementById('cnh_photo');
+
+                    const handleImageSelect = (input) => {
+                        return function(e) {
+                            if (e.target.files && e.target.files[0]) {
+                                const file = e.target.files[0];
+
+                                // Verifica se é imagem e tamanho (5MB)
+                                if (file.type.startsWith('image/')) {
+                                    if (file.size <= 5 * 1024 * 1024) {
+                                        // Tenta abrir o editor simples
+                                        if (typeof window.openSimpleImageEditor === 'function') {
+                                            const success = window.openSimpleImageEditor(file, input);
+                                            if (!success) {
+                                                console.log('Editor não disponível, enviando imagem diretamente');
+                                                // Continua com o upload normal
+                                            }
+                                        } else {
+                                            console.log('Função do editor não encontrada, enviando imagem diretamente');
+                                            // Continua com o upload normal
+                                        }
+                                    } else {
+                                        alert('A imagem deve ter no máximo 5MB');
+                                        input.value = '';
+                                    }
+                                } else {
+                                    alert('Por favor, selecione um arquivo de imagem válido (JPG, PNG, GIF)');
+                                    input.value = '';
+                                }
+                            }
+                        };
+                    };
+
+                    if (photoInput) {
+                        photoInput.addEventListener('change', handleImageSelect(photoInput));
+                    }
+
+                    if (cnhPhotoInput) {
+                        cnhPhotoInput.addEventListener('change', handleImageSelect(cnhPhotoInput));
+                    }
+                };
+
+                setupImageEditor();
             });
         </script>
     @endpush

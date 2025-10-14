@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Secretariat;
 use App\Models\UserPhoto;
+use App\Models\UserPhotoCnh;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,13 +21,18 @@ class ProfileController extends Controller
     public function edit(Request $request): View
     {
         $secretariats = Secretariat::orderBy('name')->get();
+        $cnhCategories = \App\Models\CnhCategory::where('is_active', true)->get();
 
         return view('profile.edit', [
             'user' => $request->user(),
             'secretariats' => $secretariats,
+            'cnhCategories' => $cnhCategories,
         ]);
     }
 
+    /**
+     * Update the user's profile information.
+     */
     /**
      * Update the user's profile information.
      */
@@ -34,15 +40,21 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        // Validar e atualizar dados básicos
         $user->fill($request->validated());
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
         }
 
-        // Processar upload da foto
-        if ($request->hasFile('photo')) {
-            $this->handlePhotoUpload($request->file('photo'), $user);
+        // Processar upload da foto do perfil
+        if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
+            $this->handleProfilePhotoUpload($request->file('photo'), $user);
+        }
+
+        // Processar upload da foto da CNH (ADICIONE ESTA VERIFICAÇÃO)
+        if ($request->hasFile('cnh_photo') && $request->file('cnh_photo')->isValid()) {
+            $this->handleCnhPhotoUpload($request->file('cnh_photo'), $user);
         }
 
         $user->save();
@@ -51,49 +63,145 @@ class ProfileController extends Controller
     }
 
     /**
-     * Handle photo upload - CORRIGIDO para atualizar foto existente
+     * Handle profile photo upload
      */
-    private function handlePhotoUpload($photo, $user): void
+    private function handleProfilePhotoUpload($photo, $user): bool
     {
         try {
-            // Fazer upload da nova foto
-            $path = $photo->store('user-photos', 'public');
+            return \DB::transaction(function () use ($photo, $user) {
 
-            // Buscar foto existente do tipo 'profile' para este usuário
-            $existingPhoto = UserPhoto::where('user_id', $user->id)
-                ->where('photo_type', 'profile')
-                ->first();
+                $path = $photo->store('user-photos', 'public');
 
-            if ($existingPhoto) {
-                // Se existe foto anterior, deletar o arquivo físico
-                if (Storage::disk('public')->exists($existingPhoto->path)) {
-                    Storage::disk('public')->delete($existingPhoto->path);
+                $existingPhoto = UserPhoto::where('user_id', $user->id)
+                    ->where('photo_type', 'profile')
+                    ->first();
+
+                if ($existingPhoto) {
+                    if (Storage::disk('public')->exists($existingPhoto->path)) {
+                        Storage::disk('public')->delete($existingPhoto->path);
+                    }
+
+                    $existingPhoto->update([
+                        'path' => $path,
+                        'updated_at' => now(),
+                    ]);
+
+                    $user->photo_id = $existingPhoto->id;
+                } else {
+                    $userPhoto = UserPhoto::create([
+                        'user_id' => $user->id,
+                        'photo_type' => 'profile',
+                        'path' => $path,
+                    ]);
+
+                    $user->photo_id = $userPhoto->id;
                 }
 
-                // Atualizar o registro existente
-                $existingPhoto->update([
-                    'path' => $path,
-                    'updated_at' => now(),
-                ]);
-
-                // Atualizar a referência no usuário
-                $user->photo_id = $existingPhoto->id;
-            } else {
-                // Se não existe foto, criar novo registro
-                $userPhoto = UserPhoto::create([
-                    'user_id' => $user->id,
-                    'photo_type' => 'profile',
-                    'path' => $path,
-                ]);
-
-                // Associar ao usuário
-                $user->photo_id = $userPhoto->id;
-            }
+                return true;
+            });
 
         } catch (\Exception $e) {
-            \Log::error('Erro ao fazer upload da foto: ' . $e->getMessage());
-            // Não lançar exceção para não quebrar o fluxo
+            \Log::error('Erro ao fazer upload da foto do perfil: ' . $e->getMessage());
+            return false;
         }
+    }
+
+    /**
+     * Handle CNH photo upload
+     */
+    private function handleCnhPhotoUpload($photo, $user): bool
+    {
+        try {
+            return \DB::transaction(function () use ($photo, $user) {
+
+                $path = $photo->store('user-cnh-photos', 'public');
+
+                $existingCnhPhoto = UserPhotoCnh::where('user_id', $user->id)
+                    ->where('photo_type', 'cnh')
+                    ->first();
+
+                if ($existingCnhPhoto) {
+                    if (Storage::disk('public')->exists($existingCnhPhoto->path)) {
+                        Storage::disk('public')->delete($existingCnhPhoto->path);
+                    }
+
+                    $existingCnhPhoto->update([
+                        'path' => $path,
+                        'updated_at' => now(),
+                    ]);
+
+                    $user->photo_cnh_id = $existingCnhPhoto->id;
+                } else {
+                    $cnhPhoto = UserPhotoCnh::create([
+                        'user_id' => $user->id,
+                        'photo_type' => 'cnh',
+                        'path' => $path,
+                    ]);
+
+                    $user->photo_cnh_id = $cnhPhoto->id;
+                }
+
+                return true;
+            });
+
+        } catch (\Exception $e) {
+            \Log::error('Erro ao fazer upload da foto da CNH: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Remove profile photo
+     */
+    public function removeProfilePhoto(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->photo) {
+            try {
+                if (Storage::disk('public')->exists($user->photo->path)) {
+                    Storage::disk('public')->delete($user->photo->path);
+                }
+
+                $user->photo->delete();
+                $user->photo_id = null;
+                $user->save();
+
+                return Redirect::route('profile.edit')->with('status', 'profile-photo-removed');
+            } catch (\Exception $e) {
+                \Log::error('Erro ao remover foto do perfil: ' . $e->getMessage());
+                return Redirect::route('profile.edit')->with('error', 'Erro ao remover foto do perfil.');
+            }
+        }
+
+        return Redirect::route('profile.edit')->with('error', 'Nenhuma foto do perfil para remover.');
+    }
+
+    /**
+     * Remove CNH photo
+     */
+    public function removeCnhPhoto(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->photoCnh) {
+            try {
+                if (Storage::disk('public')->exists($user->photoCnh->path)) {
+                    Storage::disk('public')->delete($user->photoCnh->path);
+                }
+
+                $user->photoCnh->delete();
+                $user->photo_cnh_id = null;
+                $user->save();
+
+                return Redirect::route('profile.edit')->with('status', 'cnh-photo-removed');
+            } catch (\Exception $e) {
+                \Log::error('Erro ao remover foto da CNH: ' . $e->getMessage());
+                return Redirect::route('profile.edit')->with('error', 'Erro ao remover foto da CNH.');
+            }
+        }
+
+        return Redirect::route('profile.edit')->with('error', 'Nenhuma foto da CNH para remover.');
     }
 
     /**

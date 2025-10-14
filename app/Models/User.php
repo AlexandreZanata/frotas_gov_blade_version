@@ -33,7 +33,7 @@ class User extends Authenticatable
         'phone',
         'cnh',
         'cnh_expiration_date',
-        'cnh_category',
+        'cnh_category_id',
     ];
 
     /**
@@ -79,7 +79,13 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Secretariat::class);
     }
-
+    /**
+     * Get the CNH category of the user
+     */
+    public function cnhCategory(): BelongsTo
+    {
+        return $this->belongsTo(CnhCategory::class, 'cnh_category_id');
+    }
     /**
      * Check if user has a specific role
      */
@@ -267,15 +273,15 @@ class User extends Authenticatable
     }
 
     /**
-     * Relação com todas as fotos do usuário (se necessário manter)
+     * Relação com a foto da CNH
      */
-    public function photos(): HasMany
+    public function photoCnh(): BelongsTo
     {
-        return $this->hasMany(UserPhoto::class);
+        return $this->belongsTo(UserPhotoCnh::class, 'photo_cnh_id');
     }
 
     /**
-     * Acessor para obter a URL da foto
+     * Acessor para a URL da foto do perfil
      */
     public function getPhotoUrlAttribute(): ?string
     {
@@ -283,11 +289,57 @@ class User extends Authenticatable
     }
 
     /**
-     * Acessor para obter a URL da foto com fallback
+     * Acessor para a URL da foto da CNH
      */
-    public function getPhotoUrlWithFallbackAttribute(): string
+    public function getPhotoCnhUrlAttribute(): ?string
     {
-        return $this->photo_url ?? asset('images/default-avatar.png');
+        return $this->photoCnh ? asset('storage/' . $this->photoCnh->path) : null;
     }
+
+    /**
+     * Acessor para o nome da secretaria
+     */
+    public function getSecretariatNameAttribute(): string
+    {
+        return $this->secretariat->name ?? 'N/A';
+    }
+
+    /**
+     * Acessor para verificar se tem CNH cadastrada
+     */
+    public function getHasCnhAttribute(): bool
+    {
+        return !empty($this->cnh) && !empty($this->cnh_expiration_date) && !empty($this->cnh_category_id);
+    }
+
+    public function getCnhCategoryNameAttribute(): string
+    {
+        return $this->cnhCategory ? $this->cnhCategory->code : 'N/A';
+    }
+
+    /**
+     * Acessor para verificar se a CNH está expirada
+     */
+    public function getIsCnhExpiredAttribute(): bool
+    {
+        if (!$this->cnh_expiration_date) {
+            return false;
+        }
+
+        return now()->gt($this->cnh_expiration_date);
+    }
+
+    /**
+     * Acessor para dias até a expiração da CNH
+     */
+    public function getDaysUntilCnhExpirationAttribute(): ?int
+    {
+        if (!$this->cnh_expiration_date) {
+            return null;
+        }
+
+        return now()->diffInDays($this->cnh_expiration_date, false);
+    }
+
 
 }

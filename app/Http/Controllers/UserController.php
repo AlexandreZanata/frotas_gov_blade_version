@@ -71,6 +71,7 @@ class UserController extends Controller
 
         $secretariats = Secretariat::all();
         $defaultPasswords = DefaultPassword::where('is_active', true)->get();
+        $cnhCategories = \App\Models\CnhCategory::where('is_active', true)->get();
 
         // Gestor geral pode atribuir qualquer role
         if ($currentUser->isGeneralManager()) {
@@ -81,7 +82,7 @@ class UserController extends Controller
             $roles = Role::whereIn('name', ['driver', 'mechanic'])->get();
         }
 
-        return view('users.create', compact('roles', 'secretariats', 'defaultPasswords'));
+        return view('users.create', compact('roles', 'secretariats', 'defaultPasswords', 'cnhCategories'));
     }
 
     /**
@@ -108,7 +109,7 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:20'],
             'cnh' => ['nullable', 'string', 'max:20'],
             'cnh_expiration_date' => ['nullable', 'date'],
-            'cnh_category' => ['nullable', 'string', 'max:5'],
+            'cnh_category_id' => ['nullable', 'exists:cnh_categories,id'],
         ]);
 
         // Verificar se o gestor setorial está tentando criar role que não pode
@@ -140,7 +141,7 @@ class UserController extends Controller
             'phone' => $request->phone,
             'cnh' => $request->cnh,
             'cnh_expiration_date' => $request->cnh_expiration_date,
-            'cnh_category' => $request->cnh_category,
+            'cnh_category_id' => $request->cnh_category_id,
         ]);
 
         return redirect()->route('users.index')
@@ -160,6 +161,7 @@ class UserController extends Controller
         }
 
         $secretariats = Secretariat::all();
+        $cnhCategories = \App\Models\CnhCategory::where('is_active', true)->get();
 
         // Gestor geral pode atribuir qualquer role
         if ($currentUser->isGeneralManager()) {
@@ -170,7 +172,7 @@ class UserController extends Controller
             $roles = Role::whereIn('name', ['driver', 'mechanic'])->get();
         }
 
-        return view('users.edit', compact('user', 'roles', 'secretariats'));
+        return view('users.edit', compact('user', 'roles', 'secretariats', 'cnhCategories'));
     }
 
     /**
@@ -195,7 +197,7 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:20'],
             'cnh' => ['nullable', 'string', 'max:20'],
             'cnh_expiration_date' => ['nullable', 'date'],
-            'cnh_category' => ['nullable', 'string', 'max:5'],
+            'cnh_category_id' => ['nullable', 'exists:cnh_categories,id'],
         ]);
 
         // Verificar se o gestor setorial está tentando atribuir role que não pode

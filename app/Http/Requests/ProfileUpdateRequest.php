@@ -22,9 +22,10 @@ class ProfileUpdateRequest extends FormRequest
             'cpf' => ['required', 'string', 'max:14', Rule::unique(User::class)->ignore($this->user()->id)],
             'cnh' => ['nullable', 'string', 'max:20'],
             'cnh_expiration_date' => ['nullable', 'date'],
-            'cnh_category' => ['nullable', 'string', 'max:5'],
+            'cnh_category_id' => ['nullable', 'exists:cnh_categories,id'],
             'secretariat_id' => ['required', 'exists:secretariats,id'],
             'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:5120'],
+            'cnh_photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:5120'],
         ];
     }
 
@@ -36,7 +37,8 @@ class ProfileUpdateRequest extends FormRequest
         return [
             'secretariat_id' => 'secretaria',
             'cnh_expiration_date' => 'data de validade da CNH',
-            'cnh_category' => 'categoria da CNH',
+            'cnh_category_id' => 'categoria da CNH',
+            'cnh_photo' => 'foto da CNH',
         ];
     }
 }
