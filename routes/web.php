@@ -359,6 +359,7 @@ Route::middleware('auth')->group(function () {
     // Postos de Combustível
     Route::resource('gas-stations', \App\Http\Controllers\GasStationController::class);
     Route::get('/api/gas-stations/search', [\App\Http\Controllers\GasStationController::class, 'search'])->name('api.gas-stations.search');
+    Route::post('/gas-stations/check-cnpj', [GasStationController::class, 'checkCnpj'])->name('gas-stations.check-cnpj');
     //***** INICIO DO AGENDAMENTOS DE POSTOS *****//
 
     // Rotas para o CRUD de Agendamento de Postos
@@ -398,8 +399,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('/settings/discount-settings/{discount}', [\App\Http\Controllers\FuelQuotationSettingsController::class, 'destroyDiscountSetting'])->name('settings.discount-settings.destroy');
 
     });
-
-    Route::post('/gas-stations/check-cnpj', [GasStationController::class, 'checkCnpj'])->name('gas-stations.check-cnpj');
 
     // Multas
     Route::prefix('fines')->name('fines.')->group(function () {

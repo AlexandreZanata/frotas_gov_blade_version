@@ -4,7 +4,7 @@
     </x-slot>
 
     <x-ui.card>
-        <form action="{{ route('gas-stations.update', $gasStation) }}" method="POST" class="space-y-6">
+        <form action="{{ route('gas-stations.update', $gasStation) }}" method="POST" class="space-y-6" id="gasStationForm">
             @csrf
             @method('PUT')
 
@@ -52,6 +52,8 @@
                            placeholder="00.000.000/0000-00"
                            maxlength="18"
                            class="w-full rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
+                    <!-- Div de feedback para validação em tempo real -->
+                    <div id="cnpjFeedback" class="mt-1 text-sm hidden"></div>
                     @error('cnpj')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
@@ -94,11 +96,8 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const cnpjInput = document.getElementById('cnpj');
                 const cnpjFeedback = document.getElementById('cnpjFeedback');
-                const form = document.getElementById('gasStationForm');
 
                 let cnpjCheckTimeout = null;
-                let isCnpjValid = false;
-                let isCheckingCnpj = false;
 
                 function formatCNPJ(value) {
                     const numbers = value.replace(/\D/g, '');
@@ -122,41 +121,45 @@
                 }
 
                 function checkCnpjAvailability(cnpj) {
-                    if (cnpj.length !== 14 || isCheckingCnpj) {
+                    if (cnpj.length !== 14) {
                         hideFeedback();
-                        isCnpjValid = false;
                         return;
                     }
 
-                    isCheckingCnpj = true;
+                    showFeedback('Verificando CNPJ...', 'success');
 
+                    // Usando fetch com tratamento SIMPLES de erro
                     fetch('{{ route("gas-stations.check-cnpj") }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({
                             cnpj: cnpj,
                             exclude_id: '{{ $gasStation->id }}'
                         })
                     })
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Erro na resposta do servidor');
+                            }
+                            return response.json();
+                        })
                         .then(data => {
-                            if (data.exists) {
+                            if (data.error) {
+                                showFeedback('Erro: ' + data.error, 'error');
+                            } else if (data.exists) {
                                 showFeedback(data.message, 'error');
-                                isCnpjValid = false;
                             } else {
                                 showFeedback(data.message, 'success');
-                                isCnpjValid = true;
                             }
                         })
                         .catch(error => {
-                            console.error('Erro ao verificar CNPJ:', error);
-                            isCnpjValid = false;
-                        })
-                        .finally(() => {
-                            isCheckingCnpj = false;
+                            console.log('Erro na verificação de CNPJ (pode ser normal):', error.message);
+                            // Não mostra erro para o usuário para não poluir a interface
+                            hideFeedback();
                         });
                 }
 
@@ -173,12 +176,11 @@
                             clearTimeout(cnpjCheckTimeout);
                             cnpjCheckTimeout = setTimeout(() => {
                                 checkCnpjAvailability(numbersOnly);
-                            }, 800);
+                            }, 1000);
                         } else {
                             // Permite que o usuário digite/edit livremente até ter 14 números
                             e.target.value = numbersOnly;
                             hideFeedback();
-                            isCnpjValid = false;
                         }
                     });
 
@@ -187,7 +189,6 @@
                         const numbersOnly = e.target.value.replace(/\D/g, '');
                         if (numbersOnly.length === 14) {
                             e.target.value = formatCNPJ(e.target.value);
-                            checkCnpjAvailability(numbersOnly);
                         }
                     });
 
@@ -204,13 +205,14 @@
                         const numbersOnly = cnpjInput.value.replace(/\D/g, '');
                         if (numbersOnly.length === 14) {
                             cnpjInput.value = formatCNPJ(cnpjInput.value);
-                            checkCnpjAvailability(numbersOnly);
+                            // Não verifica automaticamente ao carregar
+                            // checkCnpjAvailability(numbersOnly);
+                            hideFeedback();
+                            cnpjInput.setAttribute('data-initial-cnpj', numbersOnly);
+                            cnpjInput.setAttribute('data-initial-formatted', cnpjInput.value);
                         }
                     }
-                }
-
-                // REMOVER a validação no submit que estava causando o bug
-            });
+                });
         </script>
     @endpush
 </x-app-layout>

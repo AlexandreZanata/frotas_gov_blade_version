@@ -51,6 +51,7 @@
                            placeholder="00.000.000/0000-00"
                            maxlength="18"
                            class="w-full rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
+                    <!-- Div de feedback para validação em tempo real -->
                     <div id="cnpjFeedback" class="mt-1 text-sm hidden"></div>
                     @error('cnpj')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -82,7 +83,6 @@
                     Cancelar
                 </a>
                 <button type="submit"
-                        id="submitButton"
                         class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm transition">
                     Cadastrar Posto
                 </button>
@@ -95,11 +95,8 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const cnpjInput = document.getElementById('cnpj');
                 const cnpjFeedback = document.getElementById('cnpjFeedback');
-                const form = document.getElementById('gasStationForm');
 
                 let cnpjCheckTimeout = null;
-                let isCnpjValid = false;
-                let isCheckingCnpj = false;
 
                 function formatCNPJ(value) {
                     const numbers = value.replace(/\D/g, '');
@@ -123,38 +120,45 @@
                 }
 
                 function checkCnpjAvailability(cnpj) {
-                    if (cnpj.length !== 14 || isCheckingCnpj) {
+                    if (cnpj.length !== 14) {
                         hideFeedback();
-                        isCnpjValid = false;
                         return;
                     }
 
-                    isCheckingCnpj = true;
+                    showFeedback('Verificando CNPJ...', 'success');
 
+                    // Usando fetch com tratamento SIMPLES de erro (igual ao edit)
                     fetch('{{ route("gas-stations.check-cnpj") }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
                         },
-                        body: JSON.stringify({ cnpj: cnpj })
+                        body: JSON.stringify({
+                            cnpj: cnpj
+                            // Não precisa de exclude_id no create
+                        })
                     })
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Erro na resposta do servidor');
+                            }
+                            return response.json();
+                        })
                         .then(data => {
-                            if (data.exists) {
+                            if (data.error) {
+                                showFeedback('Erro: ' + data.error, 'error');
+                            } else if (data.exists) {
                                 showFeedback(data.message, 'error');
-                                isCnpjValid = false;
                             } else {
                                 showFeedback(data.message, 'success');
-                                isCnpjValid = true;
                             }
                         })
                         .catch(error => {
-                            console.error('Erro ao verificar CNPJ:', error);
-                            isCnpjValid = false;
-                        })
-                        .finally(() => {
-                            isCheckingCnpj = false;
+                            console.log('Erro na verificação de CNPJ (pode ser normal):', error.message);
+                            // Não mostra erro para o usuário para não poluir a interface
+                            hideFeedback();
                         });
                 }
 
@@ -171,12 +175,11 @@
                             clearTimeout(cnpjCheckTimeout);
                             cnpjCheckTimeout = setTimeout(() => {
                                 checkCnpjAvailability(numbersOnly);
-                            }, 800);
+                            }, 1000);
                         } else {
                             // Permite que o usuário digite/edit livremente até ter 14 números
                             e.target.value = numbersOnly;
                             hideFeedback();
-                            isCnpjValid = false;
                         }
                     });
 
@@ -185,7 +188,6 @@
                         const numbersOnly = e.target.value.replace(/\D/g, '');
                         if (numbersOnly.length === 14) {
                             e.target.value = formatCNPJ(e.target.value);
-                            checkCnpjAvailability(numbersOnly);
                         }
                     });
 
@@ -202,12 +204,11 @@
                         const numbersOnly = cnpjInput.value.replace(/\D/g, '');
                         if (numbersOnly.length === 14) {
                             cnpjInput.value = formatCNPJ(cnpjInput.value);
-                            checkCnpjAvailability(numbersOnly);
+                            // Não verifica automaticamente ao carregar (igual ao edit)
+                            hideFeedback();
                         }
                     }
                 }
-
-
             });
         </script>
     @endpush

@@ -2,7 +2,7 @@
     <x-slot name="header">
         <x-ui.page-header
             title="Troca de Óleo"
-            subtitle="Dashboard de gerenciamento e monitoramento da manutenção preventiva"
+            subtitle="Gerenciamento e monitoramento da manutenção preventiva"
             hide-title-mobile
             icon="droplet"
         />
@@ -17,13 +17,11 @@
         </button>
     </x-slot>
 
-    <!-- Definir função JavaScript ANTES do Alpine.js inicializar -->
+    <!-- Lógica Alpine.js para o Modal e Ações -->
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('oilChangeModule', () => ({
                 showRegisterModal: false,
-                searchQuery: '',
-                statusFilter: '{{ request("status", "") }}',
                 selectedVehicleId: '',
                 selectedOilId: '',
                 litersUsed: '',
@@ -31,51 +29,32 @@
                 unitCost: 0,
 
                 init() {
-                    // Listener para abrir modal com veículo pré-selecionado
                     window.addEventListener('open-register-modal', (event) => {
                         this.openRegisterModal(event.detail?.vehicleId);
                     });
                 },
 
                 openRegisterModal(vehicleId = '') {
+                    // Reseta os campos ao abrir
                     this.selectedVehicleId = vehicleId;
+                    this.selectedOilId = '';
+                    this.litersUsed = '';
+                    this.totalCost = '';
+                    this.unitCost = 0;
+
+                    const form = document.getElementById('oil-change-form');
+                    if(form) form.reset();
+
                     this.showRegisterModal = true;
+
                     if (vehicleId) {
                         this.$nextTick(() => this.loadVehicleData());
                     }
                 },
 
-                filterByStatus(status) {
-                    if (this.statusFilter === status) {
-                        window.location.href = '{{ route("oil-changes.index") }}';
-                    } else {
-                        window.location.href = '{{ route("oil-changes.index") }}?status=' + status;
-                    }
-                },
-
-                vehicleMatchesFilter(vehicle) {
-                    // Filtro de busca
-                    if (this.searchQuery) {
-                        const query = this.searchQuery.toLowerCase();
-                        const matchesName = vehicle.name.toLowerCase().includes(query);
-                        const matchesPlate = vehicle.plate.toLowerCase().includes(query);
-
-                        if (!matchesName && !matchesPlate) {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                },
-
-                filterVehicles() {
-                    // Filtro em tempo real, sem reload
-                },
-
                 loadVehicleData() {
                     if (!this.selectedVehicleId) return;
 
-                    // Buscar dados do veículo via API
                     fetch(`/api/oil-changes/vehicle-data/${this.selectedVehicleId}`)
                         .then(response => response.json())
                         .then(data => {
@@ -85,66 +64,42 @@
                             const litersUsedInput = document.getElementById('liters_used');
                             const changeDateInput = document.getElementById('change_date');
 
-                            // Preencher KM atual do veículo
                             if (data.current_km && kmAtChangeInput) {
                                 kmAtChangeInput.value = data.current_km;
                             }
 
-                            // Calcular e preencher PRÓXIMA TROCA KM automaticamente
                             if (nextChangeKmInput) {
                                 let baseKm = 0;
-
                                 if (data.last_oil_change) {
-                                    // Se já houve troca, usar o KM da última troca
-                                    baseKm = data.last_oil_change.next_change_km ||
-                                        (data.last_oil_change.km_at_change + data.suggested_km_interval);
+                                    baseKm = data.last_oil_change.next_change_km || (data.last_oil_change.km_at_change + data.suggested_km_interval);
                                 } else if (kmAtChangeInput.value) {
-                                    // Se é primeira troca, usar KM atual + intervalo
                                     baseKm = parseInt(kmAtChangeInput.value) + data.suggested_km_interval;
                                 } else if (data.current_km) {
-                                    // Fallback: usar KM atual do veículo + intervalo
                                     baseKm = parseInt(data.current_km) + data.suggested_km_interval;
                                 }
-
                                 nextChangeKmInput.value = baseKm;
                             }
 
-                            // Calcular e preencher PRÓXIMA TROCA DATA automaticamente
                             if (nextChangeDateInput) {
-                                const baseDate = changeDateInput && changeDateInput.value
-                                    ? new Date(changeDateInput.value)
-                                    : new Date();
-
+                                const baseDate = changeDateInput && changeDateInput.value ? new Date(changeDateInput.value) : new Date();
                                 baseDate.setDate(baseDate.getDate() + data.suggested_days_interval);
                                 const suggestedDate = baseDate.toISOString().split('T')[0];
                                 nextChangeDateInput.value = suggestedDate;
                             }
 
-                            // Sugerir litros padrão se configurado
                             if (data.suggested_liters && litersUsedInput) {
                                 this.litersUsed = data.suggested_liters;
                             }
-
-                            console.log('Dados carregados e calculados:', {
-                                currentKm: data.current_km,
-                                suggestedKmInterval: data.suggested_km_interval,
-                                suggestedDaysInterval: data.suggested_days_interval,
-                                nextChangeKm: nextChangeKmInput?.value,
-                                nextChangeDate: nextChangeDateInput?.value
-                            });
                         })
                         .catch(error => {
                             console.error('Erro ao carregar dados do veículo:', error);
                         });
                 },
 
-                // Método auxiliar para recalcular a data da próxima troca quando mudar a data da troca
                 recalculateNextChangeDate() {
                     const changeDateInput = document.getElementById('change_date');
                     const nextChangeDateInput = document.getElementById('next_change_date');
-
                     if (changeDateInput && changeDateInput.value && nextChangeDateInput && this.selectedVehicleId) {
-                        // Buscar intervalo de dias sugerido
                         fetch(`/api/oil-changes/vehicle-data/${this.selectedVehicleId}`)
                             .then(response => response.json())
                             .then(data => {
@@ -155,13 +110,10 @@
                     }
                 },
 
-                // Método auxiliar para recalcular o KM da próxima troca quando mudar o KM atual
                 recalculateNextChangeKm() {
                     const kmAtChangeInput = document.getElementById('km_at_change');
                     const nextChangeKmInput = document.getElementById('next_change_km');
-
                     if (kmAtChangeInput && kmAtChangeInput.value && nextChangeKmInput && this.selectedVehicleId) {
-                        // Buscar intervalo de KM sugerido
                         fetch(`/api/oil-changes/vehicle-data/${this.selectedVehicleId}`)
                             .then(response => response.json())
                             .then(data => {
@@ -176,10 +128,8 @@
                         this.unitCost = 0;
                         return;
                     }
-
                     const select = document.getElementById('inventory_item_id');
                     const option = select.options[select.selectedIndex];
-
                     this.unitCost = parseFloat(option.dataset.cost) || 0;
                     this.calculateCost();
                 },
@@ -193,139 +143,107 @@
         });
     </script>
 
-    <!-- Wrap everything in x-data to share Alpine.js state -->
     <div x-data="oilChangeModule()">
         <!-- Alertas de Estoque Baixo -->
-        @if($lowStockOils->count() > 0)
-            <x-ui.alert-card title="Estoque Baixo de Óleo" variant="danger" icon="alert-triangle">
-                <ul class="space-y-1">
+        @if($lowStockOils->isNotEmpty())
+            <x-ui.alert-card title="Estoque Baixo de Óleo" variant="danger" icon="alert-triangle" class="mb-6">
+                <ul class="space-y-1 list-disc list-inside">
                     @foreach($lowStockOils as $oil)
-                        <li class="flex items-start gap-2">
-                            <span class="text-red-600 dark:text-red-400 mt-0.5">•</span>
-                            <span><strong>{{ $oil->name }}</strong> - Estoque: {{ $oil->quantity_on_hand }} {{ $oil->unit_of_measure }} (Mínimo: {{ $oil->reorder_level }})</span>
-                        </li>
+                        <li><strong>{{ $oil->name }}</strong> - Estoque: {{ $oil->quantity_on_hand }} {{ $oil->unit_of_measure }} (Mínimo: {{ $oil->reorder_level }})</li>
                     @endforeach
                 </ul>
             </x-ui.alert-card>
         @endif
 
-        <!-- Estatísticas Gerais -->
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <x-ui.stat-card
-                title="Total de Veículos"
-                :value="$stats['total']"
-                variant="default"
-                icon="car"
-            />
-
-            <x-ui.stat-card
-                title="Em Dia"
-                :value="$stats['em_dia']"
-                variant="success"
-                icon="check-circle"
-                clickable
-                :href="route('oil-changes.index', ['status' => 'em_dia'])"
-                x-on:click.prevent="filterByStatus('em_dia')"
-            />
-
-            <x-ui.stat-card
-                title="Atenção"
-                :value="$stats['atencao']"
-                variant="warning"
-                icon="alert-circle"
-                clickable
-                :href="route('oil-changes.index', ['status' => 'atencao'])"
-                x-on:click.prevent="filterByStatus('atencao')"
-            />
-
-            <x-ui.stat-card
-                title="Crítico"
-                :value="$stats['critico']"
-                variant="orange"
-                icon="alert-triangle"
-                clickable
-                :href="route('oil-changes.index', ['status' => 'critico'])"
-                x-on:click.prevent="filterByStatus('critico')"
-            />
-
-            <x-ui.stat-card
-                title="Vencido"
-                :value="$stats['vencido']"
-                variant="danger"
-                icon="x-circle"
-                clickable
-                :href="route('oil-changes.index', ['status' => 'vencido'])"
-                x-on:click.prevent="filterByStatus('vencido')"
-            />
-
-            <x-ui.stat-card
-                title="Sem Registro"
-                :value="$stats['sem_registro']"
-                variant="gray"
-                icon="file-minus"
-                clickable
-                :href="route('oil-changes.index', ['status' => 'sem_registro'])"
-                x-on:click.prevent="filterByStatus('sem_registro')"
-            />
+        <!-- Estatísticas (Filtros) -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+            <x-ui.stat-card title="Total" :value="$stats['total']" variant="default" icon="car" :href="route('oil-changes.index')" :active="!request('status')"/>
+            <x-ui.stat-card title="Em Dia" :value="$stats['em_dia']" variant="success" icon="check-circle" :href="route('oil-changes.index', ['status' => 'em_dia'])" :active="request('status') == 'em_dia'"/>
+            <x-ui.stat-card title="Atenção" :value="$stats['atencao']" variant="warning" icon="alert-circle" :href="route('oil-changes.index', ['status' => 'atencao'])" :active="request('status') == 'atencao'"/>
+            <x-ui.stat-card title="Crítico" :value="$stats['critico']" variant="orange" icon="alert-triangle" :href="route('oil-changes.index', ['status' => 'critico'])" :active="request('status') == 'critico'"/>
+            <x-ui.stat-card title="Vencido" :value="$stats['vencido']" variant="danger" icon="x-circle" :href="route('oil-changes.index', ['status' => 'vencido'])" :active="request('status') == 'vencido'"/>
+            <x-ui.stat-card title="Sem Registro" :value="$stats['sem_registro']" variant="gray" icon="file-minus" :href="route('oil-changes.index', ['status' => 'sem_registro'])" :active="request('status') == 'sem_registro'"/>
         </div>
 
-        <!-- Busca e Filtros -->
-        <x-ui.card padding="p-4">
-            <div class="flex flex-col md:flex-row gap-4">
-                <div class="flex-1 relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <x-icon name="search" class="h-4 w-4 text-gray-400 dark:text-navy-400" />
-                    </div>
-                    <input
-                        type="text"
-                        x-model="searchQuery"
-                        @input="filterVehicles"
-                        placeholder="Buscar por veículo, placa..."
-                        class="w-full pl-10 rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                </div>
+        <!-- Tabela de Veículos -->
+        <x-ui.card>
+            <x-ui.table
+                :headers="['Veículo', 'Status', 'Última Troca', 'Próxima Troca', 'Progresso', 'Ações']"
+                :searchable="true"
+                search-placeholder="Buscar por nome ou placa..."
+                :search-value="request('search', '')"
+                :pagination="$vehicles">
 
-                @if(request('status'))
-                    <a href="{{ route('oil-changes.index') }}"
-                       class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-navy-700 dark:hover:bg-navy-600 text-gray-700 dark:text-white rounded-md font-medium transition">
-                        <x-icon name="x" class="w-4 h-4" />
-                        <span>Limpar Filtro</span>
-                    </a>
-                @endif
-            </div>
+                @forelse($vehicles as $vehicle)
+                    <tr class="hover:bg-gray-50 dark:hover:bg-navy-700/40">
+                        {{-- Veículo --}}
+                        <td class="px-4 py-2 font-medium">
+                            <div class="text-gray-900 dark:text-white">{{ $vehicle->name }}</div>
+                            <div class="text-xs text-gray-500 dark:text-navy-400">{{ $vehicle->plate }}</div>
+                        </td>
+
+                        {{-- Status --}}
+                        <td class="px-4 py-2">
+                            <x-ui.oil-status-badge :status="$vehicle->oil_status" />
+                        </td>
+
+                        {{-- Última Troca --}}
+                        <td class="px-4 py-2 text-sm">
+                            @if($vehicle->last_oil_change)
+                                <div>{{ $vehicle->last_oil_change->change_date->format('d/m/Y') }}</div>
+                                <div class="text-xs text-gray-500">{{ number_format($vehicle->last_oil_change->km_at_change, 0, ',', '.') }} km</div>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endif
+                        </td>
+
+                        {{-- Próxima Troca --}}
+                        <td class="px-4 py-2 text-sm">
+                            @if($vehicle->last_oil_change)
+                                <div>{{ $vehicle->last_oil_change->next_change_date->format('d/m/Y') }}</div>
+                                <div class="text-xs text-gray-500">{{ number_format($vehicle->last_oil_change->next_change_km, 0, ',', '.') }} km</div>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endif
+                        </td>
+
+                        {{-- Progresso --}}
+                        <td class="px-4 py-2">
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs w-8 text-gray-500">KM</span>
+                                    <div class="flex-1 bg-gray-200 dark:bg-navy-700 rounded-full h-1.5 w-24">
+                                        <div class="{{ $vehicle->km_progress_color }} h-1.5 rounded-full" style="width: {{ $vehicle->km_progress }}%"></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs w-8 text-gray-500">Data</span>
+                                    <div class="flex-1 bg-gray-200 dark:bg-navy-700 rounded-full h-1.5 w-24">
+                                        <div class="{{ $vehicle->date_progress_color }} h-1.5 rounded-full" style="width: {{ $vehicle->date_progress }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                        {{-- Ações --}}
+                        <td class="px-4 py-2 whitespace-nowrap text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <button @click="openRegisterModal('{{ $vehicle->id }}')" title="Registrar Troca" class="p-1.5 rounded-md text-green-600 bg-green-100 hover:bg-green-200 dark:text-green-300 dark:bg-green-800/50 dark:hover:bg-green-800">
+                                    <x-icon name="plus" class="w-4 h-4" />
+                                </button>
+                                <x-ui.action-icon :href="route('oil-changes.history', $vehicle)" icon="list" title="Histórico" variant="neutral" />
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-navy-200">
+                            Nenhum veículo encontrado para os filtros aplicados.
+                        </td>
+                    </tr>
+                @endforelse
+            </x-ui.table>
         </x-ui.card>
-
-        <!-- Lista de Veículos em Grid de Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            @forelse($vehicles as $vehicle)
-                <div x-show="vehicleMatchesFilter({{ json_encode([
-                        'name' => $vehicle->name,
-                        'plate' => $vehicle->plate,
-                        'status' => $vehicle->oil_status
-                    ]) }})"
-                     x-transition>
-                    <x-ui.oil-vehicle-card
-                        :vehicle="$vehicle"
-                        :last-oil-change="$vehicle->last_oil_change ?? null"
-                        :status="$vehicle->oil_status"
-                        :km-progress="$vehicle->km_progress"
-                        :date-progress="$vehicle->date_progress"
-                        :current-km="$vehicle->current_km"
-                    />
-                </div>
-            @empty
-                <div class="col-span-full">
-                    <x-ui.card padding="p-8">
-                        <div class="text-center text-gray-500 dark:text-navy-400">
-                            <svg class="w-16 h-16 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            <h3 class="text-lg font-medium mb-1">Nenhum veículo encontrado</h3>
-                            <p class="text-sm">Não há veículos cadastrados no sistema.</p>
-                        </div>
-                    </x-ui.card>
-                </div>
-            @endforelse
-        </div>
 
         <!-- Modal de Registro de Troca -->
         <div x-show="showRegisterModal"
@@ -358,7 +276,7 @@
                     </div>
 
                     <!-- Formulário -->
-                    <form method="POST" action="{{ route('oil-changes.store') }}" class="p-6">
+                    <form id="oil-change-form" method="POST" action="{{ route('oil-changes.store') }}" class="p-6">
                         @csrf
 
                         <!-- Seleção de Veículo -->

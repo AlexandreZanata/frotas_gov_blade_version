@@ -44,19 +44,50 @@ class GasStationController extends Controller
         // Remove formatação do CNPJ para validação
         $cnpj = $request->cnpj ? preg_replace('/[^0-9]/', '', $request->cnpj) : null;
 
-        $validated = $request->validate([
+        \Log::info('STORE - CNPJ Recebido:', [
+            'request_cnpj' => $request->cnpj,
+            'cleaned_cnpj' => $cnpj
+        ]);
+
+        // Validação MANUAL para CNPJ duplicado ANTES da validação do Laravel
+        if ($cnpj) {
+            $existing = GasStation::where('cnpj', $cnpj)->first();
+
+            if ($existing) {
+                \Log::warning('CNPJ duplicado detectado manualmente no store:', [
+                    'existing_id' => $existing->id,
+                    'existing_name' => $existing->name,
+                    'cnpj' => $cnpj
+                ]);
+
+                return back()
+                    ->withInput()
+                    ->withErrors(['cnpj' => 'Este CNPJ já está cadastrado no sistema.']);
+            }
+        }
+
+        // Validação do Laravel
+        $validationRules = [
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:500',
-            'cnpj' => [
+            'status' => 'required|in:active,inactive',
+        ];
+
+        // Adicionar regra de CNPJ apenas se foi fornecido
+        if ($request->filled('cnpj')) {
+            $validationRules['cnpj'] = [
                 'nullable',
                 'string',
                 'max:18',
                 new CnpjValidation,
-                Rule::unique('gas_stations', 'cnpj')->where(function ($query) use ($cnpj) {
-                    return $query->where('cnpj', $cnpj);
-                })
-            ],
-            'status' => 'required|in:active,inactive',
+                Rule::unique('gas_stations', 'cnpj')
+            ];
+        } else {
+            $validationRules['cnpj'] = 'nullable';
+        }
+
+        $validated = $request->validate($validationRules, [
+            'cnpj.unique' => 'Este CNPJ já está cadastrado no sistema.'
         ]);
 
         // Formatar CNPJ antes de salvar (remove máscara)
@@ -64,6 +95,11 @@ class GasStationController extends Controller
         if ($request->filled('cnpj')) {
             $data['cnpj'] = $cnpj;
         }
+
+        \Log::info('Criando novo posto:', [
+            'name' => $data['name'],
+            'cnpj' => $data['cnpj'] ?? null
+        ]);
 
         GasStation::create($data);
 
@@ -95,26 +131,60 @@ class GasStationController extends Controller
     }
 
     /**
-     * Atualizar posto
+     * Atualizar posto - MÉTODO COMPLETAMENTE CORRIGIDO
      */
     public function update(Request $request, GasStation $gasStation)
     {
         // Remove formatação do CNPJ para validação
         $cnpj = $request->cnpj ? preg_replace('/[^0-9]/', '', $request->cnpj) : null;
 
-        $validated = $request->validate([
+        \Log::info('UPDATE - CNPJ Recebido:', [
+            'request_cnpj' => $request->cnpj,
+            'cleaned_cnpj' => $cnpj,
+            'current_cnpj' => $gasStation->cnpj
+        ]);
+
+        // Validação MANUAL para CNPJ duplicado ANTES da validação do Laravel
+        if ($cnpj && $cnpj !== $gasStation->cnpj) {
+            $existing = GasStation::where('cnpj', $cnpj)
+                ->where('id', '!=', $gasStation->id)
+                ->first();
+
+            if ($existing) {
+                \Log::warning('CNPJ duplicado detectado manualmente:', [
+                    'existing_id' => $existing->id,
+                    'existing_name' => $existing->name,
+                    'cnpj' => $cnpj
+                ]);
+
+                return back()
+                    ->withInput()
+                    ->withErrors(['cnpj' => 'Este CNPJ já está cadastrado no sistema.']);
+            }
+        }
+
+        // Validação do Laravel
+        $validationRules = [
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:500',
-            'cnpj' => [
+            'status' => 'required|in:active,inactive',
+        ];
+
+        // Adicionar regra de CNPJ apenas se foi fornecido
+        if ($request->filled('cnpj')) {
+            $validationRules['cnpj'] = [
                 'nullable',
                 'string',
                 'max:18',
                 new CnpjValidation,
-                Rule::unique('gas_stations', 'cnpj')->ignore($gasStation->id)->where(function ($query) use ($cnpj) {
-                    return $query->where('cnpj', $cnpj);
-                })
-            ],
-            'status' => 'required|in:active,inactive',
+                Rule::unique('gas_stations', 'cnpj')->ignore($gasStation->id)
+            ];
+        } else {
+            $validationRules['cnpj'] = 'nullable';
+        }
+
+        $validated = $request->validate($validationRules, [
+            'cnpj.unique' => 'Este CNPJ já está cadastrado no sistema.'
         ]);
 
         // Formatar CNPJ antes de salvar (remove máscara)
@@ -124,6 +194,12 @@ class GasStationController extends Controller
         } else {
             $data['cnpj'] = null;
         }
+
+        \Log::info('Atualizando posto:', [
+            'id' => $gasStation->id,
+            'cnpj_antigo' => $gasStation->cnpj,
+            'cnpj_novo' => $data['cnpj']
+        ]);
 
         $gasStation->update($data);
 
@@ -148,26 +224,62 @@ class GasStationController extends Controller
     }
 
     /**
-     * API: Verificar se CNPJ já existe
+     * API: Verificar se CNPJ já existe - MÉTODO SIMPLIFICADO
      */
     public function checkCnpj(Request $request)
     {
-        $request->validate([
-            'cnpj' => 'required|string',
-        ]);
+        // Log simples para debug
+        \Log::info('API Check CNPJ chamada');
 
-        $cnpj = preg_replace('/[^0-9]/', '', $request->cnpj);
+        try {
+            $cnpj = $request->cnpj ? preg_replace('/[^0-9]/', '', $request->cnpj) : null;
 
-        $exists = GasStation::where('cnpj', $cnpj)
-            ->when($request->has('exclude_id'), function ($query) use ($request) {
+            if (!$cnpj || strlen($cnpj) !== 14) {
+                return response()->json([
+                    'exists' => false,
+                    'message' => 'CNPJ deve conter 14 dígitos.'
+                ]);
+            }
+
+            $query = GasStation::where('cnpj', $cnpj);
+
+            if ($request->exclude_id) {
                 $query->where('id', '!=', $request->exclude_id);
-            })
-            ->exists();
+            }
 
-        return response()->json([
-            'exists' => $exists,
-            'message' => $exists ? 'Este CNPJ já está cadastrado no sistema.' : 'CNPJ disponível.'
-        ]);
+            $exists = $query->exists();
+
+            return response()->json([
+                'exists' => $exists,
+                'message' => $exists ? 'Este CNPJ já está cadastrado no sistema.' : 'CNPJ disponível.'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Erro no checkCnpj:', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'error' => 'Erro interno do servidor'
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Buscar postos
+     */
+    public function search(Request $request)
+    {
+        $search = $request->get('q', '');
+
+        $gasStations = GasStation::where('status', 'active')
+            ->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%");
+            })
+            ->orderBy('name')
+            ->limit(10)
+            ->get(['id', 'name', 'address', 'cnpj']);
+
+        return response()->json($gasStations);
     }
 
     /**
