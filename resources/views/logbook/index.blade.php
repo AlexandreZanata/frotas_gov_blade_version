@@ -53,7 +53,12 @@
                         </div>
                     </td>
                     <td class="px-4 py-2">
-                        <div class="text-sm text-gray-900 dark:text-gray-100 font-medium">{{ $run->destination }}</div>
+                        <div class="text-sm text-gray-900 dark:text-gray-100 font-medium">
+                            {{ $run->destinations->first()->destination ?? 'N/A' }}
+                            @if($run->destinations->count() > 1)
+                                <span class="text-xs text-gray-500">(+{{ $run->destinations->count() - 1 }} outros)</span>
+                            @endif
+                        </div>
                         @if($run->stop_point)
                             <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                 Parada: {{ $run->stop_point }}

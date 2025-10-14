@@ -1,24 +1,70 @@
 <?php
+
 namespace Database\Seeders;
+
 use App\Models\Run;
+use App\Models\RunDestination;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
 class RunSeeder extends Seeder
 {
     public function run(): void
     {
-        $driver = User::where('email', 'admin@frotas.gov')->first(); // Usando o admin como exemplo
+        $driver = User::where('email', 'admin@frotas.gov')->first();
         $vehicle = Vehicle::where('plate', 'BRA2E19')->first();
 
         if ($driver && $vehicle) {
-            Run::create([
+            // Criar a corrida sem o campo destination
+            $run = Run::create([
                 'vehicle_id' => $vehicle->id,
                 'user_id' => $driver->id,
                 'start_km' => 15000,
                 'started_at' => now(),
-                'destination' => 'Hospital Central',
                 'status' => 'in_progress',
+            ]);
+
+            // Criar o destino na nova tabela
+            RunDestination::create([
+                'run_id' => $run->id,
+                'destination' => 'Hospital Central',
+                'order' => 0,
+            ]);
+        }
+
+        // Adicionar mais exemplos se necessário
+        $vehicle2 = Vehicle::where('plate', 'BRA0A12')->first();
+
+        if ($driver && $vehicle2) {
+            $run2 = Run::create([
+                'vehicle_id' => $vehicle2->id,
+                'user_id' => $driver->id,
+                'start_km' => 20000,
+                'started_at' => now()->subHours(2),
+                'end_km' => 20045,
+                'finished_at' => now()->subHours(1),
+                'status' => 'completed',
+            ]);
+
+            // Múltiplos destinos para exemplo
+            RunDestination::create([
+                'run_id' => $run2->id,
+                'destination' => 'Secretaria de Educação',
+                'order' => 0,
+            ]);
+
+            RunDestination::create([
+                'run_id' => $run2->id,
+                'destination' => 'Escola Municipal',
+                'order' => 1,
+            ]);
+
+            RunDestination::create([
+                'run_id' => $run2->id,
+                'destination' => 'Prefeitura',
+                'order' => 2,
             ]);
         }
     }

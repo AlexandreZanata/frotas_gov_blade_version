@@ -7,43 +7,35 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class RunStartRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         return [
             'start_km' => ['required', 'integer', 'min:0'],
-            'destination' => ['required', 'string', 'max:255'],
+            'destinations' => ['required', 'array', 'min:1'],
+            'destinations.*' => ['required', 'string', 'max:255'],
         ];
     }
 
-    /**
-     * Get custom validation messages
-     */
     public function messages(): array
     {
         return [
             'start_km.required' => 'A quilometragem atual é obrigatória.',
             'start_km.integer' => 'A quilometragem deve ser um número inteiro.',
             'start_km.min' => 'A quilometragem não pode ser negativa.',
-            'destination.required' => 'O destino é obrigatório.',
-            'destination.string' => 'O destino deve ser um texto válido.',
-            'destination.max' => 'O destino não pode ter mais de 255 caracteres.',
+            'destinations.required' => 'Pelo menos um destino é obrigatório.',
+            'destinations.array' => 'Os destinos devem ser em formato de lista.',
+            'destinations.min' => 'Pelo menos um destino é obrigatório.',
+            'destinations.*.required' => 'Cada destino é obrigatório.',
+            'destinations.*.string' => 'Cada destino deve ser um texto válido.',
+            'destinations.*.max' => 'Cada destino não pode ter mais de 255 caracteres.',
         ];
     }
 
-    /**
-     * Configure the validator instance.
-     */
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {

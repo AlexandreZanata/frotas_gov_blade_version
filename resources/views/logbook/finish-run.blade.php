@@ -25,8 +25,12 @@
         <!-- Trip Info -->
         <div class="mt-4 pt-4 border-t border-gray-200 dark:border-navy-700 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-                <p class="text-sm text-gray-500 dark:text-navy-300">Destino</p>
-                <p class="text-base font-medium text-gray-900 dark:text-navy-50">{{ $run->destination }}</p>
+                <p class="text-sm text-gray-500 dark:text-navy-300">Destinos</p>
+                <ol class="text-base font-medium text-gray-900 dark:text-navy-50 list-decimal list-inside">
+                    @foreach($run->destinations as $destination)
+                        <li>{{ $destination->destination }}</li>
+                    @endforeach
+                </ol>
             </div>
             <div>
                 <p class="text-sm text-gray-500 dark:text-navy-300">KM Inicial</p>

@@ -36,8 +36,12 @@
                         <p class="mt-1 text-base text-gray-900 dark:text-navy-50">{{ $run->user->cpf }}</p>
                     </div>
                     <div>
-                        <h4 class="text-sm font-medium text-gray-500 dark:text-navy-300">Destino</h4>
-                        <p class="mt-1 text-base text-gray-900 dark:text-navy-50">{{ $run->destination }}</p>
+                        <h4 class="text-sm font-medium text-gray-500 dark:text-navy-300">Destinos</h4>
+                        <ol class="mt-1 list-decimal list-inside space-y-1">
+                            @foreach($run->destinations as $destination)
+                                <li class="text-base text-gray-900 dark:text-navy-50">{{ $destination->destination }}</li>
+                            @endforeach
+                        </ol>
                     </div>
                     @if($run->stop_point)
                     <div>

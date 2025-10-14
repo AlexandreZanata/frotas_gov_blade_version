@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Models\RunDestination;
 
 class RunController extends Controller
 {
@@ -272,20 +273,46 @@ class RunController extends Controller
     /**
      * Salva dados de início da corrida
      */
+    /**
+     * Salva dados de início da corrida
+     */
     public function storeStartRun(RunStartRequest $request, Run $run)
     {
-        $this->authorize('update', $run);
+        try {
+            DB::beginTransaction();
 
-        $this->logbookService->startRun(
-            $run,
-            $request->validated()['start_km'],
-            $request->validated()['destination']
-        );
+            // Atualizar a corrida com o KM inicial
+            $run->update([
+                'start_km' => $request->start_km,
+                'started_at' => now(),
+            ]);
 
-        return redirect()->route('logbook.finish', $run)
-            ->with('success', 'Corrida iniciada com sucesso! Boa viagem!');
+            // Salvar os múltiplos destinos
+            foreach ($request->destinations as $index => $destination) {
+                if (!empty(trim($destination))) {
+                    RunDestination::create([
+                        'run_id' => $run->id,
+                        'destination' => trim($destination),
+                        'order' => $index,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            // CORREÇÃO: Redirecionar para a próxima etapa (finalizar corrida)
+            return redirect()->route('logbook.finish', $run)
+                ->with('success', 'Corrida iniciada com sucesso!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Erro ao iniciar corrida: ' . $e->getMessage());
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Erro ao iniciar corrida. Tente novamente.');
+        }
     }
-
     /**
      * ETAPA 4: Finalizar Corrida
      */
