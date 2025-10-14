@@ -4,9 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Models\VehicleCategory;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class VehicleCategoryController extends Controller
 {
+    // Para a API (usado no diário de bordo)
+    public function apiIndex(Request $request): JsonResponse
+    {
+        try {
+            $categories = VehicleCategory::select('id', 'name')
+                ->orderBy('name')
+                ->get();
+
+            return response()->json($categories);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Erro ao carregar categorias',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Para a interface web normal
     public function index(Request $request)
     {
         $search = $request->input('search');

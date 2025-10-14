@@ -174,4 +174,38 @@ class VehicleController extends Controller
 
         return response()->json($vehicles);
     }
+
+    public function apiSearch(Request $request): JsonResponse
+    {
+        try {
+            \Log::info('VehicleController apiSearch method called', ['request' => $request->all()]);
+
+            $query = Vehicle::with(['category', 'prefix'])
+                ->select('id', 'prefix_id', 'name', 'vehicle_category_id', 'plate')
+                ->whereNotNull('prefix_id')
+                ->orderBy('prefix_id');
+
+            $vehicles = $query->get()->map(function($vehicle) {
+                return [
+                    'id' => $vehicle->id,
+                    'name' => $vehicle->name,
+                    'prefix_id' => $vehicle->prefix->name ?? '', // Pega o nome do prefixo
+                    'plate' => $vehicle->plate,
+                    // Garante que o prefixo apareça PRIMEIRO no display
+                    'display_name' => ($vehicle->prefix->name ?? '') . ' - ' . $vehicle->name
+                ];
+            });
+
+            \Log::info('Vehicles found for API: ' . $vehicles->count());
+
+            return response()->json($vehicles);
+        } catch (\Exception $e) {
+            \Log::error('Erro ao carregar veículos para API: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Erro ao carregar veículos',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
+

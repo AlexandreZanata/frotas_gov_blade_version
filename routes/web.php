@@ -8,6 +8,8 @@ use App\Http\Controllers\PrefixController;
 use App\Http\Controllers\BackupReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DefaultPasswordController;
+use App\Http\Controllers\LogbookRuleController;
+
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -245,6 +247,20 @@ Route::middleware('auth')->group(function () {
 
         // Detalhes da corrida
         Route::get('/{run}', [\App\Http\Controllers\RunController::class, 'show'])->name('show');
+    });
+
+    Route::get('/api/vehicle-categories', [VehicleCategoryController::class, 'apiIndex'])->name('api.vehicle-categories.search');
+    Route::get('/api/vehicles', [VehicleController::class, 'apiSearch'])->name('api.vehicles.search');
+    Route::get('/api/users', [UserController::class, 'search'])->name('api.users.search');
+
+    Route::prefix('logbook-rules')->name('logbook-rules.')->group(function () {
+        Route::get('/', [LogbookRuleController::class, 'index'])->name('index');
+        Route::get('/create', [LogbookRuleController::class, 'create'])->name('create');
+        Route::post('/', [LogbookRuleController::class, 'store'])->name('store');
+        Route::get('/{logbookRule}/edit', [LogbookRuleController::class, 'edit'])->name('edit');
+        Route::put('/{logbookRule}', [LogbookRuleController::class, 'update'])->name('update');
+        Route::delete('/{logbookRule}', [LogbookRuleController::class, 'destroy'])->name('destroy');
+        Route::patch('/{logbookRule}/toggle-status', [LogbookRuleController::class, 'toggleStatus'])->name('toggle-status');
     });
 
     // Checklists (Notificações e Aprovações)

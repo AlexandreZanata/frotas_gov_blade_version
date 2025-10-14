@@ -205,6 +205,14 @@
                     </a>
                 </li>
             @endif
+            @if(auth()->user()->isGeneralManager())
+                <li>
+                    <a href="{{ route('logbook-rules.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+        {{ request()->routeIs('logbook-rules.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                        <x-icon name="cog" class="w-3.5 h-3.5" /> <span>Regras de KM</span>
+                    </a>
+                </li>
+            @endif
         </ul>
         <!-- Submenu popup quando colapsada -->
         <div x-cloak
@@ -236,6 +244,7 @@
                     <span>Privilégios</span>
                 </a>
             @endif
+
         </div>
     </li>
     <!-- Checklists (Notificações) -->
