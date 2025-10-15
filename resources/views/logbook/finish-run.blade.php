@@ -4,6 +4,12 @@
     </x-slot>
     <x-slot name="pageActions">
         <x-ui.action-icon :href="route('logbook.index')" icon="arrow-left" title="Voltar" variant="neutral" />
+
+        <!-- Botão para abastecimento independente -->
+        <a href="{{ route('logbook.fueling', $run) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm font-medium shadow transition">
+            <x-icon name="fuel" class="w-4 h-4" />
+            <span>Abastecer</span>
+        </a>
     </x-slot>
 
     <!-- Vehicle Info Card -->
@@ -38,246 +44,119 @@
             </div>
             <div>
                 <p class="text-sm text-gray-500 dark:text-navy-300">Iniciada em</p>
-                <p class="text-base font-medium text-gray-900 dark:text-navy-50">{{ $run->start_datetime ? $run->start_datetime->format('d/m/Y H:i') : 'Não iniciada' }}</p>
+                <p class="text-base font-medium text-gray-900 dark:text-navy-50">{{ $run->started_at ? $run->started_at->format('d/m/Y H:i') : 'Não iniciada' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert sobre abastecimento independente -->
+    <div class="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <div class="flex items-start">
+            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+            </svg>
+            <div class="text-sm text-blue-700 dark:text-blue-300">
+                <p class="font-medium">Abastecimento independente</p>
+                <p class="mt-1">Você pode registrar abastecimentos a qualquer momento usando o botão "Abastecer" acima. Não é necessário abastecer para finalizar a corrida.</p>
             </div>
         </div>
     </div>
 
     <x-ui.card title="Finalizar Viagem" subtitle="Preencha os dados para finalizar a corrida">
-        <form action="{{ route('logbook.store-finish', $run) }}" method="POST" enctype="multipart/form-data" class="space-y-6" x-data="{
+        <form action="{{ route('logbook.store-finish', $run) }}" method="POST" class="space-y-6" x-data="{
             startKm: {{ $run->start_km }},
             endKm: {{ old('end_km', $run->start_km) }},
-            // ADIÇÃO AQUI: Inicializa o KM do abastecimento com o KM final
-            fuelingKm: {{ old('fueling_km', old('end_km', $run->start_km)) }},
-            showFueling: {{ old('add_fueling') ? 'true' : 'false' }},
-            fuelingType: '{{ old('fueling_type', 'credenciado') }}',
             get distance() {
                 return this.endKm > this.startKm ? this.endKm - this.startKm : 0;
-            }
-        }" x-init="$watch('endKm', value => fuelingKm = value)"
-            @csrf
+            },
+            submitForm() {
+                // Validação básica
+                if (!this.endKm || this.endKm < this.startKm) {
+                    alert('O KM final deve ser maior ou igual ao KM inicial.');
+                    return false;
+                }
 
-            <!-- End KM -->
-            <div>
-                <x-input-label for="end_km" value="Quilometragem Final (KM) *" />
-                <div class="mt-2">
-                    <input
-                        type="number"
-                        name="end_km"
-                        id="end_km"
-                        x-model.number="endKm"
-                        value="{{ old('end_km', $run->start_km) }}"
-                        min="{{ $run->start_km }}"
-                        step="1"
-                        required
-                        class="block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
-                    >
-                </div>
-                <p class="mt-1 text-sm text-gray-500 dark:text-navy-400">
-                    O KM final deve ser maior ou igual ao KM inicial ({{ number_format($run->start_km, 0, ',', '.') }} km)
-                </p>
-                <x-input-error :messages="$errors->get('end_km')" class="mt-2" />
+                // Mostrar loading
+                const submitBtn = document.querySelector('button[type=\"submit\"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<x-icon name=\"loading\" class=\"w-4 h-4 mr-2 animate-spin\" />Finalizando...';
+        submitBtn.disabled = true;
+
+        // Enviar formulário
+        this.$el.submit();
+
+        return true;
+        }
+        }">
+        @csrf
+
+        <!-- End KM -->
+        <div>
+            <x-input-label for="end_km" value="Quilometragem Final (KM) *" />
+            <div class="mt-2">
+                <input
+                    type="number"
+                    name="end_km"
+                    id="end_km"
+                    x-model.number="endKm"
+                    value="{{ old('end_km', $run->start_km) }}"
+                    min="{{ $run->start_km }}"
+                    step="1"
+                    required
+                    class="block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
+                >
             </div>
+            <p class="mt-1 text-sm text-gray-500 dark:text-navy-400">
+                O KM final deve ser maior ou igual ao KM inicial ({{ number_format($run->start_km, 0, ',', '.') }} km)
+            </p>
+            <x-input-error :messages="$errors->get('end_km')" class="mt-2" />
+        </div>
 
-            <!-- Distance Display -->
-            <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div class="flex justify-between items-center">
-                    <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Distância percorrida:</span>
-                    <span class="text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <!-- Distance Display -->
+        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div class="flex justify-between items-center">
+                <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Distância percorrida:</span>
+                <span class="text-2xl font-bold text-blue-700 dark:text-blue-300">
                         <span x-text="distance.toLocaleString('pt-BR')"></span> km
                     </span>
-                </div>
             </div>
+        </div>
 
-            <!-- Stop Point -->
-            <div>
-                <x-input-label for="stop_point" value="Ponto de Parada (Opcional)" />
-                <div class="mt-2">
-                    <input
-                        type="text"
-                        name="stop_point"
-                        id="stop_point"
-                        value="{{ old('stop_point') }}"
-                        class="block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
-                        placeholder="Ex: Pátio da Prefeitura, Garagem Central"
-                    >
-                </div>
-                <p class="mt-1 text-sm text-gray-500 dark:text-navy-400">
-                    Onde o veículo será estacionado após a corrida
-                </p>
-                <x-input-error :messages="$errors->get('stop_point')" class="mt-2" />
+        <!-- Stop Point -->
+        <div>
+            <x-input-label for="stop_point" value="Ponto de Parada (Opcional)" />
+            <div class="mt-2">
+                <input
+                    type="text"
+                    name="stop_point"
+                    id="stop_point"
+                    value="{{ old('stop_point') }}"
+                    class="block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
+                    placeholder="Ex: Pátio da Prefeitura, Garagem Central"
+                >
             </div>
+            <p class="mt-1 text-sm text-gray-500 dark:text-navy-400">
+                Onde o veículo será estacionado após a corrida
+            </p>
+            <x-input-error :messages="$errors->get('stop_point')" class="mt-2" />
+        </div>
 
-            <!-- Fueling Option -->
-            <div class="border-t border-gray-200 dark:border-navy-700 pt-6">
-                <div class="flex items-center mb-4">
-                    <input
-                        type="checkbox"
-                        name="add_fueling"
-                        id="add_fueling"
-                        x-model="showFueling"
-                        @checked(old('add_fueling'))
-                        class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:bg-navy-700 dark:border-navy-600"
-                    >
-                    <label for="add_fueling" class="ml-3 cursor-pointer">
-                        <span class="block text-sm font-medium text-gray-900 dark:text-navy-50">
-                            Desejo registrar um abastecimento
-                        </span>
-                    </label>
-                </div>
+        <!-- Observações -->
+        <div>
+            <x-input-label for="notes" value="Observações (Opcional)" />
+            <textarea
+                name="notes"
+                id="notes"
+                rows="3"
+                class="mt-2 block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
+                placeholder="Alguma observação sobre a corrida..."
+            >{{ old('notes') }}</textarea>
+            <x-input-error :messages="$errors->get('notes')" class="mt-2" />
+        </div>
 
-                <!-- Fueling Form (shown when checkbox is checked) -->
-                <div x-show="showFueling" x-transition class="space-y-6 mt-6 p-6 bg-gray-50 dark:bg-navy-900/50 rounded-lg border border-gray-200 dark:border-navy-700">
-                    <h4 class="text-base font-semibold text-gray-900 dark:text-navy-50">Dados do Abastecimento</h4>
-
-                    <!-- Fueling Type Selection -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label class="cursor-pointer">
-                            <input
-                                type="radio"
-                                name="fueling_type"
-                                value="credenciado"
-                                x-model="fuelingType"
-                                class="sr-only peer"
-                                @checked(old('fueling_type', 'credenciado') === 'credenciado')
-                            >
-                            <div class="p-4 border-2 rounded-lg peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 border-gray-300 dark:border-navy-600 transition">
-                                <p class="font-medium text-gray-900 dark:text-navy-50">Posto Credenciado</p>
-                                <p class="text-xs text-gray-500 dark:text-navy-400 mt-1">Valor calculado automaticamente</p>
-                            </div>
-                        </label>
-                        <label class="cursor-pointer">
-                            <input
-                                type="radio"
-                                name="fueling_type"
-                                value="manual"
-                                x-model="fuelingType"
-                                class="sr-only peer"
-                                @checked(old('fueling_type') === 'manual')
-                            >
-                            <div class="p-4 border-2 rounded-lg peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 border-gray-300 dark:border-navy-600 transition">
-                                <p class="font-medium text-gray-900 dark:text-navy-50">Abastecimento Manual</p>
-                                <p class="text-xs text-gray-500 dark:text-navy-400 mt-1">Preenchimento manual</p>
-                            </div>
-                        </label>
-                    </div>
-
-                    <!-- Common Fields -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Fueling KM -->
-                        <div>
-                            <x-input-label for="fueling_km" value="KM de Abastecimento *" />
-                            <input
-                                type="number"
-                                name="fueling_km"
-                                id="fueling_km"
-                                {{-- ADIÇÃO AQUI: Usa x-model para vincular o campo --}}
-                                x-model.number="fuelingKm"
-                                min="{{ $run->start_km }}"
-                                step="1"
-                                class="mt-2 block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
-                            >
-                            <x-input-error :messages="$errors->get('fueling_km')" class="mt-2" />
-                        </div>
-
-                        <!-- Liters -->
-                        <div>
-                            <x-input-label for="liters" value="Litros Abastecidos *" />
-                            <input
-                                type="number"
-                                name="liters"
-                                id="liters"
-                                value="{{ old('liters') }}"
-                                step="0.01"
-                                min="0"
-                                class="mt-2 block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
-                            >
-                            <x-input-error :messages="$errors->get('liters')" class="mt-2" />
-                        </div>
-
-                        <!-- Fuel Type -->
-                        <div>
-                            <x-input-label for="fuel_type_id" value="Tipo de Combustível *" />
-                            <x-ui.select name="fuel_type_id" id="fuel_type_id" class="mt-2">
-                                <option value="">Selecione...</option>
-                                @foreach($fuelTypes as $fuelType)
-                                    <option value="{{ $fuelType->id }}" @selected(old('fuel_type_id') == $fuelType->id)>
-                                        {{ $fuelType->name }}
-                                    </option>
-                                @endforeach
-                            </x-ui.select>
-                            <x-input-error :messages="$errors->get('fuel_type_id')" class="mt-2" />
-                        </div>
-
-                        <!-- Gas Station (Credenciado) -->
-                        <div x-show="fuelingType === 'credenciado'">
-                            <x-input-label for="gas_station_id" value="Posto de Gasolina *" />
-                            <x-ui.select name="gas_station_id" id="gas_station_id" class="mt-2">
-                                <option value="">Selecione...</option>
-                                @foreach($gasStations as $station)
-                                    <option value="{{ $station->id }}" @selected(old('gas_station_id') == $station->id)>
-                                        {{ $station->name }} - R$ {{ number_format($station->price_per_liter, 2, ',', '.') }}/L
-                                    </option>
-                                @endforeach
-                            </x-ui.select>
-                            <x-input-error :messages="$errors->get('gas_station_id')" class="mt-2" />
-                        </div>
-
-                        <!-- Gas Station Name (Manual) -->
-                        <div x-show="fuelingType === 'manual'" x-cloak>
-                            <x-input-label for="gas_station_name" value="Nome do Posto *" />
-                            <input
-                                type="text"
-                                name="gas_station_name"
-                                id="gas_station_name"
-                                value="{{ old('gas_station_name') }}"
-                                class="mt-2 block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
-                                placeholder="Ex: Posto Shell"
-                            >
-                            <x-input-error :messages="$errors->get('gas_station_name')" class="mt-2" />
-                        </div>
-                    </div>
-
-                    <!-- Value (Manual only) -->
-                    <div x-show="fuelingType === 'manual'" x-cloak>
-                        <x-input-label for="total_value" value="Valor Total do Abastecimento (R$) *" />
-                        <input
-                            type="number"
-                            name="total_value"
-                            id="total_value"
-                            value="{{ old('total_value') }}"
-                            step="0.01"
-                            min="0"
-                            class="mt-2 block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
-                            placeholder="0,00"
-                        >
-                        <x-input-error :messages="$errors->get('total_value')" class="mt-2" />
-                    </div>
-
-                    <!-- Invoice Upload -->
-                    <div>
-                        <x-input-label for="invoice" value="Nota Fiscal (Opcional)" />
-                        <input
-                            type="file"
-                            name="invoice"
-                            id="invoice"
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            class="mt-2 block w-full text-sm text-gray-500 dark:text-navy-300
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-md file:border-0
-                                file:text-sm file:font-semibold
-                                file:bg-primary-50 file:text-primary-700
-                                hover:file:bg-primary-100
-                                dark:file:bg-primary-900/30 dark:file:text-primary-400"
-                        >
-                        <p class="mt-1 text-xs text-gray-500 dark:text-navy-400">PDF, JPG, JPEG ou PNG. Máximo 5MB.</p>
-                        <x-input-error :messages="$errors->get('invoice')" class="mt-2" />
-                    </div>
-                </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-navy-700">
+        <!-- Actions -->
+        <div class="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-navy-700">
+            <div class="flex space-x-3">
                 <a href="{{ route('logbook.start-run', $run) }}">
                     <x-secondary-button type="button">
                         <x-icon name="arrow-left" class="w-4 h-4 mr-2" />
@@ -285,11 +164,70 @@
                     </x-secondary-button>
                 </a>
 
-                <x-primary-button type="submit">
-                    <x-icon name="check" class="w-4 h-4 mr-2" />
-                    Finalizar Corrida
-                </x-primary-button>
+                <a href="{{ route('logbook.fueling', $run) }}">
+                    <x-secondary-button type="button" variant="outline">
+                        <x-icon name="fuel" class="w-4 h-4 mr-2" />
+                        Abastecer Agora
+                    </x-secondary-button>
+                </a>
             </div>
+
+            <x-primary-button
+                type="submit"
+                x-bind:disabled="!endKm || endKm < startKm"
+                @click="submitForm()"
+            >
+                <x-icon name="check" class="w-4 h-4 mr-2" />
+                Finalizar Corrida
+            </x-primary-button>
+        </div>
         </form>
     </x-ui.card>
+
+    <!-- Informações sobre abastecimentos recentes -->
+    @php
+        $recentFuelings = \App\Models\Fueling::where('vehicle_id', $run->vehicle_id)
+            ->where('run_id', $run->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(3)
+            ->get();
+    @endphp
+
+    @if($recentFuelings->count() > 0)
+        <x-ui.card title="Abastecimentos Recentes" subtitle="Abastecimentos registrados durante esta corrida">
+            <div class="space-y-3">
+                @foreach($recentFuelings as $fueling)
+                    <div class="flex items-center justify-between p-3 border border-gray-200 dark:border-navy-700 rounded-lg">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3">
+                                <x-icon name="fuel" class="w-5 h-5 text-green-600 dark:text-green-400" />
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-navy-50">
+                                        {{ $fueling->liters }}L - {{ $fueling->fuelType->name ?? 'N/A' }}
+                                    </p>
+                                    <p class="text-sm text-gray-500 dark:text-navy-300">
+                                        {{ $fueling->gas_station_name ?? ($fueling->gasStation->name ?? 'Posto não informado') }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-semibold text-gray-900 dark:text-navy-50">
+                                R$ {{ number_format($fueling->total_value, 2, ',', '.') }}
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-navy-300">
+                                {{ $fueling->fueled_at->format('d/m/Y H:i') }}
+                            </p>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="mt-4 text-center">
+                <a href="{{ route('logbook.fueling', $run) }}" class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm font-medium">
+                    Ver todos os abastecimentos →
+                </a>
+            </div>
+        </x-ui.card>
+    @endif
 </x-app-layout>

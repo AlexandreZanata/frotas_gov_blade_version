@@ -12,15 +12,9 @@
             @include('default-passwords._form')
 
             <!-- Botões de Ação -->
-            <div class="flex items-center gap-4 pt-4">
-                <x-primary-button>
-                    <x-icon name="save" class="w-4 h-4 mr-2" />
-                    Salvar Alterações
-                </x-primary-button>
-
-                <a href="{{ route('default-passwords.index') }}" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
-                    Cancelar
-                </a>
+            <div class="flex items-center gap-3 pt-6">
+                <x-primary-button icon="save" compact>Salvar Alterações</x-primary-button>
+                <a href="{{ route('default-passwords.index') }}" class="text-sm text-gray-600 dark:text-navy-200 hover:underline">Cancelar</a>
             </div>
         </form>
     </x-ui.card>

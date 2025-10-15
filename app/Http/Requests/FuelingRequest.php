@@ -13,7 +13,7 @@ class FuelingRequest extends FormRequest
 
     public function rules(): array
     {
-        $isManual = $this->input('is_manual', false);
+        $isManual = $this->boolean('is_manual');
 
         return [
             'gas_station_id' => $isManual ? 'nullable' : 'required|exists:gas_stations,id',
@@ -40,53 +40,3 @@ class FuelingRequest extends FormRequest
         ];
     }
 }
-<?php
-
-namespace App\Http\Requests;
-
-use Illuminate\Foundation\Http\FormRequest;
-use App\Models\Run;
-
-class RunStartRequest extends FormRequest
-{
-    public function authorize(): bool
-    {
-        return true;
-    }
-
-    public function rules(): array
-    {
-        return [
-            'start_km' => [
-                'required',
-                'numeric',
-                'min:0',
-                function ($attribute, $value, $fail) {
-                    // Validação: KM inicial deve ser >= ao KM final da última corrida
-                    $lastRun = Run::where('vehicle_id', $this->route('run')->vehicle_id)
-                        ->where('status', 'completed')
-                        ->latest('finished_at')
-                        ->first();
-
-                    if ($lastRun && $value < $lastRun->end_km) {
-                        $fail("O KM inicial ({$value}) não pode ser menor que o KM final da última corrida ({$lastRun->end_km}).");
-                    }
-                },
-            ],
-            'destination' => 'required|string|max:255',
-            'origin' => 'nullable|string|max:255',
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'start_km.required' => 'O KM inicial é obrigatório.',
-            'start_km.numeric' => 'O KM inicial deve ser um número.',
-            'start_km.min' => 'O KM inicial não pode ser negativo.',
-            'destination.required' => 'O destino é obrigatório.',
-            'destination.max' => 'O destino não pode ter mais de 255 caracteres.',
-        ];
-    }
-}
-
