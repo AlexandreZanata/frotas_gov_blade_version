@@ -49,152 +49,104 @@
         </div>
     </div>
 
-    <!-- Alert sobre abastecimento independente -->
-    <div class="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-        <div class="flex items-start">
-            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-            </svg>
-            <div class="text-sm text-blue-700 dark:text-blue-300">
-                <p class="font-medium">Abastecimento independente</p>
-                <p class="mt-1">Você pode registrar abastecimentos a qualquer momento usando o botão "Abastecer" acima. Não é necessário abastecer para finalizar a corrida.</p>
-            </div>
-        </div>
-    </div>
-
     <x-ui.card title="Finalizar Viagem" subtitle="Preencha os dados para finalizar a corrida">
         <form action="{{ route('logbook.store-finish', $run) }}" method="POST" class="space-y-6" x-data="{
             startKm: {{ $run->start_km }},
             endKm: {{ old('end_km', $run->start_km) }},
             get distance() {
                 return this.endKm > this.startKm ? this.endKm - this.startKm : 0;
-            },
-            submitForm() {
-                // Validação básica
-                if (!this.endKm || this.endKm < this.startKm) {
-                    alert('O KM final deve ser maior ou igual ao KM inicial.');
-                    return false;
-                }
-
-                // Mostrar loading
-                const submitBtn = document.querySelector('button[type=\"submit\"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<x-icon name=\"loading\" class=\"w-4 h-4 mr-2 animate-spin\" />Finalizando...';
-        submitBtn.disabled = true;
-
-        // Enviar formulário
-        this.$el.submit();
-
-        return true;
-        }
+            }
         }">
-        @csrf
+            @csrf
 
-        <!-- End KM -->
-        <div>
-            <x-input-label for="end_km" value="Quilometragem Final (KM) *" />
-            <div class="mt-2">
-                <input
-                    type="number"
-                    name="end_km"
-                    id="end_km"
-                    x-model.number="endKm"
-                    value="{{ old('end_km', $run->start_km) }}"
-                    min="{{ $run->start_km }}"
-                    step="1"
-                    required
-                    class="block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
-                >
+            <!-- End KM -->
+            <div>
+                <x-input-label for="end_km" value="Quilometragem Final (KM) *" />
+                <div class="mt-2">
+                    <input
+                        type="number"
+                        name="end_km"
+                        id="end_km"
+                        x-model.number="endKm"
+                        value="{{ old('end_km', $run->start_km) }}"
+                        min="{{ $run->start_km }}"
+                        step="1"
+                        required
+                        class="block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
+                    >
+                </div>
+                <p class="mt-1 text-sm text-gray-500 dark:text-navy-400">
+                    O KM final deve ser maior ou igual ao KM inicial ({{ number_format($run->start_km, 0, ',', '.') }} km)
+                </p>
+                <x-input-error :messages="$errors->get('end_km')" class="mt-2" />
             </div>
-            <p class="mt-1 text-sm text-gray-500 dark:text-navy-400">
-                O KM final deve ser maior ou igual ao KM inicial ({{ number_format($run->start_km, 0, ',', '.') }} km)
-            </p>
-            <x-input-error :messages="$errors->get('end_km')" class="mt-2" />
-        </div>
 
-        <!-- Distance Display -->
-        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <div class="flex justify-between items-center">
-                <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Distância percorrida:</span>
-                <span class="text-2xl font-bold text-blue-700 dark:text-blue-300">
+            <!-- Distance Display -->
+            <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Distância percorrida:</span>
+                    <span class="text-2xl font-bold text-blue-700 dark:text-blue-300">
                         <span x-text="distance.toLocaleString('pt-BR')"></span> km
                     </span>
-            </div>
-        </div>
-
-        <!-- Stop Point -->
-        <div>
-            <x-input-label for="stop_point" value="Ponto de Parada (Opcional)" />
-            <div class="mt-2">
-                <input
-                    type="text"
-                    name="stop_point"
-                    id="stop_point"
-                    value="{{ old('stop_point') }}"
-                    class="block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
-                    placeholder="Ex: Pátio da Prefeitura, Garagem Central"
-                >
-            </div>
-            <p class="mt-1 text-sm text-gray-500 dark:text-navy-400">
-                Onde o veículo será estacionado após a corrida
-            </p>
-            <x-input-error :messages="$errors->get('stop_point')" class="mt-2" />
-        </div>
-
-        <!-- Observações -->
-        <div>
-            <x-input-label for="notes" value="Observações (Opcional)" />
-            <textarea
-                name="notes"
-                id="notes"
-                rows="3"
-                class="mt-2 block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
-                placeholder="Alguma observação sobre a corrida..."
-            >{{ old('notes') }}</textarea>
-            <x-input-error :messages="$errors->get('notes')" class="mt-2" />
-        </div>
-
-        <!-- Actions -->
-        <div class="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-navy-700">
-            <div class="flex space-x-3">
-                <a href="{{ route('logbook.start-run', $run) }}">
-                    <x-secondary-button type="button">
-                        <x-icon name="arrow-left" class="w-4 h-4 mr-2" />
-                        Voltar
-                    </x-secondary-button>
-                </a>
-
-                <a href="{{ route('logbook.fueling', $run) }}">
-                    <x-secondary-button type="button" variant="outline">
-                        <x-icon name="fuel" class="w-4 h-4 mr-2" />
-                        Abastecer Agora
-                    </x-secondary-button>
-                </a>
+                </div>
             </div>
 
-            <x-primary-button
-                type="submit"
-                x-bind:disabled="!endKm || endKm < startKm"
-                @click="submitForm()"
-            >
-                <x-icon name="check" class="w-4 h-4 mr-2" />
-                Finalizar Corrida
-            </x-primary-button>
-        </div>
+            <!-- Stop Point -->
+            <div>
+                <x-input-label for="stop_point" value="Ponto de Parada (Opcional)" />
+                <div class="mt-2">
+                    <input
+                        type="text"
+                        name="stop_point"
+                        id="stop_point"
+                        value="{{ old('stop_point') }}"
+                        class="block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
+                        placeholder="Ex: Pátio da Prefeitura, Garagem Central"
+                    >
+                </div>
+                <p class="mt-1 text-sm text-gray-500 dark:text-navy-400">
+                    Onde o veículo será estacionado após a corrida
+                </p>
+                <x-input-error :messages="$errors->get('stop_point')" class="mt-2" />
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-navy-700">
+                <div class="flex space-x-3">
+                    <a href="{{ route('logbook.start-run', $run) }}">
+                        <x-secondary-button type="button">
+                            <x-icon name="arrow-left" class="w-4 h-4 mr-2" />
+                            Voltar
+                        </x-secondary-button>
+                    </a>
+
+                    <a href="{{ route('logbook.fueling', $run) }}">
+                        <x-secondary-button type="button" variant="outline">
+                            <x-icon name="fuel" class="w-4 h-4 mr-2" />
+                            Abastecer Agora
+                        </x-secondary-button>
+                    </a>
+                </div>
+
+                <x-primary-button type="submit" x-bind:disabled="!endKm || endKm < startKm">
+                    <x-icon name="check" class="w-4 h-4 mr-2" />
+                    Finalizar Corrida
+                </x-primary-button>
+            </div>
         </form>
     </x-ui.card>
 
     <!-- Informações sobre abastecimentos recentes -->
     @php
+        // Query corrigida - removendo temporariamente a condição run_id até a migration ser executada
         $recentFuelings = \App\Models\Fueling::where('vehicle_id', $run->vehicle_id)
-            ->where('run_id', $run->id)
             ->orderBy('created_at', 'desc')
             ->limit(3)
             ->get();
     @endphp
 
     @if($recentFuelings->count() > 0)
-        <x-ui.card title="Abastecimentos Recentes" subtitle="Abastecimentos registrados durante esta corrida">
+        <x-ui.card title="Abastecimentos Recentes" subtitle="Abastecimentos registrados para este veículo">
             <div class="space-y-3">
                 @foreach($recentFuelings as $fueling)
                     <div class="flex items-center justify-between p-3 border border-gray-200 dark:border-navy-700 rounded-lg">
