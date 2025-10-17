@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Traits\Auditable;
+use App\Models\Vehicle\VehicleHeritage;
+use App\Models\Vehicle\VehiclePriceOrigin;
+use App\Models\Vehicle\VehiclePriceCurrent;
+use App\Models\Vehicle\VehiclePriceHistory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Vehicle extends Model
 {
@@ -26,6 +32,7 @@ class Vehicle extends Model
         'category_id',
         'status_id',
         'secretariat_id',
+        'heritage_id',
     ];
 
     public function category(): BelongsTo
@@ -110,5 +117,25 @@ class Vehicle extends Model
     public function activeRun()
     {
         return $this->hasOne(Run::class)->where('status', 'in_progress');
+    }
+
+    public function heritage(): BelongsTo
+    {
+        return $this->belongsTo(VehicleHeritage::class);
+    }
+
+    public function priceOrigin(): HasOne
+    {
+        return $this->hasOne(VehiclePriceOrigin::class);
+    }
+
+    public function priceCurrent(): HasOne
+    {
+        return $this->hasOne(VehiclePriceCurrent::class);
+    }
+
+    public function priceHistories(): HasMany
+    {
+        return $this->hasMany(VehiclePriceHistory::class);
     }
 }
