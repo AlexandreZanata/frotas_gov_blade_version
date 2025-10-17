@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 class GarbageWeighing extends Model
@@ -15,7 +16,9 @@ class GarbageWeighing extends Model
     protected $fillable = [
         'weighing_code',
         'garbage_type_id',
-        'weight_kg',
+        'gross_weight_kg',
+        'tare_weight_kg',
+        'net_weight_kg',
         'weighed_at',
         'requester_id',
         'weighbridge_operator_id',
@@ -29,9 +32,18 @@ class GarbageWeighing extends Model
     protected static function boot()
     {
         parent::boot();
+
+        // Gera o código único de auditoria
         static::creating(function ($model) {
             if (empty($model->weighing_code)) {
                 $model->weighing_code = 'PES-' . now()->format('Ymd') . '-' . Str::upper(Str::random(6));
+            }
+        });
+
+        // Calcula o peso líquido sempre que o registro é salvo
+        static::saving(function ($model) {
+            if (isset($model->gross_weight_kg) && isset($model->tare_weight_kg)) {
+                $model->net_weight_kg = $model->gross_weight_kg - $model->tare_weight_kg;
             }
         });
     }

@@ -15,10 +15,10 @@ class GarbageWeighingSeeder extends Seeder
     {
         $requester = User::first();
         $operator = GarbageWeighbridgeOperator::first();
-        $garbageVehicle = GarbageVehicle::first();
+        $garbageVehicle = GarbageVehicle::with('currentTare')->first(); // Carrega a tara atual
         $garbageType = GarbageType::where('name', 'Lixo Úmido')->first();
 
-        if ($requester && $operator && $garbageVehicle && $garbageType) {
+        if ($requester && $operator && $garbageVehicle && $garbageType && $garbageVehicle->currentTare) {
             GarbageWeighing::updateOrCreate(
                 [
                     'garbage_vehicle_id' => $garbageVehicle->id,
@@ -26,7 +26,8 @@ class GarbageWeighingSeeder extends Seeder
                 ],
                 [
                     'garbage_type_id' => $garbageType->id,
-                    'weight_kg' => 1250.75,
+                    'gross_weight_kg' => 7850.75,
+                    'tare_weight_kg' => $garbageVehicle->currentTare->tare_weight_kg, // Pega a tara atual
                     'weighed_at' => now(),
                     'weighbridge_operator_id' => $operator->id,
                 ]

@@ -67,6 +67,7 @@ class DatabaseSeeder extends Seeder
             GarbageRunsSeeder::class,
             GarbageUsersSeeder::class,
             GarbageWeighbridgeOperatorSeeder::class,
+            GarbageMaintenanceTareVehicleSeeder::class,
             GarbageWeighingSeeder::class,
             GarbageWeighingSignatureSeeder::class,
             GarbageRunsSeeder::class,
