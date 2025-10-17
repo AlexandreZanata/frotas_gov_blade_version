@@ -58,6 +58,7 @@ class DatabaseSeeder extends Seeder
             BalanceGasStationSupplierSeeder::class,
             ManagerStatusSeeder::class,
             SecretariatSectorManagerSeeder::class,
+            GeneralManagerSeeder::class,
         ]);
     }
 }

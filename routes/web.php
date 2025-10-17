@@ -153,6 +153,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/vehicles/usage-panel', [\App\Http\Controllers\VehiclesUsagePanelController::class, 'index'])
         ->middleware(['auth', 'verified', 'role:general_manager,sector_manager'])
         ->name('vehicles.usage-panel');
+// Vehicle Price Origins (Patrimônio dos Veículos)
+    Route::resource('vehicle-price-origins', \App\Http\Controllers\VehiclePriceOriginController::class)->except(['destroy']);
+
+// API para buscar veículos disponíveis para patrimônio
+    Route::get('/api/vehicle-price-origins/available-vehicles', [\App\Http\Controllers\VehiclePriceOriginController::class, 'searchAvailableVehicles'])->name('api.vehicle-price-origins.available-vehicles');
 
     Route::resource('vehicles', VehicleController::class);
     Route::resource('vehicle-categories', VehicleCategoryController::class);

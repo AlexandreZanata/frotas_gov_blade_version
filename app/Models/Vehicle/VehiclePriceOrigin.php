@@ -8,15 +8,52 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+
 class VehiclePriceOrigin extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['vehicle_id', 'amount', 'acquisition_date', 'acquisition_type'];
-    protected $casts = ['acquisition_date' => 'date'];
+    protected $fillable = [
+        'vehicle_id',
+        'amount',
+        'acquisition_date',
+        'acquisition_type_id',
+    ];
 
-    public function vehicle(): BelongsTo
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'acquisition_date' => 'date',
+    ];
+
+    /**
+     * Relacionamento com Vehicle
+     */
+    public function vehicle()
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    /**
+     * Relacionamento com AcquisitionType
+     */
+    public function acquisitionType()
+    {
+        return $this->belongsTo(AcquisitionType::class);
+    }
+
+    /**
+     * Formata o valor para exibição
+     */
+    public function getFormattedAmountAttribute()
+    {
+        return 'R$ ' . number_format($this->amount, 2, ',', '.');
+    }
+
+    /**
+     * Formata a data para exibição
+     */
+    public function getFormattedAcquisitionDateAttribute()
+    {
+        return $this->acquisition_date->format('d/m/Y');
     }
 }

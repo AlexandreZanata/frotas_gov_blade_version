@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Traits\Auditable;
 use App\Models\Manager\SecretariatSectorManager;
+use App\Models\Manager\GeneralManager;
 
 
 class User extends Authenticatable
@@ -347,6 +348,12 @@ class User extends Authenticatable
     {
         return $this->hasOne(SecretariatSectorManager::class);
     }
+
+    public function generalManagerDetails(): HasOne
+    {
+        return $this->hasOne(GeneralManager::class);
+    }
+
 
 
 }
