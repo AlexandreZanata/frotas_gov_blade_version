@@ -5,11 +5,31 @@
         <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $vehicle->name ?? '')" required />
         <x-input-error :messages="$errors->get('name')" class="mt-1" />
     </div>
+
+    <!-- Novo campo brand_id (substitui o campo brand) -->
     <div>
-        <x-input-label for="brand" value="Marca" />
-        <x-text-input id="brand" name="brand" type="text" class="mt-1 block w-full" :value="old('brand', $vehicle->brand ?? '')" required />
-        <x-input-error :messages="$errors->get('brand')" class="mt-1" />
+        <x-input-label for="brand_id" value="Marca" />
+        <x-ui.select name="brand_id" id="brand_id" class="mt-1" required>
+            <option value="">Selecione...</option>
+            @foreach($brands as $brand)
+                <option value="{{ $brand->id }}" @selected(old('brand_id', $vehicle->brand_id ?? '') == $brand->id)>{{ $brand->name }}</option>
+            @endforeach
+        </x-ui.select>
+        <x-input-error :messages="$errors->get('brand_id')" class="mt-1" />
     </div>
+
+    <!-- Novo campo heritage_id -->
+    <div>
+        <x-input-label for="heritage_id" value="Patrimônio" />
+        <x-ui.select name="heritage_id" id="heritage_id" class="mt-1" required>
+            <option value="">Selecione...</option>
+            @foreach($heritages as $heritage)
+                <option value="{{ $heritage->id }}" @selected(old('heritage_id', $vehicle->heritage_id ?? '') == $heritage->id)>{{ $heritage->name }}</option>
+            @endforeach
+        </x-ui.select>
+        <x-input-error :messages="$errors->get('heritage_id')" class="mt-1" />
+    </div>
+
     <div>
         <x-input-label for="model_year" value="Ano / Modelo" />
         <x-text-input id="model_year" name="model_year" type="text" class="mt-1 block w-full" :value="old('model_year', $vehicle->model_year ?? '')" required />
@@ -142,104 +162,104 @@
 </div>
 
 <script>
-function prefixSearch(initialId, initialName) {
-    return {
-        searchQuery: initialName,
-        selectedId: initialId,
-        results: [],
-        showDropdown: false,
-        loading: false,
-        searchTimeout: null,
+    function prefixSearch(initialId, initialName) {
+        return {
+            searchQuery: initialName,
+            selectedId: initialId,
+            results: [],
+            showDropdown: false,
+            loading: false,
+            searchTimeout: null,
 
-        search() {
-            clearTimeout(this.searchTimeout);
+            search() {
+                clearTimeout(this.searchTimeout);
 
-            if (this.searchQuery.length === 0) {
-                this.results = [];
-                this.selectedId = null;
-                return;
-            }
+                if (this.searchQuery.length === 0) {
+                    this.results = [];
+                    this.selectedId = null;
+                    return;
+                }
 
-            this.searchTimeout = setTimeout(() => {
+                this.searchTimeout = setTimeout(() => {
+                    this.loading = true;
+                    fetch(`{{ route('api.prefixes.search') }}?q=${encodeURIComponent(this.searchQuery)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            this.results = data;
+                            this.loading = false;
+                        })
+                        .catch(error => {
+                            console.error('Erro ao buscar prefixos:', error);
+                            this.loading = false;
+                        });
+                }, 300);
+            },
+
+            selectPrefix(prefix) {
+                this.searchQuery = prefix.name;
+                this.selectedId = prefix.id;
+                this.showDropdown = false;
+            },
+
+            exactMatch() {
+                return this.results.some(r => r.name.toLowerCase() === this.searchQuery.toLowerCase());
+            },
+
+            createNewPrefix() {
+                if (!this.searchQuery || this.searchQuery.trim().length === 0) {
+                    return;
+                }
+
                 this.loading = true;
-                fetch(`{{ route('api.prefixes.search') }}?q=${encodeURIComponent(this.searchQuery)}`)
-                    .then(response => response.json())
+
+                fetch(`{{ route('api.prefixes.store-inline') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        name: this.searchQuery.trim()
+                    })
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => Promise.reject(err));
+                        }
+                        return response.json();
+                    })
                     .then(data => {
-                        this.results = data;
+                        if (data.success) {
+                            this.selectPrefix(data.prefix);
+                            this.showDropdown = false;
+                            // Mostrar mensagem de sucesso usando toast notification
+                            this.showNotification('✅ Sucesso!', `Prefixo "${data.prefix.name}" criado com sucesso.`, 'success');
+                        } else {
+                            this.showNotification('❌ Erro', data.message || 'Erro ao criar prefixo.', 'error');
+                        }
                         this.loading = false;
                     })
                     .catch(error => {
-                        console.error('Erro ao buscar prefixos:', error);
+                        console.error('Erro ao criar prefixo:', error);
+                        let errorMsg = 'Erro ao criar prefixo.';
+
+                        if (error.message) {
+                            errorMsg = error.message;
+                        } else if (error.errors && error.errors.name) {
+                            errorMsg = error.errors.name[0];
+                        }
+
+                        this.showNotification('❌ Erro', errorMsg, 'error');
                         this.loading = false;
                     });
-            }, 300);
-        },
+            },
 
-        selectPrefix(prefix) {
-            this.searchQuery = prefix.name;
-            this.selectedId = prefix.id;
-            this.showDropdown = false;
-        },
+            showNotification(title, message, type = 'success') {
+                const bgColor = type === 'success' ? 'bg-green-100 border-green-400 text-green-700 dark:bg-green-900/30 dark:border-green-700 dark:text-green-400' : 'bg-red-100 border-red-400 text-red-700 dark:bg-red-900/30 dark:border-red-700 dark:text-red-400';
 
-        exactMatch() {
-            return this.results.some(r => r.name.toLowerCase() === this.searchQuery.toLowerCase());
-        },
-
-        createNewPrefix() {
-            if (!this.searchQuery || this.searchQuery.trim().length === 0) {
-                return;
-            }
-
-            this.loading = true;
-
-            fetch(`{{ route('api.prefixes.store-inline') }}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({
-                    name: this.searchQuery.trim()
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => Promise.reject(err));
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    this.selectPrefix(data.prefix);
-                    this.showDropdown = false;
-                    // Mostrar mensagem de sucesso usando toast notification
-                    this.showNotification('✅ Sucesso!', `Prefixo "${data.prefix.name}" criado com sucesso.`, 'success');
-                } else {
-                    this.showNotification('❌ Erro', data.message || 'Erro ao criar prefixo.', 'error');
-                }
-                this.loading = false;
-            })
-            .catch(error => {
-                console.error('Erro ao criar prefixo:', error);
-                let errorMsg = 'Erro ao criar prefixo.';
-
-                if (error.message) {
-                    errorMsg = error.message;
-                } else if (error.errors && error.errors.name) {
-                    errorMsg = error.errors.name[0];
-                }
-
-                this.showNotification('❌ Erro', errorMsg, 'error');
-                this.loading = false;
-            });
-        },
-
-        showNotification(title, message, type = 'success') {
-            const bgColor = type === 'success' ? 'bg-green-100 border-green-400 text-green-700 dark:bg-green-900/30 dark:border-green-700 dark:text-green-400' : 'bg-red-100 border-red-400 text-red-700 dark:bg-red-900/30 dark:border-red-700 dark:text-red-400';
-
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 z-50 ${bgColor} border px-4 py-3 rounded-lg shadow-lg max-w-md animate-slide-in`;
-            notification.innerHTML = `
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 z-50 ${bgColor} border px-4 py-3 rounded-lg shadow-lg max-w-md animate-slide-in`;
+                notification.innerHTML = `
                 <div class="flex items-start gap-3">
                     <div class="flex-1">
                         <strong class="font-bold block">${title}</strong>
@@ -253,21 +273,21 @@ function prefixSearch(initialId, initialName) {
                 </div>
             `;
 
-            document.body.appendChild(notification);
-            setTimeout(() => {
-                notification.style.opacity = '0';
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => notification.remove(), 300);
-            }, 4000);
-        },
+                document.body.appendChild(notification);
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => notification.remove(), 300);
+                }, 4000);
+            },
 
-        closeDropdown() {
-            setTimeout(() => {
-                this.showDropdown = false;
-            }, 200);
+            closeDropdown() {
+                setTimeout(() => {
+                    this.showDropdown = false;
+                }, 200);
+            }
         }
     }
-}
 </script>
 
 <div class="flex items-center gap-3 pt-6">

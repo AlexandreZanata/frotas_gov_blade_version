@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             VehicleStatusSeeder::class,
             PrefixSeeder::class,
             VehicleHeritageSeeder::class,
+            VehicleBrandSeeder::class,
             VehicleSeeder::class,
             AcquisitionTypeSeeder::class,
             VehiclePriceOriginSeeder::class,

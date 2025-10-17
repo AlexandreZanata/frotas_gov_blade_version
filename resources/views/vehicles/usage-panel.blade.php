@@ -109,7 +109,7 @@
             </h3>
 
             <x-ui.table
-                :headers="['Nome','Marca','Ano','Placa','Categoria','Combustível','Status']"
+                :headers="['Nome','Marca','Patrimônio','Ano','Placa','Categoria','Combustível','Status']"
                 :searchable="true"
                 search-placeholder="Pesquisar por nome, placa, marca ou categoria..."
                 :search-value="$search ?? ''"
@@ -117,7 +117,8 @@
                 @forelse($vehicles as $vehicle)
                     <tr class="hover:bg-gray-50 dark:hover:bg-navy-700/40">
                         <td class="px-4 py-2 font-medium">{{ $vehicle->name }}</td>
-                        <td class="px-4 py-2">{{ $vehicle->brand }}</td>
+                        <td class="px-4 py-2">{{ $vehicle->brand->name ?? '-' }}</td>
+                        <td class="px-4 py-2">{{ $vehicle->heritage->name ?? '-' }}</td>
                         <td class="px-4 py-2">{{ $vehicle->model_year }}</td>
                         <td class="px-4 py-2 uppercase tracking-wide">{{ $vehicle->plate }}</td>
                         <td class="px-4 py-2">{{ $vehicle->category->name ?? '-' }}</td>
@@ -128,7 +129,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-navy-200">Nenhum veículo em uso no momento.</td>
+                        <td colspan="8" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-navy-200">Nenhum veículo em uso no momento.</td>
                     </tr>
                 @endforelse
             </x-ui.table>

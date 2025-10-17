@@ -11,7 +11,7 @@
 
     <x-ui.card>
         <x-ui.table
-            :headers="['Nome','Marca','Ano','Placa','Categoria','Combustível','Status','Ações']"
+            :headers="['Nome','Marca','Patrimônio','Ano','Placa','Categoria','Combustível','Status','Ações']"
             :searchable="true"
             search-placeholder="Pesquisar por nome, placa, marca ou categoria..."
             :search-value="$search ?? ''"
@@ -19,13 +19,13 @@
             @forelse($vehicles as $v)
                 <tr class="hover:bg-gray-50 dark:hover:bg-navy-700/40">
                     <td class="px-4 py-2 font-medium">{{ $v->name }}</td>
-                    <td class="px-4 py-2">{{ $v->brand }}</td>
+                    <td class="px-4 py-2">{{ $v->brand->name ?? '-' }}</td>
+                    <td class="px-4 py-2">{{ $v->heritage->name ?? '-' }}</td>
                     <td class="px-4 py-2">{{ $v->model_year }}</td>
                     <td class="px-4 py-2 uppercase tracking-wide">{{ $v->plate }}</td>
                     <td class="px-4 py-2">{{ $v->category->name ?? '-' }}</td>
                     <td class="px-4 py-2">{{ $v->fuelType->name ?? '—' }}</td>
                     <td class="px-4 py-2">
-                        {{-- USANDO O NOVO COMPONENTE DE STATUS COM AS NOVAS CORES --}}
                         <x-ui.status-badge :status="$v->status" />
                     </td>
                     <td class="px-4 py-2 whitespace-nowrap text-right">
@@ -52,7 +52,7 @@ Esta ação NÃO PODE SER DESFEITA."
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-navy-200">Nenhum veículo cadastrado.</td>
+                    <td colspan="9" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-navy-200">Nenhum veículo cadastrado.</td>
                 </tr>
             @endforelse
         </x-ui.table>

@@ -13,7 +13,8 @@
         <x-ui.card title="Informações Gerais">
             @php($items=[
                 ['label'=>'Nome','value'=>e($vehicle->name),'bold'=>true],
-                ['label'=>'Marca','value'=>e($vehicle->brand)],
+                ['label'=>'Marca','value'=>e($vehicle->brand->name ?? '-')],
+                ['label'=>'Patrimônio','value'=>e($vehicle->heritage->name ?? '-')],
                 ['label'=>'Ano/Modelo','value'=>e($vehicle->model_year)],
                 ['label'=>'Placa','value'=>strtoupper($vehicle->plate)],
                 ['label'=>'Categoria','value'=>e($vehicle->category->name ?? '-')],

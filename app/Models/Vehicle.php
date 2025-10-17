@@ -13,6 +13,7 @@ use App\Models\Vehicle\VehiclePriceCurrent;
 use App\Models\Vehicle\VehiclePriceHistory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Vehicle\VehicleBrand;
 
 class Vehicle extends Model
 {
@@ -21,7 +22,7 @@ class Vehicle extends Model
     protected $fillable = [
         'prefix_id',
         'name',
-        'brand',
+        'brand_id',
         'model_year',
         'plate',
         'chassis',
@@ -137,5 +138,10 @@ class Vehicle extends Model
     public function priceHistories(): HasMany
     {
         return $this->hasMany(VehiclePriceHistory::class);
+    }
+
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(VehicleBrand::class);
     }
 }
