@@ -59,6 +59,10 @@ class DatabaseSeeder extends Seeder
             ManagerStatusSeeder::class,
             SecretariatSectorManagerSeeder::class,
             GeneralManagerSeeder::class,
+            GarbageVehiclesSeeder::class,
+            GarbageUsersSeeder::class,
+            GarbageNeighborhoodsSeeder::class,
+            GarbageTypesSeeder::class,
         ]);
     }
 }

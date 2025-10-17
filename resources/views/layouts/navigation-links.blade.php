@@ -1,7 +1,7 @@
 {{-- Links de Navegação Sidebar --}}
 @php($vehicleGroupActive = request()->routeIs('vehicles.*') || request()->routeIs('vehicle-categories.*') || request()->routeIs('prefixes.*') || request()->routeIs('vehicle-transfers.*') || request()->routeIs('vehicles.usage-panel') || request()->routeIs('vehicle-price-origins.*'))
 @php($logbookGroupActive = request()->routeIs('logbook.*') || request()->routeIs('logbook-permissions.*') || request()->routeIs('logbook-rules.*'))
-@php($checklistGroupActive = request()->routeIs('checklists.*'))
+@php($checklistGroupActive = request()->routeIs('checklists.*') || request()->routeIs('defect-reports.*'))
 @php($maintenanceGroupActive = request()->routeIs('oil-changes.*') || request()->routeIs('tires.*'))
 @php($fuelGroupActive = request()->routeIs('fuel-quotations.*', 'gas-stations.*', 'scheduled_gas_stations.*', 'gas_stations_current.*', 'scheduled_prices.*', 'fuel_prices.*'))
 @php($reportsGroupActive = request()->routeIs('backup-reports.*') || request()->routeIs('pdf-templates.*'))
@@ -266,6 +266,13 @@
                 <a href="{{ route('checklists.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('checklists.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
                     <x-icon name="list" class="w-3.5 h-3.5" /> <span>Todos</span>
+                </a>
+            </li>
+            {{-- Link para Comunicação de Defeitos --}}
+            <li>
+                <a href="{{ route('defect-reports.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                {{ request()->routeIs('defect-reports.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                    <x-icon name="alert" class="w-3.5 h-3.5" /> <span>Comunicar Defeito</span>
                 </a>
             </li>
             @if(auth()->user()->isManager())

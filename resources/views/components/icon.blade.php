@@ -8,12 +8,22 @@
         <svg {{ $attributes->merge(['class'=>$classes]) }} fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
         @break
     @case('car')
-        <!-- Ícone de carro estilizado -->
-        <svg {{ $attributes->merge(['class'=>$classes]) }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13l1.2-3.6A2 2 0 016.06 8h11.88a2 2 0 011.86 1.4L21 13v5a1 1 0 01-1 1h-1.2a2.8 2.8 0 01-5.6 0H10.8a2.8 2.8 0 01-5.6 0H4a1 1 0 01-1-1v-5z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7 13h10M6.5 16.5h.01M17.5 16.5h.01" />
+        <!-- Ícone de carro Material Design - proporções originais -->
+        <svg {{ $attributes->merge(['class'=>$classes]) }} xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18.92 6.01C18.72 5.42 18.16 5 17.53 5H6.47c-.63 0-1.19.42-1.39 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-5h14v5zm-11.5-2.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5S9 16.83 9 16s-.67-1.5-1.5-1.5zm9 0c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5S18 16.83 18 16s-.67-1.5-1.5-1.5z"/>
         </svg>
         @break
+
+
+
+    @case('upload')
+        <!-- Ícone upload 1 - seta simples para cima com base -->
+        <svg {{ $attributes->merge(['class' => 'upload '.$classes]) }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4"/>
+        </svg>
+        @break
+
 
     @case('chart-bar')
         <!-- Ícone de gráfico de barras -->

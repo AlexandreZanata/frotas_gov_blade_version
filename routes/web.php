@@ -13,6 +13,7 @@ use App\Http\Controllers\ScheduledGasStationController;
 use App\Http\Controllers\GasStationCurrentController;
 use App\Http\Controllers\ScheduledPriceController;
 use App\Http\Controllers\FuelPriceController;
+use App\Http\Controllers\DefectReportController;
 
 
 Route::get('/', function () {
@@ -170,6 +171,8 @@ Route::middleware('auth')->group(function () {
     // API Routes para veículos
     Route::get('/api/vehicles/search', [VehicleController::class, 'search'])->name('api.vehicles.search');
     Route::get('/api/vehicles/{vehicle}/data', [\App\Http\Controllers\RunController::class, 'getVehicleData'])->name('api.vehicles.data');
+    Route::resource('defect-reports', DefectReportController::class)->except(['edit', 'update', 'destroy']);
+
 
     // API Routes para usuários
     Route::get('/api/users/search', [UserController::class, 'search'])->name('api.users.search');
@@ -320,7 +323,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['auth'])->prefix('tires')->name('tires.')->group(function () {
         // Dashboard
         Route::get('/', [\App\Http\Controllers\TireController::class, 'index'])->name('index');
-
         // Gestão de Veículos
         Route::get('/vehicles', [\App\Http\Controllers\TireController::class, 'vehicles'])->name('vehicles');
         Route::get('/vehicles/{vehicle}', [\App\Http\Controllers\TireController::class, 'showVehicle'])->name('vehicles.show');

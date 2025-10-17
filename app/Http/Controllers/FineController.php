@@ -56,6 +56,9 @@ class FineController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -85,10 +88,33 @@ class FineController extends Controller
                     ['notice_number' => $request->infraction_notice_number],
                     [
                         'issued_at' => $request->issued_at,
-                        'issuing_authority' => $request->issuing_authority
+                        'issuing_authority' => $request->issuing_authority ?? 'Autoridade Desconhecida'
                     ]
                 );
             }
+
+            // Calcular o valor total da multa
+            $totalAmount = collect($validated['infractions'])->sum(function($infraction) {
+                $base = $infraction['base_amount'];
+                $extra = $infraction['extra_fees'] ?? 0;
+                $discount = $infraction['discount_amount'] ?? 0;
+                return ($base + $extra) - $discount;
+            });
+
+            // Criar descrição geral baseada nas infrações
+            $generalDescription = collect($validated['infractions'])
+                ->pluck('description')
+                ->implode('; ');
+
+            // Limitar a descrição se for muito longa
+            if (strlen($generalDescription) > 255) {
+                $generalDescription = substr($generalDescription, 0, 252) . '...';
+            }
+
+            // Criar código de infração concatenado
+            $infractionCodes = collect($validated['infractions'])
+                ->pluck('code')
+                ->implode(', ');
 
             // Criar multa
             $fine = Fine::create([
@@ -96,10 +122,15 @@ class FineController extends Controller
                 'vehicle_id' => $validated['vehicle_id'],
                 'driver_id' => $validated['driver_id'],
                 'registered_by_user_id' => auth()->id(),
+                'infraction_code' => $infractionCodes,
+                'description' => $generalDescription,
                 'location' => $validated['location'],
                 'issued_at' => $validated['issued_at'],
+                'amount' => $totalAmount,
                 'due_date' => $validated['due_date'],
                 'status' => 'pending_acknowledgement',
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             // Criar infrações
@@ -114,6 +145,8 @@ class FineController extends Controller
                     'discount_percentage' => $infractionData['discount_percentage'] ?? 0,
                     'points' => $infractionData['points'] ?? 0,
                     'severity' => $infractionData['severity'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
             }
 
@@ -130,6 +163,8 @@ class FineController extends Controller
                         'file_size' => $file->getSize(),
                         'mime_type' => $file->getMimeType(),
                         'uploaded_by' => auth()->id(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
                 }
             }
@@ -195,32 +230,69 @@ class FineController extends Controller
     /**
      * Update the specified resource in storage.
      */
+    /**
+     * Update the specified resource in storage.
+     */
     public function update(Request $request, Fine $fine)
     {
         $validated = $request->validate([
+            'infraction_notice_number' => 'nullable|string',
+            'issuing_authority' => 'nullable|string',
             'vehicle_id' => 'required|uuid|exists:vehicles,id',
             'driver_id' => 'required|uuid|exists:users,id',
             'location' => 'nullable|string',
             'issued_at' => 'required|date',
             'due_date' => 'nullable|date',
+            'description' => 'required|string',
             'status' => 'required|in:pending_acknowledgement,pending_payment,paid,appealed,cancelled',
         ]);
 
-        $fine->update($validated);
+        DB::beginTransaction();
+        try {
+            // Criar ou buscar auto de infração
+            $infractionNotice = null;
+            if ($request->infraction_notice_number) {
+                $infractionNotice = InfractionNotice::firstOrCreate(
+                    ['notice_number' => $request->infraction_notice_number],
+                    [
+                        'issued_at' => $request->issued_at,
+                        'issuing_authority' => $request->issuing_authority ?? 'Autoridade Desconhecida'
+                    ]
+                );
+            }
 
-        // Registrar mudança de status
-        if ($fine->wasChanged('status')) {
-            FineProcess::create([
-                'fine_id' => $fine->id,
-                'user_id' => auth()->id(),
-                'stage' => 'status_change',
-                'notes' => "Status alterado para: {$fine->status_label}",
+            // Atualizar multa
+            $fine->update([
+                'infraction_notice_id' => $infractionNotice?->id,
+                'vehicle_id' => $validated['vehicle_id'],
+                'driver_id' => $validated['driver_id'],
+                'description' => $validated['description'],
+                'location' => $validated['location'],
+                'issued_at' => $validated['issued_at'],
+                'due_date' => $validated['due_date'],
+                'status' => $validated['status'],
+                'updated_at' => now(),
             ]);
+
+            // Registrar mudança de status se houve alteração
+            if ($fine->wasChanged('status')) {
+                FineProcess::create([
+                    'fine_id' => $fine->id,
+                    'user_id' => auth()->id(),
+                    'stage' => 'status_change',
+                    'notes' => "Status alterado para: {$fine->status_label}",
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->route('fines.show', $fine)->with('success', 'Multa atualizada com sucesso!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->with('error', 'Erro ao atualizar multa: ' . $e->getMessage());
         }
-
-        return redirect()->route('fines.show', $fine)->with('success', 'Multa atualizada com sucesso!');
     }
-
     /**
      * Remove the specified resource from storage.
      */

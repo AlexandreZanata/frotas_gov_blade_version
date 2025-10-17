@@ -52,8 +52,17 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
+        // 1. Desativa a verificação de chaves estrangeiras
+        Schema::disableForeignKeyConstraints();
+
+        // 2. Apaga as tabelas dependentes PRIMEIRO
         Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
+
+        // 3. Apaga a tabela principal (users) por ÚLTIMO
+        Schema::dropIfExists('users');
+
+        // 4. Reativa a verificação de chaves estrangeiras
+        Schema::enableForeignKeyConstraints();
     }
 };
