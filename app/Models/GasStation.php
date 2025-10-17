@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Balance\BalanceGasStationSupplier;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class GasStation extends Model
 {
@@ -61,5 +63,10 @@ class GasStation extends Model
     public function fuelings(): HasMany
     {
         return $this->hasMany(Fueling::class);
+    }
+
+    public function supplierDetails(): HasOne
+    {
+        return $this->hasOne(BalanceGasStationSupplier::class);
     }
 }

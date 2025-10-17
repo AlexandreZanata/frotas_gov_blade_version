@@ -49,6 +49,7 @@ class DatabaseSeeder extends Seeder
             ScheduledPriceMovementSeeder::class,
             GasStationCurrentSeeder::class,
             ScheduledGasStationSeeder::class,
+            BalanceGasStationSupplierSeeder::class,
         ]);
     }
 }
