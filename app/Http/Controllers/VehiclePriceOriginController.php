@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Vehicle\VehiclePriceOrigin;
-use App\Models\Vehicle;
 use App\Models\Vehicle\AcquisitionType;
+use App\Models\Vehicle\Vehicle;
+use App\Models\Vehicle\VehiclePriceOrigin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 

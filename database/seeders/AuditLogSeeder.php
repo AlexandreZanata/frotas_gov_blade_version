@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\AuditLog;
-use App\Models\User;
-use App\Models\Vehicle;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\auditlog\AuditLog;
+use App\Models\user\User;
+use App\Models\Vehicle\Vehicle;
 use Illuminate\Database\Seeder;
 
 class AuditLogSeeder extends Seeder

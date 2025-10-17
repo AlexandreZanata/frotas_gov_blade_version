@@ -1,7 +1,7 @@
 <?php
 
+use App\Models\chat\ChatParticipant;
 use Illuminate\Support\Facades\Broadcast;
-use App\Models\ChatParticipant;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;

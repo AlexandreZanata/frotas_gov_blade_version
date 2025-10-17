@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\ChatRoom;
-use App\Models\ChatMessage;
+use App\Models\chat\ChatMessage;
+use App\Models\chat\ChatRoom;
+use App\Models\user\User;
 use Illuminate\Database\Seeder;
 
 class ChatSeeder extends Seeder

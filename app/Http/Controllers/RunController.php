@@ -2,22 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Run;
-use App\Models\Vehicle;
-use App\Models\ChecklistItem;
-use App\Models\GasStation;
-use App\Models\FuelType;
-use App\Models\Fueling;
-use App\Http\Requests\RunStartRequest;
-use App\Http\Requests\RunFinishRequest;
 use App\Http\Requests\ChecklistRequest;
 use App\Http\Requests\FuelingRequest;
+use App\Http\Requests\RunFinishRequest;
+use App\Http\Requests\RunStartRequest;
+use App\Models\checklist\ChecklistItem;
+use App\Models\fuel\Fueling;
+use App\Models\fuel\FuelType;
+use App\Models\fuel\GasStation;
+use App\Models\run\Run;
+use App\Models\run\RunDestination;
+use App\Models\Vehicle\Vehicle;
 use App\Services\LogbookService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Models\RunDestination;
 
 class RunController extends Controller
 {
@@ -100,11 +100,11 @@ class RunController extends Controller
      */
     public function getVehicleData(Vehicle $vehicle)
     {
-        /** @var \App\Models\User $user */
+        /** @var \App\Models\user\User $user */
         $user = Auth::user();
 
         // Verifica se o usuário tem permissão para acessar este veículo
-        if (!\App\Models\LogbookPermission::canAccessVehicle($user, $vehicle)) {
+        if (!\App\Models\logbook\LogbookPermission::canAccessVehicle($user, $vehicle)) {
             return response()->json([
                 'error' => true,
                 'message' => 'Você não tem permissão para acessar este veículo.',
@@ -141,11 +141,11 @@ class RunController extends Controller
 
         $vehicle = Vehicle::findOrFail($request->vehicle_id);
 
-        /** @var \App\Models\User $user */
+        /** @var \App\Models\user\User $user */
         $user = Auth::user();
 
         // Verifica se o usuário tem permissão para acessar este veículo
-        if (!\App\Models\LogbookPermission::canAccessVehicle($user, $vehicle)) {
+        if (!\App\Models\logbook\LogbookPermission::canAccessVehicle($user, $vehicle)) {
             return back()->with('error', 'Você não tem permissão para acessar este veículo.');
         }
 
@@ -177,11 +177,11 @@ class RunController extends Controller
 
         $vehicle = Vehicle::with('prefix', 'category')->findOrFail($vehicleId);
 
-        /** @var \App\Models\User $user */
+        /** @var \App\Models\user\User $user */
         $user = Auth::user();
 
         // Verifica se o usuário tem permissão para acessar este veículo
-        if (!\App\Models\LogbookPermission::canAccessVehicle($user, $vehicle)) {
+        if (!\App\Models\logbook\LogbookPermission::canAccessVehicle($user, $vehicle)) {
             $this->logbookService->clearVehicleSelection();
             return redirect()->route('logbook.vehicle-select')
                 ->with('error', 'Você não tem permissão para acessar este veículo.');
@@ -207,11 +207,11 @@ class RunController extends Controller
 
         $vehicle = Vehicle::findOrFail($vehicleId);
 
-        /** @var \App\Models\User $user */
+        /** @var \App\Models\user\User $user */
         $user = Auth::user();
 
         // Verifica se o usuário tem permissão para acessar este veículo
-        if (!\App\Models\LogbookPermission::canAccessVehicle($user, $vehicle)) {
+        if (!\App\Models\logbook\LogbookPermission::canAccessVehicle($user, $vehicle)) {
             $this->logbookService->clearVehicleSelection();
             return redirect()->route('logbook.vehicle-select')
                 ->with('error', 'Você não tem permissão para acessar este veículo.');

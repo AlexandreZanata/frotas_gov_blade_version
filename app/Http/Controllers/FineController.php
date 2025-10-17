@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Fine;
-use App\Models\Infraction;
-use App\Models\InfractionNotice;
-use App\Models\FineAttachment;
-use App\Models\FineViewLog;
-use App\Models\FineProcess;
-use App\Models\Vehicle;
-use App\Models\User;
+use App\Models\fines\Fine;
+use App\Models\fines\FineAttachment;
+use App\Models\fines\FineProcess;
+use App\Models\fines\FineViewLog;
+use App\Models\fines\Infraction;
+use App\Models\fines\InfractionNotice;
+use App\Models\user\User;
+use App\Models\Vehicle\Vehicle;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class FineController extends Controller
 {

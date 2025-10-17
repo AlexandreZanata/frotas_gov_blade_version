@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LogbookRule;
-use App\Models\VehicleCategory;
-use App\Models\User;
-use App\Models\Vehicle;
-use Illuminate\Http\Request;
+use App\Models\logbook\LogbookRule;
+use App\Models\user\User;
+use App\Models\Vehicle\Vehicle;
+use App\Models\Vehicle\VehicleCategory;
 use App\Rules\UniqueLogbookRule;
+use Illuminate\Http\Request;
 
 class LogbookRuleController extends Controller
 {
@@ -223,7 +223,7 @@ class LogbookRuleController extends Controller
     private function createAuditLog($model, $action, $oldValues = null, $newValues = null, $description = null)
     {
         try {
-            \App\Models\AuditLog::create([
+            \App\Models\auditlog\AuditLog::create([
                 'user_id' => auth()->id(),
                 'action' => $action,
                 'auditable_type' => get_class($model),

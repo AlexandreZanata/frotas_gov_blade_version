@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Events\ChatMessageSent;
-use App\Models\ChatRoom;
-use App\Models\ChatMessage;
-use App\Models\User;
-use App\Models\Secretariat;
+use App\Models\chat\ChatRoom;
+use App\Models\user\Secretariat;
+use App\Models\user\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

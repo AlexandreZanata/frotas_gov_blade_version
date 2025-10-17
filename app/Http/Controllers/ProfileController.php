@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
-use App\Models\Secretariat;
-use App\Models\UserPhoto;
-use App\Models\UserPhotoCnh;
+use App\Models\user\Secretariat;
+use App\Models\user\UserPhoto;
+use App\Models\user\UserPhotoCnh;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\View\View;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
@@ -21,7 +21,7 @@ class ProfileController extends Controller
     public function edit(Request $request): View
     {
         $secretariats = Secretariat::orderBy('name')->get();
-        $cnhCategories = \App\Models\CnhCategory::where('is_active', true)->get();
+        $cnhCategories = \App\Models\user\CnhCategory::where('is_active', true)->get();
 
         return view('profile.edit', [
             'user' => $request->user(),

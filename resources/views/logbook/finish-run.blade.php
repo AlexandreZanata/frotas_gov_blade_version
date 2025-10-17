@@ -1,13 +1,15 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-ui.page-header title="Finalizar Corrida" subtitle="Preencha os dados para concluir a viagem" hide-title-mobile icon="clipboard" />
+        <x-ui.page-header title="Finalizar Corrida" subtitle="Preencha os dados para concluir a viagem"
+                          hide-title-mobile icon="clipboard"/>
     </x-slot>
     <x-slot name="pageActions">
-        <x-ui.action-icon :href="route('logbook.index')" icon="arrow-left" title="Voltar" variant="neutral" />
+        <x-ui.action-icon :href="route('logbook.index')" icon="arrow-left" title="Voltar" variant="neutral"/>
 
         <!-- Botão para abastecimento independente -->
-        <a href="{{ route('logbook.fueling', $run) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm font-medium shadow transition">
-            <x-icon name="fuel" class="w-4 h-4" />
+        <a href="{{ route('logbook.fueling', $run) }}"
+           class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm font-medium shadow transition">
+            <x-icon name="fuel" class="w-4 h-4"/>
             <span>Abastecer</span>
         </a>
     </x-slot>
@@ -16,7 +18,7 @@
     <div class="mb-6 bg-white dark:bg-navy-800 rounded-lg shadow p-6">
         <div class="flex items-center gap-4">
             <div class="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-full">
-                <x-icon name="car" class="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                <x-icon name="car" class="w-8 h-8 text-primary-600 dark:text-primary-400"/>
             </div>
             <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-navy-50">
@@ -40,7 +42,8 @@
             </div>
             <div>
                 <p class="text-sm text-gray-500 dark:text-navy-300">KM Inicial</p>
-                <p class="text-base font-medium text-gray-900 dark:text-navy-50">{{ number_format($run->start_km, 0, ',', '.') }} km</p>
+                <p class="text-base font-medium text-gray-900 dark:text-navy-50">{{ number_format($run->start_km, 0, ',', '.') }}
+                    km</p>
             </div>
             <div>
                 <p class="text-sm text-gray-500 dark:text-navy-300">Iniciada em</p>
@@ -61,7 +64,7 @@
 
             <!-- End KM -->
             <div>
-                <x-input-label for="end_km" value="Quilometragem Final (KM) *" />
+                <x-input-label for="end_km" value="Quilometragem Final (KM) *"/>
                 <div class="mt-2">
                     <input
                         type="number"
@@ -76,9 +79,10 @@
                     >
                 </div>
                 <p class="mt-1 text-sm text-gray-500 dark:text-navy-400">
-                    O KM final deve ser maior ou igual ao KM inicial ({{ number_format($run->start_km, 0, ',', '.') }} km)
+                    O KM final deve ser maior ou igual ao KM inicial ({{ number_format($run->start_km, 0, ',', '.') }}
+                    km)
                 </p>
-                <x-input-error :messages="$errors->get('end_km')" class="mt-2" />
+                <x-input-error :messages="$errors->get('end_km')" class="mt-2"/>
             </div>
 
             <!-- Distance Display -->
@@ -93,7 +97,7 @@
 
             <!-- Stop Point -->
             <div>
-                <x-input-label for="stop_point" value="Ponto de Parada (Opcional)" />
+                <x-input-label for="stop_point" value="Ponto de Parada (Opcional)"/>
                 <div class="mt-2">
                     <input
                         type="text"
@@ -107,7 +111,7 @@
                 <p class="mt-1 text-sm text-gray-500 dark:text-navy-400">
                     Onde o veículo será estacionado após a corrida
                 </p>
-                <x-input-error :messages="$errors->get('stop_point')" class="mt-2" />
+                <x-input-error :messages="$errors->get('stop_point')" class="mt-2"/>
             </div>
 
             <!-- Actions -->
@@ -115,21 +119,21 @@
                 <div class="flex space-x-3">
                     <a href="{{ route('logbook.start-run', $run) }}">
                         <x-secondary-button type="button">
-                            <x-icon name="arrow-left" class="w-4 h-4 mr-2" />
+                            <x-icon name="arrow-left" class="w-4 h-4 mr-2"/>
                             Voltar
                         </x-secondary-button>
                     </a>
 
                     <a href="{{ route('logbook.fueling', $run) }}">
                         <x-secondary-button type="button" variant="outline">
-                            <x-icon name="fuel" class="w-4 h-4 mr-2" />
+                            <x-icon name="fuel" class="w-4 h-4 mr-2"/>
                             Abastecer Agora
                         </x-secondary-button>
                     </a>
                 </div>
 
                 <x-primary-button type="submit" x-bind:disabled="!endKm || endKm < startKm">
-                    <x-icon name="check" class="w-4 h-4 mr-2" />
+                    <x-icon name="check" class="w-4 h-4 mr-2"/>
                     Finalizar Corrida
                 </x-primary-button>
             </div>
@@ -139,7 +143,7 @@
     <!-- Informações sobre abastecimentos recentes -->
     @php
         // Query corrigida - removendo temporariamente a condição run_id até a migration ser executada
-        $recentFuelings = \App\Models\Fueling::where('vehicle_id', $run->vehicle_id)
+        $recentFuelings = \App\Models\fuel\Fueling::where('vehicle_id', $run->vehicle_id)
             ->orderBy('created_at', 'desc')
             ->limit(3)
             ->get();
@@ -149,10 +153,11 @@
         <x-ui.card title="Abastecimentos Recentes" subtitle="Abastecimentos registrados para este veículo">
             <div class="space-y-3">
                 @foreach($recentFuelings as $fueling)
-                    <div class="flex items-center justify-between p-3 border border-gray-200 dark:border-navy-700 rounded-lg">
+                    <div
+                        class="flex items-center justify-between p-3 border border-gray-200 dark:border-navy-700 rounded-lg">
                         <div class="flex-1">
                             <div class="flex items-center space-x-3">
-                                <x-icon name="fuel" class="w-5 h-5 text-green-600 dark:text-green-400" />
+                                <x-icon name="fuel" class="w-5 h-5 text-green-600 dark:text-green-400"/>
                                 <div>
                                     <p class="font-medium text-gray-900 dark:text-navy-50">
                                         {{ $fueling->liters }}L - {{ $fueling->fuelType->name ?? 'N/A' }}
@@ -176,7 +181,8 @@
             </div>
 
             <div class="mt-4 text-center">
-                <a href="{{ route('logbook.fueling', $run) }}" class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm font-medium">
+                <a href="{{ route('logbook.fueling', $run) }}"
+                   class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm font-medium">
                     Ver todos os abastecimentos →
                 </a>
             </div>

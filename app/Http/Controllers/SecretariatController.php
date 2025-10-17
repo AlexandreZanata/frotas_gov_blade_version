@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Secretariat;
+use App\Models\user\Secretariat;
 use Illuminate\Http\Request;
 
 class SecretariatController extends Controller

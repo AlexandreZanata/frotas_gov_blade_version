@@ -2,12 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\Fine;
-use App\Models\FineProcess;
-use App\Models\FineSignature;
-use App\Models\User;
-use App\Models\Vehicle;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\fines\Fine;
+use App\Models\fines\FineProcess;
+use App\Models\fines\FineSignature;
+use App\Models\user\User;
+use App\Models\Vehicle\Vehicle;
 use Illuminate\Database\Seeder;
 
 class FineSeeder extends Seeder

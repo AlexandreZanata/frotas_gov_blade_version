@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\GasStationCurrent;
+use App\Models\fuel\GasStationCurrent;
 
 class GasStationCurrentController extends Controller
 {

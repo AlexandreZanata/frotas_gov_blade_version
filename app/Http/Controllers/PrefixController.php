@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Prefix;
+use App\Models\Vehicle\Prefix;
 use Illuminate\Http\Request;
 
 class PrefixController extends Controller

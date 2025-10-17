@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\FuelType;
-use App\Models\FuelCalculationMethod;
-use App\Models\FuelDiscountSetting;
+use App\Models\fuel\FuelCalculationMethod;
+use App\Models\fuel\FuelDiscountSetting;
+use App\Models\fuel\FuelType;
 use Illuminate\Http\Request;
 
 class FuelQuotationSettingsController extends Controller

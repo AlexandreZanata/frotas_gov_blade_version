@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DefectReport;
-use App\Models\DefectReportItem;
-use App\Models\Vehicle;
+use App\Models\defect\DefectReport;
+use App\Models\defect\DefectReportItem;
+use App\Models\Vehicle\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

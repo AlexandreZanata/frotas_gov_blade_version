@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Role;
-use App\Models\Secretariat;
-use App\Models\DefaultPassword;
+use App\Models\defect\DefaultPassword;
+use App\Models\user\Role;
+use App\Models\user\Secretariat;
+use App\Models\user\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -71,7 +71,7 @@ class UserController extends Controller
 
         $secretariats = Secretariat::all();
         $defaultPasswords = DefaultPassword::where('is_active', true)->get();
-        $cnhCategories = \App\Models\CnhCategory::where('is_active', true)->get();
+        $cnhCategories = \App\Models\user\CnhCategory::where('is_active', true)->get();
 
         // Gestor geral pode atribuir qualquer role
         if ($currentUser->isGeneralManager()) {
@@ -161,7 +161,7 @@ class UserController extends Controller
         }
 
         $secretariats = Secretariat::all();
-        $cnhCategories = \App\Models\CnhCategory::where('is_active', true)->get();
+        $cnhCategories = \App\Models\user\CnhCategory::where('is_active', true)->get();
 
         // Gestor geral pode atribuir qualquer role
         if ($currentUser->isGeneralManager()) {

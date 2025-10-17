@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Tire;
-use App\Models\Vehicle;
-use App\Models\InventoryItem;
-use App\Models\VehicleTireLayout;
+use App\Models\maintenance\InventoryItem;
+use App\Models\maintenance\Tire;
+use App\Models\Vehicle\Vehicle;
 use App\Services\TireService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Secretariat;
-use App\Models\Role;
+use App\Models\user\Role;
+use App\Models\user\Secretariat;
+use App\Models\user\User;
 use App\Rules\ValidCpf;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;

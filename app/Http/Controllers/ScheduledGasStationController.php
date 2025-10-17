@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\GasStation;
-use App\Models\ScheduledGasStation;
+use App\Models\fuel\GasStation;
+use App\Models\fuel\ScheduledGasStation;
 use Illuminate\Http\Request;
 
 class ScheduledGasStationController extends Controller

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Vehicle;
-use App\Models\Secretariat;
-use App\Models\VehicleTransfer;
+use App\Models\user\Secretariat;
+use App\Models\Vehicle\Vehicle;
+use App\Models\Vehicle\VehicleTransfer;
 use App\Services\VehicleTransferService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

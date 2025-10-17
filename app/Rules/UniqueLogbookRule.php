@@ -2,7 +2,7 @@
 
 namespace App\Rules;
 
-use App\Models\LogbookRule;
+use App\Models\logbook\LogbookRule;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -80,15 +80,15 @@ class UniqueLogbookRule implements ValidationRule
         try {
             switch ($targetType) {
                 case 'vehicle_category':
-                    $target = \App\Models\VehicleCategory::find($targetId);
+                    $target = \App\Models\Vehicle\VehicleCategory::find($targetId);
                     return $target ? "a categoria '{$target->name}'" : 'esta categoria de veículo';
 
                 case 'user':
-                    $target = \App\Models\User::find($targetId);
+                    $target = \App\Models\user\User::find($targetId);
                     return $target ? "o usuário '{$target->name}'" : 'este usuário';
 
                 case 'vehicle':
-                    $target = \App\Models\Vehicle::with('prefix')->find($targetId);
+                    $target = \App\Models\Vehicle\Vehicle::with('prefix')->find($targetId);
                     if ($target && $target->prefix) {
                         return "o veículo '{$target->prefix->name} - {$target->name}'";
                     }

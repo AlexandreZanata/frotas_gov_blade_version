@@ -2,8 +2,8 @@
 
 namespace App\Models\Manager;
 
-use App\Models\Secretariat;
-use App\Models\User;
+use App\Models\user\Secretariat;
+use App\Models\user\User;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

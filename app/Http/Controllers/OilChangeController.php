@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\OilChange;
-use App\Models\Vehicle;
-use App\Models\InventoryItem;
-use App\Models\OilChangeSetting;
-use App\Models\InventoryMovement;
+use App\Models\maintenance\InventoryItem;
+use App\Models\maintenance\InventoryMovement;
+use App\Models\maintenance\OilChange;
+use App\Models\maintenance\OilChangeSetting;
+use App\Models\Vehicle\Vehicle;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\DB;
 
 class OilChangeController extends Controller
 {
@@ -149,7 +149,7 @@ class OilChangeController extends Controller
                     'inventory_item_id' => $validated['inventory_item_id'],
                     'type' => 'out',
                     'quantity' => $validated['liters_used'],
-                    'reference_type' => 'App\Models\OilChange',
+                    'reference_type' => 'App\Models\maintenance\OilChange',
                     'reference_id' => $oilChange->id,
                     'user_id' => auth()->id(),
                     'notes' => 'Troca de óleo - Veículo: ' . $oilChange->vehicle->name,
@@ -206,7 +206,7 @@ class OilChangeController extends Controller
             abort(403, 'Acesso Negado. Apenas o Gestor Geral pode acessar esta página.');
         }
 
-        $categories = \App\Models\VehicleCategory::withCount('vehicles')->orderBy('name')->get();
+        $categories = \App\Models\Vehicle\VehicleCategory::withCount('vehicles')->orderBy('name')->get();
         $settings = OilChangeSetting::all()->keyBy('vehicle_category_id');
 
         return view('oil-changes.settings', compact('categories', 'settings'));

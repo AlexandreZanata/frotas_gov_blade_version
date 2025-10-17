@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LogbookPermission;
-use App\Models\User;
-use App\Models\Vehicle;
-use App\Models\Secretariat;
+use App\Models\logbook\LogbookPermission;
+use App\Models\user\Secretariat;
+use App\Models\user\User;
+use App\Models\Vehicle\Vehicle;
 use Illuminate\Http\Request;
 
 class LogbookPermissionController extends Controller

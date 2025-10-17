@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\FuelPrice;
-use Illuminate\Http\Request;
+use App\Models\fuel\FuelPrice;
 
 class FuelPriceController extends Controller
 {

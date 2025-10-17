@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Vehicle;
-use Illuminate\Http\Request;
+use App\Models\Vehicle\Vehicle;
 
 class VehicleTireController extends Controller
 {
     public function show(Vehicle $vehicle)
     {
         // Carrega o layout (simplificado, idealmente viria de uma relação no model Vehicle)
-        $layout = \App\Models\VehicleTireLayout::first(); // Lógica para pegar o layout correto
+        $layout = \App\Models\Vehicle\VehicleTireLayout::first(); // Lógica para pegar o layout correto
 
         $vehicle->load('tires');
 

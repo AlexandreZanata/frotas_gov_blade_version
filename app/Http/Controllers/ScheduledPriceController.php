@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\FuelType;
-use App\Models\GasStation;
-use App\Models\ScheduledPrice;
+use App\Models\fuel\FuelType;
+use App\Models\fuel\GasStation;
+use App\Models\fuel\ScheduledPrice;
 use Illuminate\Http\Request;
 
 class ScheduledPriceController extends Controller

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\VehicleCategory;
-use Illuminate\Http\Request;
+use App\Models\Vehicle\VehicleCategory;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class VehicleCategoryController extends Controller
 {

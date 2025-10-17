@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\Run;
-use App\Models\User;
+use App\Models\run\Run;
+use App\Models\user\User;
 
 class RunPolicy
 {

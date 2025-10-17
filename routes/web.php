@@ -1,19 +1,19 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\VehicleController;
-use App\Http\Controllers\VehicleCategoryController;
-use App\Http\Controllers\PrefixController;
 use App\Http\Controllers\BackupReportController;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\DefaultPasswordController;
-use App\Http\Controllers\LogbookRuleController;
-use App\Http\Controllers\ScheduledGasStationController;
-use App\Http\Controllers\GasStationCurrentController;
-use App\Http\Controllers\ScheduledPriceController;
-use App\Http\Controllers\FuelPriceController;
 use App\Http\Controllers\DefectReportController;
+use App\Http\Controllers\FuelPriceController;
+use App\Http\Controllers\GasStationCurrentController;
+use App\Http\Controllers\LogbookRuleController;
+use App\Http\Controllers\PrefixController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ScheduledGasStationController;
+use App\Http\Controllers\ScheduledPriceController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\VehicleCategoryController;
+use App\Http\Controllers\VehicleController;
+use Illuminate\Support\Facades\Route;
 
 
 Route::get('/', function () {
@@ -42,7 +42,7 @@ Route::get('/dashboard', function () {
 
     // Dados apenas para general_manager e sector_manager
     if ($user->hasAnyRole(['general_manager', 'sector_manager'])) {
-        $query = \App\Models\Vehicle::query();
+        $query = \App\Models\Vehicle\Vehicle::query();
 
         // Filtra apenas veículos em uso (com diário de bordo em andamento)
         $query->whereHas('runs', function($q) {
@@ -87,7 +87,7 @@ Route::get('/dashboard', function () {
 
         // Gráfico de Gastos do Mês (últimos 7 dias) - CORREÇÃO APLICADA AQUI
         $startDate = now()->subDays(6)->startOfDay();
-        $expenses = \App\Models\Fueling::query()
+        $expenses = \App\Models\fuel\Fueling::query()
             ->whereBetween('created_at', [$startDate, now()])
             ->selectRaw('DATE(created_at) as date, SUM(liters * value_per_liter) as total') // Correção: Trocado total_cost por liters * value_per_liter
             ->groupBy('date')
@@ -107,7 +107,7 @@ Route::get('/dashboard', function () {
         }
 
         // Gráfico de Abastecimentos Recentes (últimos 7 dias)
-        $fuelings = \App\Models\Fueling::query()
+        $fuelings = \App\Models\fuel\Fueling::query()
             ->whereBetween('created_at', [$startDate, now()])
             ->selectRaw('DATE(created_at) as date, COUNT(*) as total, SUM(liters) as liters')
             ->groupBy('date')
@@ -274,7 +274,7 @@ Route::middleware('auth')->group(function () {
 
         \Log::info("API Check: target_type={$targetType}, target_id={$targetId}, current_rule_id={$currentRuleId}");
 
-        $query = \App\Models\LogbookRule::where('target_type', $targetType)
+        $query = \App\Models\logbook\LogbookRule::where('target_type', $targetType)
             ->where('is_active', true);
 
         if ($targetType === 'global') {
@@ -347,7 +347,7 @@ Route::middleware('auth')->group(function () {
 
     // API para pneus
     Route::get('/api/tires/{tire}', function($id) {
-        return \App\Models\Tire::findOrFail($id);
+        return \App\Models\maintenance\Tire::findOrFail($id);
     })->middleware('auth');
 
     // Manutenção - Troca de Óleo

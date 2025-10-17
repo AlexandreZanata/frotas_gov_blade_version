@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\GasStation;
+use App\Models\fuel\GasStation;
 use App\Rules\CnpjValidation;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;

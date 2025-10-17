@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\Vehicle;
-use App\Models\VehicleTransfer;
-use App\Models\User;
+use App\Models\user\User;
+use App\Models\Vehicle\Vehicle;
+use App\Models\Vehicle\VehicleTransfer;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class VehicleTransferService
 {

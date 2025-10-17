@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Vehicle;
+use App\Models\fuel\FuelType;
+use App\Models\logbook\LogbookPermission;
+use App\Models\user\Secretariat;
+use App\Models\Vehicle\Prefix;
+use App\Models\Vehicle\Vehicle;
 use App\Models\Vehicle\VehicleBrand;
+use App\Models\Vehicle\VehicleCategory;
 use App\Models\Vehicle\VehicleHeritage;
-use App\Models\VehicleCategory;
-use App\Models\Prefix;
-use App\Models\VehicleStatus;
-use App\Models\FuelType;
-use App\Models\Secretariat;
-use App\Models\LogbookPermission;
+use App\Models\Vehicle\VehicleStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

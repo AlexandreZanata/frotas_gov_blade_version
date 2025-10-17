@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin\General;
 
 use App\Http\Controllers\Controller;
 use App\Models\Balance\BalanceGasStationSupplier;
-use App\Models\GasStation;
+use App\Models\fuel\GasStation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;

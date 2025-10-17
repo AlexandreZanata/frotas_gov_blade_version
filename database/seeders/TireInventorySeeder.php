@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\InventoryItem;
-use App\Models\InventoryItemCategory;
+use App\Models\maintenance\InventoryItem;
+use App\Models\maintenance\InventoryItemCategory;
 use Illuminate\Database\Seeder;
 
 class TireInventorySeeder extends Seeder

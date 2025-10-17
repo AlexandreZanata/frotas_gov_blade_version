@@ -2,10 +2,8 @@
 
 namespace App\Events;
 
-use App\Models\ChatMessage;
-use Illuminate\Broadcasting\Channel;
+use App\Models\chat\ChatMessage;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;

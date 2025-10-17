@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DefaultPassword;
+use App\Models\defect\DefaultPassword;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 

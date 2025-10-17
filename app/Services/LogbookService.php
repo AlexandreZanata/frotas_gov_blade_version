@@ -2,16 +2,15 @@
 
 namespace App\Services;
 
-use App\Models\Run;
-use App\Models\Vehicle;
-use App\Models\Checklist;
-use App\Models\ChecklistAnswer;
-use App\Models\ChecklistItem;
-use App\Models\User;
+use App\Models\checklist\Checklist;
+use App\Models\checklist\ChecklistAnswer;
+use App\Models\checklist\ChecklistItem;
+use App\Models\run\Run;
+use App\Models\user\User;
+use App\Models\Vehicle\Vehicle;
 use App\Notifications\ChecklistProblemNotification;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\DB;
 
 class LogbookService
 {
@@ -435,17 +434,17 @@ ne     * Busca veículos disponíveis baseado nos privilégios do usuário
      */
     public function getAvailableVehicles(): \Illuminate\Database\Eloquent\Collection
     {
-        /** @var \App\Models\User $user */
+        /** @var \App\Models\user\User $user */
         $user = Auth::user();
 
         // Verifica se o usuário tem privilégios configurados
-        if (!\App\Models\LogbookPermission::userHasActivePermissions($user)) {
+        if (!\App\Models\logbook\LogbookPermission::userHasActivePermissions($user)) {
             // Se não tem privilégios, retorna coleção vazia do Eloquent
             return Vehicle::whereRaw('1 = 0')->get();
         }
 
         // Obtém os IDs dos veículos que o usuário pode acessar
-        $accessibleVehicleIds = \App\Models\LogbookPermission::getUserAccessibleVehicleIds($user);
+        $accessibleVehicleIds = \App\Models\logbook\LogbookPermission::getUserAccessibleVehicleIds($user);
 
         if (empty($accessibleVehicleIds)) {
             return Vehicle::whereRaw('1 = 0')->get();

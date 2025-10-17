@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Vehicle;
 use App\Models\Logbook;
+use App\Models\Vehicle\Vehicle;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class VehiclesUsagePanelController extends Controller

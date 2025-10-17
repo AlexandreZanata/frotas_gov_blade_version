@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\FuelQuotation;
-use App\Models\FuelQuotationPrice;
-use App\Models\FuelQuotationDiscount;
-use App\Models\FuelPumpPrice;
-use App\Models\GasStation;
-use App\Models\FuelType;
+use App\Models\fuel\FuelPumpPrice;
+use App\Models\fuel\FuelQuotation;
+use App\Models\fuel\FuelQuotationDiscount;
+use App\Models\fuel\FuelQuotationPrice;
+use App\Models\fuel\FuelType;
+use App\Models\fuel\GasStation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

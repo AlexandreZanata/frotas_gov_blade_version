@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin\General;
 use App\Http\Controllers\Controller;
 use App\Models\Balance\BalanceCommitment;
 use App\Models\Balance\BalanceGasStationSupplier;
-use App\Models\Secretariat;
+use App\Models\user\Secretariat;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 

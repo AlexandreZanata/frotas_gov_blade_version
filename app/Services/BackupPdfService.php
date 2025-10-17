@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\BackupReport;
+use App\Models\auditlog\BackupReport;
 use App\Models\PdfTemplate;
-use App\Models\Vehicle;
-use App\Models\VehicleCategory;
-use App\Models\Prefix;
+use App\Models\Vehicle\Prefix;
+use App\Models\Vehicle\Vehicle;
+use App\Models\Vehicle\VehicleCategory;
 use Illuminate\Support\Facades\Storage;
 use TCPDF;
 

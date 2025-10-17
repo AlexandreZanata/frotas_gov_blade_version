@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use App\Models\GarbageMaintenanceTareVehicle;
+use App\Models\garbage\GarbageMaintenanceTareVehicle;
 use App\Observers\GarbageMaintenanceTareVehicleObserver;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {

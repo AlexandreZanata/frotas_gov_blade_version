@@ -2,8 +2,8 @@
 
 namespace App\Notifications;
 
-use App\Models\Run;
-use App\Models\ChecklistItem;
+use App\Models\checklist\ChecklistItem;
+use App\Models\run\Run;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;

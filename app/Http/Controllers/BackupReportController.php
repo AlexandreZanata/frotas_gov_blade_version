@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BackupReport;
+use App\Models\auditlog\BackupReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 

@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\Tire;
-use App\Models\TireEvent;
-use App\Models\Vehicle;
-use App\Models\VehicleTireLayout;
-use Illuminate\Support\Facades\DB;
+use App\Models\maintenance\Tire;
+use App\Models\maintenance\TireEvent;
+use App\Models\Vehicle\Vehicle;
+use App\Models\Vehicle\VehicleTireLayout;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TireService
 {

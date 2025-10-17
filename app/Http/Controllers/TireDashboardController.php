@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Tire;
-use App\Models\Vehicle;
-use Illuminate\Http\Request;
+use App\Models\maintenance\Tire;
+use App\Models\Vehicle\Vehicle;
 
 class TireDashboardController extends Controller
 {

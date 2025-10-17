@@ -2,8 +2,8 @@
 
 namespace App\Observers;
 
-use App\Models\GarbageMaintenanceTareVehicle;
-use App\Models\GarbageTareVehiclesCurrent;
+use App\Models\garbage\GarbageMaintenanceTareVehicle;
+use App\Models\garbage\GarbageTareVehiclesCurrent;
 
 class GarbageMaintenanceTareVehicleObserver
 {

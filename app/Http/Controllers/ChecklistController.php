@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Checklist;
-use App\Models\DefectReport;
-use App\Models\User;
+use App\Models\checklist\Checklist;
+use App\Models\defect\DefectReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

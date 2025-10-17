@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Events\ChatMessageSent;
 use App\Events\MessageRead;
-use App\Events\UserTyping;
 use App\Events\UserOnlineStatus;
-use App\Models\ChatRoom;
-use App\Models\ChatMessage;
-use App\Models\User;
+use App\Events\UserTyping;
+use App\Models\chat\ChatMessage;
+use App\Models\chat\ChatRoom;
+use App\Models\user\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

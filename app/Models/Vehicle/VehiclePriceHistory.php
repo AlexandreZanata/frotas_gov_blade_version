@@ -2,8 +2,7 @@
 
 namespace App\Models\Vehicle;
 
-use App\Models\User;
-use App\Models\Vehicle;
+use App\Models\user\User;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
