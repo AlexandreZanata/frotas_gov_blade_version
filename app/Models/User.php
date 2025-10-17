@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// 1. IMPORTAR A TRAIT
+
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -10,6 +10,8 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Traits\Auditable;
+use App\Models\Manager\SecretariatSectorManager;
+
 
 class User extends Authenticatable
 {
@@ -339,6 +341,11 @@ class User extends Authenticatable
         }
 
         return now()->diffInDays($this->cnh_expiration_date, false);
+    }
+
+    public function sectorManagerDetails(): HasOne
+    {
+        return $this->hasOne(SecretariatSectorManager::class);
     }
 
 
