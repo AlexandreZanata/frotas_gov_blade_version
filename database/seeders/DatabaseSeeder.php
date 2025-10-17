@@ -63,6 +63,14 @@ class DatabaseSeeder extends Seeder
             GarbageUsersSeeder::class,
             GarbageNeighborhoodsSeeder::class,
             GarbageTypesSeeder::class,
+            GarbageWeighingSeeder::class,
+            GarbageRunsSeeder::class,
+            GarbageUsersSeeder::class,
+            GarbageWeighbridgeOperatorSeeder::class,
+            GarbageWeighingSeeder::class,
+            GarbageWeighingSignatureSeeder::class,
+            GarbageRunsSeeder::class,
+            GarbageRunDestinationsSeeder::class,
         ]);
     }
 }

@@ -13,11 +13,16 @@ class GarbageUsersSeeder extends Seeder
      */
     public function run(): void
     {
-        $user = User::where('email', 'motorista@frotas.gov')->first(); // Pega um motorista para exemplo
-        if ($user) {
-            GarbageUser::create([
-                'user_id' => $user->id,
-            ]);
+        // Encontra o primeiro usuário que tem a role 'driver'
+        $driver = User::whereHas('role', function ($query) {
+            $query->where('name', 'driver');
+        })->first();
+
+        // Se encontrar um motorista, cria o registro em garbage_users
+        if ($driver) {
+            GarbageUser::updateOrCreate(
+                ['user_id' => $driver->id]
+            );
         }
     }
 }
