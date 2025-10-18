@@ -35,54 +35,9 @@
     </div>
 
     <x-ui.card title="Dados do Abastecimento" subtitle="Preencha as informações do abastecimento realizado">
-        {{--
-          * AÇÃO DO FORMULÁRIO: Aponta para a rota 'logbook.store-fueling' que definimos.
-          * X-DATA: Gerencia todo o estado do formulário.
-        --}}
         <form action="{{ route('logbook.store-fueling', $run) }}" method="POST" enctype="multipart/form-data"
               class="space-y-6"
-              x-data="{
-                {{-- Inicializa 'isManual' com base no 'old' input. Default é 'false' (0). --}}
-                isManual: {{ old('is_manual', 0) == 1 ? 'true' : 'false' }},
-                liters: {{ old('liters', 0) }},
-                {{-- Inicializa 'pricePerLiter'. Se for 'old', usa ele. Senão, 0. --}}
-                pricePerLiter: {{ old('value_per_liter', 0) }},
-
-                {{-- Calcula o valor total dinamicamente --}}
-                get totalValue() {
-                    const L = parseFloat(this.liters) || 0;
-                    const P = parseFloat(this.pricePerLiter) || 0;
-                    return (L * P).toFixed(2);
-                },
-
-                {{-- Função para atualizar o preço quando o posto credenciado é selecionado --}}
-                updatePriceFromSelect(event) {
-                    if (!this.isManual) {
-                        const selectedOption = event.target.options[event.target.selectedIndex];
-                        this.pricePerLiter = parseFloat(selectedOption.getAttribute('data-price')) || 0;
-                    }
-                },
-
-                {{-- Observador para limpar/ajustar o preço ao trocar o tipo de abastecimento --}}
-                watchManualToggle() {
-                    this.$watch('isManual', (isNowManual) => {
-                        if (isNowManual) {
-                            {{-- Se mudou para Manual, reseta o preço (ou mantém o 'old' se existir) --}}
-                            this.pricePerLiter = {{ old('value_per_liter', 0) }};
-                        } else {
-                            {{-- Se mudou para Credenciado, busca o preço do select --}}
-                            const select = this.$refs.gasStationSelect;
-                            if (select.value) {
-                                const selectedOption = select.options[select.selectedIndex];
-                                this.pricePerLiter = parseFloat(selectedOption.getAttribute('data-price')) || 0;
-                            } else {
-                                this.pricePerLiter = 0;
-                            }
-                        }
-                    });
-                }
-            }"
-              x-init="watchManualToggle()" {{-- Inicia o observador --}}
+              x-data="fuelingForm()"
         >
             @csrf
 
@@ -91,16 +46,14 @@
                     <x-input-label value="Tipo de Abastecimento *" />
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                         <label class="cursor-pointer">
-                            {{-- AJUSTE: :value="false" para casar com o x-data booleano --}}
-                            <input type="radio" name="is_manual" value="0" x-model="isManual" :value="false" class="sr-only peer">
+                            <input type="radio" name="is_manual" value="0" x-model="isManual" class="sr-only peer">
                             <div class="p-4 border-2 rounded-lg peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 border-gray-300 dark:border-navy-600 transition">
                                 <p class="font-medium text-gray-900 dark:text-navy-50">Posto Credenciado</p>
                                 <p class="text-xs text-gray-500 dark:text-navy-400 mt-1">Valor calculado automaticamente</p>
                             </div>
                         </label>
                         <label class="cursor-pointer">
-                            {{-- AJUSTE: :value="true" para casar com o x-data booleano --}}
-                            <input type="radio" name="is_manual" value="1" x-model="isManual" :value="true" class="sr-only peer">
+                            <input type="radio" name="is_manual" value="1" x-model="isManual" class="sr-only peer">
                             <div class="p-4 border-2 rounded-lg peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 border-gray-300 dark:border-navy-600 transition">
                                 <p class="font-medium text-gray-900 dark:text-navy-50">Abastecimento Manual</p>
                                 <p class="text-xs text-gray-500 dark:text-navy-400 mt-1">Preenchimento manual dos valores</p>
@@ -109,41 +62,81 @@
                     </div>
                 </div>
 
-                <div x-show="!isManual" x-transition>
-                    <x-input-label for="gas_station_id" value="Posto de Combustível *" />
-                    {{--
-                      * AJUSTE: x-ref para referência no Alpine.
-                      * AJUSTE: @change para disparar a atualização de preço.
-                      * AJUSTE: x-bind:required para validação dinâmica.
-                    --}}
-                    <x-ui.select name="gas_station_id" id="gas_station_id" class="mt-2"
-                                 x-ref="gasStationSelect"
-                                 @change="updatePriceFromSelect($event)"
-                                 x-bind:required="!isManual"
-                    >
-                        <option value="">Selecione o posto...</option>
-                        @foreach($gasStations as $station)
-                            {{-- Assume que o model GasStation tem 'price_per_liter' (conforme controller) --}}
-                            <option value="{{ $station->id }}"
-                                    @selected(old('gas_station_id') == $station->id)
-                                    data-price="{{ $station->price_per_liter ?? 0 }}">
-                                {{ $station->name }} - R$ {{ number_format($station->price_per_liter ?? 0, 2, ',', '.') }}/L
-                            </option>
-                        @endforeach
-                    </x-ui.select>
-                    <x-input-error :messages="$errors->get('gas_station_id')" class="mt-2" />
-                </div>
+                {{-- Campos do Modo Credenciado --}}
+                <template x-if="!isManual">
+                    <div>
+                        <x-input-label for="gas_station_id" value="Posto de Combustível *" />
+                        <x-ui.select name="gas_station_id" id="gas_station_id" class="mt-2"
+                                     x-ref="gasStationSelect"
+                                     @change="updatePriceFromSelect($event)"
+                                     required
+                        >
+                            <option value="">Selecione o posto...</option>
+                            @foreach($gasStations as $station)
+                                @php
+                                    // Buscar preços para todos os tipos de combustível deste posto
+                                    $prices = [];
+                                    foreach($fuelTypes as $fuelType) {
+                                        $price = \App\Models\fuel\FuelPrice::where('gas_station_id', $station->id)
+                                            ->where('fuel_type_id', $fuelType->id)
+                                            ->orderBy('effective_date', 'desc')
+                                            ->first();
+                                        $prices[$fuelType->id] = $price ? $price->price : 0;
+                                    }
+                                @endphp
+                                <option value="{{ $station->id }}"
+                                        @selected(old('gas_station_id') == $station->id)
+                                        @foreach($prices as $fuelTypeId => $price)
+                                            data-price-{{ $fuelTypeId }}="{{ $price }}"
+                                    @endforeach
+                                >
+                                    {{ $station->name }}
+                                    @foreach($prices as $fuelTypeId => $price)
+                                        @if($price > 0)
+                                            - {{ \App\Models\fuel\FuelType::find($fuelTypeId)->name }}: R$ {{ number_format($price, 2, ',', '.') }}/L
+                                        @endif
+                                    @endforeach
+                                </option>
+                            @endforeach
+                        </x-ui.select>
+                        <x-input-error :messages="$errors->get('gas_station_id')" class="mt-2" />
+                    </div>
+                </template>
 
+                {{-- Campo de Tipo de Combustível --}}
                 <div>
                     <x-input-label for="fuel_type_id" value="Tipo de Combustível *" />
-                    <x-ui.select name="fuel_type_id" id="fuel_type_id" class="mt-2" required>
-                        <option value="">Selecione o combustível...</option>
-                        @foreach($fuelTypes as $type)
-                            <option value="{{ $type->id }}" @selected(old('fuel_type_id') == $type->id)>
-                                {{ $type->name }}
-                            </option>
-                        @endforeach
-                    </x-ui.select>
+
+                    {{-- Modo Credenciado: Apenas visualização --}}
+                    <template x-if="!isManual">
+                        <div>
+                            <div class="mt-2 p-3 bg-gray-50 dark:bg-navy-700 rounded-md border border-gray-300 dark:border-navy-600">
+                                <p class="text-gray-900 dark:text-navy-50 font-medium">
+                                    {{ $vehicleFuelType->name }}
+                                </p>
+                                <input type="hidden" name="fuel_type_id" value="{{ $vehicleFuelTypeId }}">
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-navy-400">
+                                Combustível definido pelo veículo
+                            </p>
+                        </div>
+                    </template>
+
+                    {{-- Modo Manual: Select editável --}}
+                    <template x-if="isManual">
+                        <div>
+                            <x-ui.select name="fuel_type_id" id="fuel_type_id" class="mt-2" required>
+                                <option value="">Selecione o combustível...</option>
+                                @foreach($fuelTypes as $type)
+                                    <option value="{{ $type->id }}"
+                                        @selected(old('fuel_type_id', $vehicleFuelTypeId) == $type->id)>
+                                        {{ $type->name }}
+                                    </option>
+                                @endforeach
+                            </x-ui.select>
+                        </div>
+                    </template>
+
                     <x-input-error :messages="$errors->get('fuel_type_id')" class="mt-2" />
                 </div>
 
@@ -154,7 +147,7 @@
                             type="number"
                             name="km"
                             id="km"
-                            value="{{ old('km', $run->start_km) }}"
+                            value="{{ old('km') ?? $run->start_km }}"
                             min="{{ $run->start_km }}"
                             step="1"
                             required
@@ -175,7 +168,7 @@
                             type="number"
                             name="liters"
                             id="liters"
-                            x-model.number="liters" {{-- Liga o input ao 'liters' do x-data --}}
+                            x-model.number="liters"
                             step="0.001"
                             min="0.1"
                             required
@@ -189,51 +182,63 @@
                     <x-input-error :messages="$errors->get('liters')" class="mt-2" />
                 </div>
 
-                <div x-show="isManual" x-transition>
-                    <x-input-label for="value_per_liter" value="Valor por Litro (R$) *" />
-                    <div class="mt-2 relative">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <span class="text-gray-500 dark:text-navy-300">R$</span>
+                {{-- Campos do Modo Manual --}}
+                <template x-if="isManual">
+                    <div>
+                        <x-input-label for="total_value_manual" value="Valor Total (R$) *" />
+                        <div class="mt-2 relative">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <span class="text-gray-500 dark:text-navy-300">R$</span>
+                            </div>
+                            <input
+                                type="number"
+                                name="total_value_manual"
+                                id="total_value_manual"
+                                x-model.number="totalValueManual"
+                                step="0.01"
+                                min="0"
+                                required
+                                class="block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500 pl-12"
+                                placeholder="0.00"
+                            >
+                            <input type="hidden" name="value_per_liter" x-bind:value="calculatedValuePerLiter">
                         </div>
-                        <input
-                            type="number"
-                            name="value_per_liter"
-                            id="value_per_liter"
-                            x-model.number="pricePerLiter" {{-- Liga o input ao 'pricePerLiter' do x-data --}}
-                            step="0.01"
-                            min="0"
-                            x-bind:required="isManual" {{-- AJUSTE: Validação dinâmica --}}
-                            class="block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500 pl-12"
-                            placeholder="0.00"
-                        >
+                        <p class="mt-1 text-sm text-gray-500 dark:text-navy-400" x-show="liters > 0 && totalValueManual > 0">
+                            Valor por litro calculado: R$ <span x-text="calculatedValuePerLiter"></span>/L
+                        </p>
+                        <x-input-error :messages="$errors->get('total_value_manual')" class="mt-2" />
+                        <x-input-error :messages="$errors->get('value_per_liter')" class="mt-2" />
                     </div>
-                    <x-input-error :messages="$errors->get('value_per_liter')" class="mt-2" />
-                </div>
+                </template>
 
-                {{-- Este campo é exigido pelo controller se 'isManual' for true --}}
-                <div x-show="isManual" x-transition>
-                    <x-input-label for="gas_station_name" value="Nome do Posto *" />
-                    <div class="mt-2">
-                        <input
-                            type="text"
-                            name="gas_station_name"
-                            id="gas_station_name"
-                            value="{{ old('gas_station_name') }}"
-                            x-bind:required="isManual" {{-- AJUSTE: Validação dinâmica --}}
-                            class="block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
-                            placeholder="Ex: Posto Shell, Posto Ipiranga..."
-                        >
+                <template x-if="isManual">
+                    <div>
+                        <x-input-label for="gas_station_name" value="Nome do Posto *" />
+                        <div class="mt-2">
+                            <input
+                                type="text"
+                                name="gas_station_name"
+                                id="gas_station_name"
+                                value="{{ old('gas_station_name') }}"
+                                required
+                                class="block w-full rounded-md border-gray-300 dark:border-navy-600 dark:bg-navy-700 dark:text-navy-50 focus:border-primary-500 focus:ring-primary-500"
+                                placeholder="Ex: Posto Shell, Posto Ipiranga..."
+                            >
+                        </div>
+                        <x-input-error :messages="$errors->get('gas_station_name')" class="mt-2" />
                     </div>
-                    <x-input-error :messages="$errors->get('gas_station_name')" class="mt-2" />
-                </div>
+                </template>
 
+                {{-- Valor Total do Abastecimento --}}
                 <div class="p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-medium text-primary-700 dark:text-primary-300">Valor Total do Abastecimento:</span>
                         <span class="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                            {{-- Mostra o valor calculado pelo Alpine --}}
                             R$ <span x-text="totalValue"></span>
                         </span>
+                    </div>
+                    <div x-show="isManual && liters > 0 && totalValueManual > 0" class="mt-2 text-xs text-primary-600 dark:text-primary-400">
+                        (Valor por litro: R$ <span x-text="calculatedValuePerLiter"></span>)
                     </div>
                 </div>
 
@@ -254,36 +259,6 @@
                     <x-input-error :messages="$errors->get('invoice_path')" class="mt-2" />
                 </div>
 
-                <div>
-                    <x-input-label for="signature" value="Assinatura *" />
-                    <div class="mt-2 border-2 border-gray-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-700">
-                        <canvas
-                            id="signature-pad"
-                            class="w-full h-48 cursor-crosshair"
-                            {{-- AJUSTE: Passa a ID correta ('signature_data') para o JS do Alpine --}}
-                            x-data="signaturePad('signature_data')"
-                            x-init="init()"
-                        ></canvas>
-                    </div>
-                    <div class="flex justify-between items-center mt-2">
-                        <p class="text-xs text-gray-500 dark:text-navy-400">
-                            Assine no campo acima para confirmar o abastecimento
-                        </p>
-                        <button
-                            type="button"
-                            @click="clear()" {{-- Chama a função clear do x-data --}}
-                            class="text-sm text-gray-600 dark:text-navy-300 hover:text-gray-900 dark:hover:text-navy-50 underline"
-                        >
-                            Limpar Assinatura
-                        </button>
-                    </div>
-                    {{--
-                      * AJUSTE CRÍTICO:
-                      * O name e id devem ser 'signature_data' para bater com a validação do Controller.
-                    --}}
-                    <input type="hidden" name="signature_data" id="signature_data" required>
-                    <x-input-error :messages="$errors->get('signature_data')" class="mt-2" />
-                </div>
             </div>
 
             <div class="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-navy-700">
@@ -304,93 +279,92 @@
 
     @push('scripts')
         <script>
-            // AJUSTE: A função agora aceita o ID do input hidden como argumento
-            function signaturePad(targetInputId) {
+            function fuelingForm() {
                 return {
-                    canvas: null,
-                    ctx: null,
-                    drawing: false,
-                    targetInput: null,
+                    isManual: {{ old('is_manual', 0) == 1 ? 'true' : 'false' }},
+                    liters: {{ old('liters', 0) }},
+                    totalValueManual: {{ old('total_value_manual', 0) }},
+                    pricePerLiter: {{ old('value_per_liter', 0) }},
 
-                    init() {
-                        this.canvas = this.$el; // O canvas é o próprio elemento com x-data
-                        this.ctx = this.canvas.getContext('2d');
-                        this.targetInput = document.getElementById(targetInputId);
-
-                        // Define o tamanho do canvas
-                        this.canvas.width = this.canvas.offsetWidth;
-                        this.canvas.height = this.canvas.offsetHeight;
-
-                        this.ctx.strokeStyle = '#3b82f6'; // Azul
-                        this.ctx.lineWidth = 2;
-                        this.ctx.lineCap = 'round';
-                        this.ctx.lineJoin = 'round';
-
-                        // Eventos Mouse
-                        this.canvas.addEventListener('mousedown', (e) => this.startDrawing(this.getMousePos(e)));
-                        this.canvas.addEventListener('mousemove', (e) => this.draw(this.getMousePos(e)));
-                        this.canvas.addEventListener('mouseup', () => this.stopDrawing());
-                        this.canvas.addEventListener('mouseleave', () => this.stopDrawing());
-
-                        // Eventos Touch
-                        this.canvas.addEventListener('touchstart', (e) => {
-                            e.preventDefault();
-                            this.startDrawing(this.getTouchPos(e.touches[0]));
-                        });
-                        this.canvas.addEventListener('touchmove', (e) => {
-                            e.preventDefault();
-                            this.draw(this.getTouchPos(e.touches[0]));
-                        });
-                        this.canvas.addEventListener('touchend', () => this.stopDrawing());
-                    },
-
-                    getMousePos(e) {
-                        const rect = this.canvas.getBoundingClientRect();
-                        return {
-                            x: e.clientX - rect.left,
-                            y: e.clientY - rect.top
-                        };
-                    },
-
-                    getTouchPos(touch) {
-                        const rect = this.canvas.getBoundingClientRect();
-                        return {
-                            x: touch.clientX - rect.left,
-                            y: touch.clientY - rect.top
-                        };
-                    },
-
-                    startDrawing(pos) {
-                        this.drawing = true;
-                        this.ctx.beginPath();
-                        this.ctx.moveTo(pos.x, pos.y);
-                    },
-
-                    draw(pos) {
-                        if (!this.drawing) return;
-                        this.ctx.lineTo(pos.x, pos.y);
-                        this.ctx.stroke();
-                    },
-
-                    stopDrawing() {
-                        if (this.drawing) {
-                            this.drawing = false;
-                            // AJUSTE: Atualiza o input hidden correto
-                            this.targetInput.value = this.canvas.toDataURL();
+                    // Calcula o valor total baseado no modo
+                    get totalValue() {
+                        if (this.isManual) {
+                            return parseFloat(this.totalValueManual) || 0;
+                        } else {
+                            const L = parseFloat(this.liters) || 0;
+                            const P = parseFloat(this.pricePerLiter) || 0;
+                            return (L * P).toFixed(2);
                         }
                     },
 
-                    clear() {
-                        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                        // AJUSTE: Limpa o input hidden correto
-                        this.targetInput.value = '';
+                    // Calcula o valor por litro no modo manual
+                    get calculatedValuePerLiter() {
+                        if (this.isManual) {
+                            const L = parseFloat(this.liters) || 0;
+                            const total = parseFloat(this.totalValueManual) || 0;
+                            return L > 0 ? (total / L).toFixed(2) : 0;
+                        }
+                        return this.pricePerLiter;
+                    },
+
+                    updatePriceFromSelect(event) {
+                        if (!this.isManual) {
+                            const selectedOption = event.target.options[event.target.selectedIndex];
+                            const selectedFuelType = '{{ $vehicleFuelTypeId }}';
+
+                            if (selectedOption.value && selectedFuelType) {
+                                const price = selectedOption.getAttribute('data-price-' + selectedFuelType);
+                                this.pricePerLiter = parseFloat(price) || 0;
+                            } else {
+                                this.pricePerLiter = 0;
+                            }
+                        }
+                    },
+
+                    updateFuelTypePrice() {
+                        if (!this.isManual) {
+                            const gasStationSelect = document.getElementById('gas_station_id');
+                            const selectedFuelType = '{{ $vehicleFuelTypeId }}';
+
+                            if (gasStationSelect && gasStationSelect.value && selectedFuelType) {
+                                const selectedOption = gasStationSelect.options[gasStationSelect.selectedIndex];
+                                const price = selectedOption.getAttribute('data-price-' + selectedFuelType);
+                                this.pricePerLiter = parseFloat(price) || 0;
+                            } else {
+                                this.pricePerLiter = 0;
+                            }
+                        }
+                    },
+
+                    init() {
+                        // Inicializa o preço no carregamento
+                        this.$nextTick(() => {
+                            this.updateFuelTypePrice();
+                        });
+
+                        // Observa mudanças no modo para recalcular
+                        this.$watch('isManual', (value) => {
+                            if (!value) {
+                                // Quando volta para posto credenciado, recalcula o preço
+                                this.$nextTick(() => {
+                                    this.updateFuelTypePrice();
+                                });
+                            }
+                        });
                     }
                 }
             }
 
-            // O script antigo de 'DOMContentLoaded' foi removido
-            // pois sua lógica agora está dentro do 'x-data' do Alpine.js,
-            // que é a maneira correta de gerenciar o estado.
+            // Selecionar automaticamente o posto se houver apenas um
+            document.addEventListener('DOMContentLoaded', function() {
+                const gasStationSelect = document.getElementById('gas_station_id');
+                if (gasStationSelect && gasStationSelect.options.length === 2) {
+                    gasStationSelect.selectedIndex = 1;
+                    // Dispara o evento de change para atualizar o preço
+                    const event = new Event('change');
+                    gasStationSelect.dispatchEvent(event);
+                }
+            });
         </script>
     @endpush
 </x-app-layout>

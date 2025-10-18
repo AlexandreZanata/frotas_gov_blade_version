@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\fuel\Fueling;
 use App\Models\fuel\FuelType;
 use App\Models\fuel\GasStation;
+use App\Models\fuel\FuelPrice;
+use App\Models\fuel\GasStationCurrent;
 use App\Models\run\Run;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,16 +27,21 @@ class FuelingRecordController extends Controller
      */
     public function create(Run $run)
     {
-        // Verifica se o veículo pertence à corrida correta (segurança)
-        // (Adicionar lógica de autorização/política se necessário)
+        // Obter postos ativos (da tabela gas_stations_current)
+        $currentGasStations = GasStationCurrent::where('is_active', 1)->with('gasStation')->get();
 
-        $gasStations = GasStation::where('status', 'active')->orderBy('name')->get();
+        $gasStations = $currentGasStations->map(function ($currentStation) {
+            return $currentStation->gasStation;
+        });
+
         $fuelTypes = FuelType::orderBy('name')->get();
 
-        // Passa a corrida, postos e tipos de combustível para a view
-        return view('logbook.fueling', compact('run', 'gasStations', 'fuelTypes'));
-        // Nota: A view 'fueling.blade.php' precisa existir em resources/views/
-        // O nome do arquivo que você passou foi fueling.blade.php, então o nome da view é 'fueling'.
+        // Obter o tipo de combustível do veículo
+        $vehicleFuelTypeId = $run->vehicle->fuel_type_id;
+        $vehicleFuelType = FuelType::find($vehicleFuelTypeId);
+
+        // Passa a corrida, postos, tipos de combustível e tipo do veículo para a view
+        return view('logbook.fueling', compact('run', 'gasStations', 'fuelTypes', 'vehicleFuelTypeId', 'vehicleFuelType'));
     }
 
     /**
@@ -64,21 +71,24 @@ class FuelingRecordController extends Controller
             'fuel_type_id' => ['required', 'uuid', 'exists:fuel_types,id'],
             'km' => ['required', 'integer', 'min:' . $run->start_km], // KM deve ser >= KM inicial da corrida
             'liters' => ['required', 'numeric', 'gt:0', 'regex:/^\d+(\.\d{1,3})?$/'], // Maior que zero, até 3 casas decimais
-            'value_per_liter' => [
+            'total_value_manual' => [ // Novo campo para valor total no modo manual
                 Rule::requiredIf($request->boolean('is_manual')),
                 'nullable',
                 'numeric',
-                'gte:0', // Maior ou igual a zero
-                'regex:/^\d+(\.\d{1,2})?$/' // Até 2 casas decimais
+                'gte:0',
+                'regex:/^\d+(\.\d{1,2})?$/'
+            ],
+            'value_per_liter' => [ // Agora é calculado automaticamente
+                'nullable',
+                'numeric',
+                'gte:0'
             ],
             'invoice_path' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'], // Max 5MB
-            'signature_data' => ['required', 'string'], // Espera a assinatura como Data URL (string base64)
         ], [
-            // Mensagens de erro personalizadas (opcional)
+            // Mensagens de erro personalizadas
             'km.min' => 'O KM do abastecimento não pode ser menor que o KM inicial da corrida.',
             'liters.regex' => 'A quantidade de litros deve ter no máximo 3 casas decimais.',
-            'value_per_liter.regex' => 'O valor por litro deve ter no máximo 2 casas decimais.',
-            'signature_data.required' => 'A assinatura é obrigatória.',
+            'total_value_manual.regex' => 'O valor total deve ter no máximo 2 casas decimais.',
         ]);
 
         try {
@@ -86,63 +96,39 @@ class FuelingRecordController extends Controller
 
             $isManual = $request->boolean('is_manual');
             $valuePerLiter = null;
+            $totalValue = null;
             $gasStationId = null;
-            $gasStationName = null; // Para guardar o nome manual
+            $gasStationName = null;
 
             if ($isManual) {
-                $valuePerLiter = $validatedData['value_per_liter'];
+                // Modo Manual: Usuário informa o valor total
+                $totalValue = $validatedData['total_value_manual'];
+                $valuePerLiter = $validatedData['value_per_liter']; // Calculado automaticamente na view
                 $gasStationName = $validatedData['gas_station_name'];
-                // Em modo manual, não temos um gas_station_id, mas podemos querer
-                // criar um registro genérico ou associar a um "posto manual" se existir.
-                // Por agora, deixaremos gas_station_id como null.
-                // Poderíamos também salvar o nome manual em um campo diferente na tabela fuelings,
-                // mas a estrutura atual não tem isso. Usaremos gas_station_id = null.
             } else {
+                // Modo Credenciado: Sistema calcula o valor total
                 $gasStation = GasStation::find($validatedData['gas_station_id']);
                 if (!$gasStation) {
                     throw new \Exception("Posto credenciado não encontrado.");
                 }
-                // Busca o preço por litro do posto credenciado (PRECISA ADICIONAR ESSA LÓGICA NO MODEL/BD)
-                // $valuePerLiter = $gasStation->price_per_liter; // Supondo que existe essa propriedade/relação
-                // Temporário - Se não tiver o preço no cadastro do posto, lança erro ou define um padrão
-                if (!isset($gasStation->price_per_liter)) {
-                    Log::warning("Preço por litro não definido para o posto credenciado ID: {$gasStation->id}");
-                    // Poderia lançar uma exceção ou usar um valor padrão/null se a regra permitir
-                    // throw new \Exception("Preço por litro não configurado para o posto selecionado.");
-                    $valuePerLiter = 0; // Ou null, dependendo da regra de negócio e BD
+
+                // Busca o preço por litro do posto credenciado da tabela fuel_prices
+                $fuelPrice = FuelPrice::where('gas_station_id', $gasStation->id)
+                    ->where('fuel_type_id', $validatedData['fuel_type_id'])
+                    ->orderBy('effective_date', 'desc')
+                    ->first();
+
+                if (!$fuelPrice) {
+                    Log::warning("Preço não encontrado para o posto ID: {$gasStation->id} e combustível ID: {$validatedData['fuel_type_id']}");
+                    $valuePerLiter = 0;
                 } else {
-                    $valuePerLiter = $gasStation->price_per_liter;
+                    $valuePerLiter = $fuelPrice->price;
                 }
+
+                // Calcula o valor total
+                $totalValue = $validatedData['liters'] * $valuePerLiter;
                 $gasStationId = $gasStation->id;
             }
-
-            // Calcula o valor total
-            $totalValue = $validatedData['liters'] * $valuePerLiter;
-
-            // --- Tratamento da Assinatura ---
-            // 1. Decodificar Base64 e Salvar Imagem
-            $signatureImage = $this->saveSignature($validatedData['signature_data']);
-            if (!$signatureImage) {
-                throw new \Exception("Falha ao salvar a imagem da assinatura.");
-            }
-            $signaturePath = $signatureImage['path']; // Caminho relativo no storage
-
-            // 2. Salvar na tabela fuelings_signatures (NECESSITA MODEL e MIGRATION)
-            // Assumindo que a tabela fuelings_signatures tem 'id', 'path', 'user_id', 'created_at', etc.
-            /*
-            $signatureRecord = FuelingSignature::create([
-                'user_id' => Auth::id(),
-                'path' => $signaturePath,
-                // outros campos se houver...
-            ]);
-            $signatureId = $signatureRecord->id;
-            */
-            // **Placeholder:** Como não temos a tabela/model `FuelingSignature`, vamos simular o ID ou lançar erro.
-            // Para continuar, usaremos NULL, mas isso PRECISA SER IMPLEMENTADO CORRETAMENTE.
-            $signatureId = null;
-            Log::warning("Tabela/Model FuelingSignature não implementado. signature_id será null.");
-            // throw new \Exception("Lógica de salvamento da assinatura (tabela fuelings_signatures) não implementada.");
-
 
             // --- Tratamento da Nota Fiscal ---
             $invoicePath = null;
@@ -162,16 +148,15 @@ class FuelingRecordController extends Controller
                 'run_id' => $run->id,
                 'fuel_type_id' => $validatedData['fuel_type_id'],
                 'gas_station_id' => $gasStationId, // Será null se for manual
-                // Se precisar salvar o nome manual, adicione um campo na tabela ou use gas_station_id de forma especial
-                'fueled_at' => now(), // Ou pegar de um campo de data/hora do formulário se existir
+                'fueled_at' => now(),
                 'km' => $validatedData['km'],
                 'liters' => $validatedData['liters'],
-                'value_per_liter' => $valuePerLiter, // Pode ser null se for credenciado e o BD permitir
-                'value' => $totalValue, // Valor total calculado
+                'value_per_liter' => $valuePerLiter,
+                'value' => $totalValue,
                 'invoice_path' => $invoicePath,
-                'public_code' => $this->generatePublicCode(), // Gerar código único
-                'signature_id' => $signatureId, // ID da assinatura salva na tabela fuelings_signatures
-                'viewed_by' => null, // Inicialmente null
+                'public_code' => $this->generatePublicCode(),
+                'signature_id' => null,
+                'viewed_by' => null,
             ]);
 
             DB::commit();
@@ -188,13 +173,9 @@ class FuelingRecordController extends Controller
             ]);
 
             // Tenta limpar arquivos salvos se a transação falhou
-            if (isset($signaturePath) && Storage::exists('public/' . $signaturePath)) {
-                Storage::delete('public/' . $signaturePath);
-            }
             if (isset($invoicePath) && Storage::exists('public/' . $invoicePath)) {
                 Storage::delete('public/' . $invoicePath);
             }
-
 
             // Redireciona de volta com erro
             return back()->withInput()->with('error', 'Erro ao registrar abastecimento: ' . $e->getMessage());
@@ -202,51 +183,7 @@ class FuelingRecordController extends Controller
     }
 
     /**
-     * Salva a imagem da assinatura (decodifica base64 e armazena).
-     *
-     * @param string $base64Data Data URL da assinatura (e.g., "data:image/png;base64,...").
-     * @return array|false Retorna ['path' => caminho_relativo] ou false em caso de erro.
-     */
-    private function saveSignature(string $base64Data)
-    {
-        // Verifica se é um Data URL válido
-        if (!preg_match('/^data:image\/(\w+);base64,/', $base64Data, $type)) {
-            Log::error("Formato inválido para Data URL da assinatura.");
-            return false;
-        }
-
-        // Extrai os dados da imagem (remove o prefixo 'data:image/png;base64,')
-        $imageData = base64_decode(substr($base64Data, strpos($base64Data, ',') + 1));
-        $type = strtolower($type[1]); // png, jpg, etc.
-
-        if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
-            Log::error("Tipo de imagem inválido para assinatura: " . $type);
-            return false;
-        }
-
-        if ($imageData === false) {
-            Log::error("Falha ao decodificar base64 da assinatura.");
-            return false;
-        }
-
-        // Gera um nome de arquivo único
-        $filename = 'signature_' . time() . '_' . Str::uuid() . '.' . $type;
-        $relativePath = 'signatures/fueling/' . $filename; // Caminho dentro de storage/app/public/
-
-        try {
-            // Salva o arquivo
-            Storage::disk('public')->put($relativePath, $imageData);
-            return ['path' => $relativePath]; // Retorna o caminho relativo para salvar no BD
-        } catch (\Exception $e) {
-            Log::error("Erro ao salvar arquivo de assinatura: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
      * Gera um código público único para o abastecimento.
-     * (Esta é uma implementação simples, pode precisar de ajustes
-     * para garantir unicidade em alta concorrência).
      *
      * @return string
      */
@@ -255,10 +192,8 @@ class FuelingRecordController extends Controller
         do {
             // Exemplo: ABS-YYYYMMDD-XXXXXX (6 caracteres aleatórios)
             $code = 'ABS-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
-        } while (Fueling::where('public_code', $code)->exists()); // Verifica se já existe
+        } while (Fueling::where('public_code', $code)->exists());
 
         return $code;
     }
-
 }
-
