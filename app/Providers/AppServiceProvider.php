@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Models\garbage\GarbageMaintenanceTareVehicle;
 use App\Observers\GarbageMaintenanceTareVehicleObserver;
 use Illuminate\Support\ServiceProvider;
+use App\Models\fuel\Fueling;
+use App\Observers\FuelingObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -14,8 +16,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Adicione esta linha dentro do método boot()
         GarbageMaintenanceTareVehicle::observe(GarbageMaintenanceTareVehicleObserver::class);
+        Fueling::observe(FuelingObserver::class);
     }
     /**
      * Register any application services.

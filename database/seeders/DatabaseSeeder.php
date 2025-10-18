@@ -65,6 +65,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             SecretariatSeeder::class,
             UserSeeder::class,
+            GarbageManagerSeeder::class,
+            GarbageUsersSeeder::class,
             FuelTypeSeeder::class,
             VehicleCategorySeeder::class,
             VehicleStatusSeeder::class,
@@ -121,6 +123,10 @@ class DatabaseSeeder extends Seeder
             GarbageWeighingSignatureSeeder::class,
             GarbageRunsSeeder::class,
             GarbageRunDestinationsSeeder::class,
+            FuelingVehicleExpenseSeeder::class,
+            DigitalSignatureSeeder::class,
+            FuelingSeeder::class,
+            FuelingSignatureSeeder::class,
         ]);
     }
 }

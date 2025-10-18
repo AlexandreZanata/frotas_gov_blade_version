@@ -1,10 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-ui.page-header title="Editar Posto" subtitle="Atualizar dados do posto" hide-title-mobile icon="fuel" />
+        <x-ui.page-header title="Editar Posto" subtitle="Atualizar dados do posto" hide-title-mobile icon="fuel"/>
     </x-slot>
 
     <x-ui.card>
-        <form action="{{ route('gas-stations.update', $gasStation) }}" method="POST" class="space-y-6" id="gasStationForm">
+        <form action="{{ route('gas-stations.update', $gasStation) }}" method="POST" class="space-y-6"
+              id="gasStationForm">
             @csrf
             @method('PUT')
 
@@ -48,7 +49,7 @@
                     <input type="text"
                            name="cnpj"
                            id="cnpj"
-                           value="{{ old('cnpj', $gasStation->cnpj ? \App\Http\Controllers\GasStationController::formatCnpj($gasStation->cnpj) : '') }}"
+                           value="{{ old('cnpj', $gasStation->cnpj ? \App\Http\Controllers\fuel\GasStationController::formatCnpj($gasStation->cnpj) : '') }}"
                            placeholder="00.000.000/0000-00"
                            maxlength="18"
                            class="w-full rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
@@ -68,8 +69,13 @@
                             id="status"
                             required
                             class="w-full rounded-lg border-gray-300 dark:border-navy-600 dark:bg-navy-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
-                        <option value="active" {{ old('status', $gasStation->status) === 'active' ? 'selected' : '' }}>Ativo</option>
-                        <option value="inactive" {{ old('status', $gasStation->status) === 'inactive' ? 'selected' : '' }}>Inativo</option>
+                        <option value="active" {{ old('status', $gasStation->status) === 'active' ? 'selected' : '' }}>
+                            Ativo
+                        </option>
+                        <option
+                            value="inactive" {{ old('status', $gasStation->status) === 'inactive' ? 'selected' : '' }}>
+                            Inativo
+                        </option>
                     </select>
                     @error('status')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -93,7 +99,7 @@
 
     @push('scripts')
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 const cnpjInput = document.getElementById('cnpj');
                 const cnpjFeedback = document.getElementById('cnpjFeedback');
 
@@ -164,7 +170,7 @@
                 }
 
                 if (cnpjInput) {
-                    cnpjInput.addEventListener('input', function(e) {
+                    cnpjInput.addEventListener('input', function (e) {
                         const currentValue = e.target.value;
                         const numbersOnly = currentValue.replace(/\D/g, '');
 
@@ -185,7 +191,7 @@
                     });
 
                     // Formata ao perder o foco, se tiver 14 números
-                    cnpjInput.addEventListener('blur', function(e) {
+                    cnpjInput.addEventListener('blur', function (e) {
                         const numbersOnly = e.target.value.replace(/\D/g, '');
                         if (numbersOnly.length === 14) {
                             e.target.value = formatCNPJ(e.target.value);
@@ -193,7 +199,7 @@
                     });
 
                     // Remove formatação ao ganhar foco para facilitar edição
-                    cnpjInput.addEventListener('focus', function(e) {
+                    cnpjInput.addEventListener('focus', function (e) {
                         const numbersOnly = e.target.value.replace(/\D/g, '');
                         if (numbersOnly.length === 14) {
                             e.target.value = numbersOnly;
@@ -212,7 +218,9 @@
                             cnpjInput.setAttribute('data-initial-formatted', cnpjInput.value);
                         }
                     }
-                });
+                }
+            )
+                ;
         </script>
     @endpush
 </x-app-layout>
