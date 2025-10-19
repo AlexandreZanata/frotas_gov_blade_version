@@ -27,8 +27,13 @@ class FuelingRecordController extends Controller
      */
     public function create(Run $run)
     {
-        // Obter postos ativos (da tabela gas_stations_current)
-        $currentGasStations = GasStationCurrent::where('is_active', 1)->with('gasStation')->get();
+        // Obter postos ativos (da tabela gas_stations_current), excluindo o posto manual
+        $currentGasStations = GasStationCurrent::where('is_active', 1)
+            ->with('gasStation')
+            ->whereHas('gasStation', function($query) {
+                $query->where('name', '!=', 'Abastecimento Manual');
+            })
+            ->get();
 
         $gasStations = $currentGasStations->map(function ($currentStation) {
             return $currentStation->gasStation;
@@ -40,8 +45,11 @@ class FuelingRecordController extends Controller
         $vehicleFuelTypeId = $run->vehicle->fuel_type_id;
         $vehicleFuelType = FuelType::find($vehicleFuelTypeId);
 
+        // Obter o posto manual para usar no modo manual
+        $manualGasStation = GasStation::where('name', 'Abastecimento Manual')->first();
+
         // Passa a corrida, postos, tipos de combustível e tipo do veículo para a view
-        return view('logbook.fueling', compact('run', 'gasStations', 'fuelTypes', 'vehicleFuelTypeId', 'vehicleFuelType'));
+        return view('logbook.fueling', compact('run', 'gasStations', 'fuelTypes', 'vehicleFuelTypeId', 'vehicleFuelType', 'manualGasStation'));
     }
 
     /**
@@ -62,30 +70,29 @@ class FuelingRecordController extends Controller
                 'uuid',
                 'exists:gas_stations,id'
             ],
-            'gas_station_name' => [ // Campo para nome manual do posto
+            'gas_station_name' => [
                 Rule::requiredIf($request->boolean('is_manual')),
                 'nullable',
                 'string',
                 'max:255'
             ],
             'fuel_type_id' => ['required', 'uuid', 'exists:fuel_types,id'],
-            'km' => ['required', 'integer', 'min:' . $run->start_km], // KM deve ser >= KM inicial da corrida
-            'liters' => ['required', 'numeric', 'gt:0', 'regex:/^\d+(\.\d{1,3})?$/'], // Maior que zero, até 3 casas decimais
-            'total_value_manual' => [ // Novo campo para valor total no modo manual
+            'km' => ['required', 'integer', 'min:' . $run->start_km],
+            'liters' => ['required', 'numeric', 'gt:0', 'regex:/^\d+(\.\d{1,3})?$/'],
+            'total_value_manual' => [
                 Rule::requiredIf($request->boolean('is_manual')),
                 'nullable',
                 'numeric',
                 'gte:0',
                 'regex:/^\d+(\.\d{1,2})?$/'
             ],
-            'value_per_liter' => [ // Agora é calculado automaticamente
+            'value_per_liter' => [
                 'nullable',
                 'numeric',
                 'gte:0'
             ],
-            'invoice_path' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'], // Max 5MB
+            'invoice_path' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ], [
-            // Mensagens de erro personalizadas
             'km.min' => 'O KM do abastecimento não pode ser menor que o KM inicial da corrida.',
             'liters.regex' => 'A quantidade de litros deve ter no máximo 3 casas decimais.',
             'total_value_manual.regex' => 'O valor total deve ter no máximo 2 casas decimais.',
@@ -103,8 +110,15 @@ class FuelingRecordController extends Controller
             if ($isManual) {
                 // Modo Manual: Usuário informa o valor total
                 $totalValue = $validatedData['total_value_manual'];
-                $valuePerLiter = $validatedData['value_per_liter']; // Calculado automaticamente na view
+                $valuePerLiter = $validatedData['value_per_liter'];
                 $gasStationName = $validatedData['gas_station_name'];
+
+                // Usar o posto manual fixo
+                $manualGasStation = GasStation::where('name', 'Abastecimento Manual')->first();
+                if (!$manualGasStation) {
+                    throw new \Exception("Posto manual não configurado no sistema.");
+                }
+                $gasStationId = $manualGasStation->id;
             } else {
                 // Modo Credenciado: Sistema calcula o valor total
                 $gasStation = GasStation::find($validatedData['gas_station_id']);
@@ -112,7 +126,7 @@ class FuelingRecordController extends Controller
                     throw new \Exception("Posto credenciado não encontrado.");
                 }
 
-                // Busca o preço por litro do posto credenciado da tabela fuel_prices
+                // Busca o preço por litro do posto credenciado
                 $fuelPrice = FuelPrice::where('gas_station_id', $gasStation->id)
                     ->where('fuel_type_id', $validatedData['fuel_type_id'])
                     ->orderBy('effective_date', 'desc')
@@ -128,16 +142,14 @@ class FuelingRecordController extends Controller
                 // Calcula o valor total
                 $totalValue = $validatedData['liters'] * $valuePerLiter;
                 $gasStationId = $gasStation->id;
+                $gasStationName = null; // No modo credenciado, não usamos nome manual
             }
 
             // --- Tratamento da Nota Fiscal ---
             $invoicePath = null;
             if ($request->hasFile('invoice_path')) {
-                // Define um nome único para o arquivo
                 $fileName = 'invoice_' . time() . '_' . Str::uuid() . '.' . $request->file('invoice_path')->getClientOriginalExtension();
-                // Salva no storage (ex: 'storage/app/public/invoices/fueling')
                 $invoicePath = $request->file('invoice_path')->storeAs('public/invoices/fueling', $fileName);
-                // Remove o 'public/' para salvar no banco o caminho acessível via URL
                 $invoicePath = Str::replaceFirst('public/', '', $invoicePath);
             }
 
@@ -147,7 +159,8 @@ class FuelingRecordController extends Controller
                 'vehicle_id' => $run->vehicle_id,
                 'run_id' => $run->id,
                 'fuel_type_id' => $validatedData['fuel_type_id'],
-                'gas_station_id' => $gasStationId, // Será null se for manual
+                'gas_station_id' => $gasStationId, // Sempre preenchido (manual ou credenciado)
+                'gas_station_name' => $gasStationName, // No manual: nome digitado; no credenciado: null
                 'fueled_at' => now(),
                 'km' => $validatedData['km'],
                 'liters' => $validatedData['liters'],
@@ -161,7 +174,6 @@ class FuelingRecordController extends Controller
 
             DB::commit();
 
-            // Redireciona de volta para a tela de finalizar corrida com mensagem de sucesso
             return redirect()->route('logbook.finish', $run)->with('success', 'Abastecimento registrado com sucesso!');
 
         } catch (\Exception $e) {
@@ -172,12 +184,10 @@ class FuelingRecordController extends Controller
                 'exception' => $e
             ]);
 
-            // Tenta limpar arquivos salvos se a transação falhou
             if (isset($invoicePath) && Storage::exists('public/' . $invoicePath)) {
                 Storage::delete('public/' . $invoicePath);
             }
 
-            // Redireciona de volta com erro
             return back()->withInput()->with('error', 'Erro ao registrar abastecimento: ' . $e->getMessage());
         }
     }
@@ -190,7 +200,6 @@ class FuelingRecordController extends Controller
     private function generatePublicCode(): string
     {
         do {
-            // Exemplo: ABS-YYYYMMDD-XXXXXX (6 caracteres aleatórios)
             $code = 'ABS-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
         } while (Fueling::where('public_code', $code)->exists());
 

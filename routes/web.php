@@ -14,6 +14,7 @@ use App\Http\Controllers\vehicle\PrefixController;
 use App\Http\Controllers\vehicle\VehicleCategoryController;
 use App\Http\Controllers\vehicle\VehicleController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\fuel\FuelingExpenseController;
 
 
 Route::get('/', function () {
@@ -263,6 +264,40 @@ Route::middleware('auth')->group(function () {
         Route::get('/{run}', [\App\Http\Controllers\runs\RunController::class, 'show'])->name('show');
     });
 
+// --- GRUPO DE GESTÃO DE DESPESAS ---
+// Este grupo só permite acesso a 'general_manager' OU 'sector_manager'
+// Se o usuário for 'driver', por exemplo, ele será barrado (403 Forbidden).
+    Route::middleware(['role:general_manager,sector_manager'])
+        ->prefix('fueling-expenses') // Adiciona /fueling-expenses/ na frente de todas as rotas do grupo
+        ->name('fueling_expenses.') // Adiciona fueling_expenses. no nome de todas as rotas
+        ->group(function () {
+
+            // Rota principal: /fueling-expenses
+            // O Controller vai decidir se mostra TUDO ou SÓ DA SECRETARIA
+            Route::get('/', [FuelingExpenseController::class, 'index'])
+                ->name('index'); // Nome: fueling_expenses.index
+
+            // Rota para ver o detalhe de um abastecimento (aciona o log de visualização)
+            // Ex: /fueling-expenses/detail/uuid-do-abastecimento
+            Route::get('/detail/{fuelingId}', [FuelingExpenseController::class, 'showFuelingDetail'])
+                ->name('fueling_detail'); // Nome: fueling_expenses.fueling_detail
+
+            // Rotas opcionais para drill-down (se necessário)
+            Route::get('/vehicle/{vehicleId}', [FuelingExpenseController::class, 'showVehicleFuelings'])
+                ->name('vehicle_details'); // Nome: fueling_expenses.vehicle_details
+
+            Route::get('/station/{gasStationId}', [FuelingExpenseController::class, 'showGasStationFuelings'])
+                ->name('station_details'); // Nome: fueling_expenses.station_details
+
+            Route::get('/forecast', [FuelingExpenseController::class, 'getExpenseForecast'])
+                ->name('forecast');
+
+            Route::post('/sign/{fuelingId}', [FuelingExpenseController::class, 'signFueling'])
+                ->name('sign');
+
+            Route::post('/sign/{fuelingId}', [FuelingExpenseController::class, 'signFueling'])->name('sign');
+        });
+
     Route::get('/api/vehicle-categories', [VehicleCategoryController::class, 'apiIndex'])->name('api.vehicle-categories.search');
     Route::get('/api/vehicles', [VehicleController::class, 'apiSearch'])->name('api.vehicles.search');
     Route::get('/api/users', [UserController::class, 'search'])->name('api.users.search');
@@ -344,6 +379,8 @@ Route::middleware('auth')->group(function () {
         // Atualizar condição
         Route::post('/{tire}/update-condition', [\App\Http\Controllers\maintenance\TireController::class, 'updateCondition'])->name('update-condition');
     });
+
+
 
     // API para pneus
     Route::get('/api/tires/{tire}', function($id) {

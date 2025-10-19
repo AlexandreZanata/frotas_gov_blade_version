@@ -3,8 +3,7 @@
 @php($logbookGroupActive = request()->routeIs('logbook.*') || request()->routeIs('logbook-permissions.*') || request()->routeIs('logbook-rules.*'))
 @php($checklistGroupActive = request()->routeIs('checklists.*') || request()->routeIs('defect-reports.*'))
 @php($maintenanceGroupActive = request()->routeIs('oil-changes.*') || request()->routeIs('tires.*'))
-@php($fuelGroupActive = request()->routeIs('fuel-quotations.*', 'gas-stations.*', 'scheduled_gas_stations.*', 'gas_stations_current.*', 'scheduled_prices.*', 'fuel_prices.*'))
-@php($reportsGroupActive = request()->routeIs('backup-reports.*') || request()->routeIs('pdf-templates.*'))
+@php($fuelGroupActive = request()->routeIs('fuel-quotations.*', 'gas-stations.*', 'scheduled_gas_stations.*', 'gas_stations_current.*', 'scheduled_prices.*', 'fuel_prices.*', 'fueling_expenses.*'))@php($reportsGroupActive = request()->routeIs('backup-reports.*') || request()->routeIs('pdf-templates.*'))
 @php($usersGroupActive = request()->routeIs('users.*') || request()->routeIs('default-passwords.*'))
 @php($auditGroupActive = request()->routeIs('audit-logs.*'))
 @php($finesGroupActive = request()->routeIs('fines.*'))
@@ -684,6 +683,15 @@
                 {{ request()->routeIs('fuel-quotations.settings') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
                             <x-icon name="settings" class="w-3.5 h-3.5"/>
                             <span>Configurações</span>
+                        </a>
+                    </li>
+                @endif
+                @if(auth()->user()->hasRole('general_manager') || auth()->user()->hasRole('sector_manager'))
+                    <li>
+                        <a href="{{ route('fueling_expenses.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
+                {{ request()->routeIs('fueling_expenses.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
+                            <x-icon name="chart-bar" class="w-3.5 h-3.5"/>
+                            <span>Despesas</span>
                         </a>
                     </li>
                 @endif

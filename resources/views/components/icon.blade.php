@@ -130,11 +130,22 @@
         </svg>
         @break
     @case('fuel')
-        <svg {{ $attributes->merge(['class'=>$classes]) }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-2-2M8 21H6a2 2 0 01-2-2V7a2 2 0 012-2h2m4 0h2a2 2 0 012 2v10m0 0a2 2 0 002 2h2"/>
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 11h4m-4 4h4"/>
+        <!-- Ícone de combustível aprimorado (bomba de gasolina detalhada) -->
+        <svg {{ $attributes->merge(['class' => 'fuel '.$classes]) }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <!-- Corpo da bomba -->
+            <rect x="5" y="4" width="9" height="16" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Tela/visor -->
+            <rect x="7" y="6" width="5" height="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Linhas do painel -->
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7 12h5M7 15h5"/>
+            <!-- Base -->
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 20h12"/>
+            <!-- Mangueira e bico -->
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14 7h2a2 2 0 012 2v6a2 2 0 002 2h1"/>
+            <circle cx="20" cy="17" r="1"/>
         </svg>
         @break
+
     @case('play-circle')
         <svg {{ $attributes->merge(['class'=>$classes]) }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>

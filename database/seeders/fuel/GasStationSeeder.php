@@ -4,6 +4,7 @@ namespace Database\Seeders\fuel;
 
 use App\Models\fuel\GasStation;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class GasStationSeeder extends Seeder
 {
@@ -13,6 +14,15 @@ class GasStationSeeder extends Seeder
     public function run(): void
     {
         $stations = [
+            [
+                'id' => '0199f999-9999-9999-9999-999999999999', // ID fixo para abastecimento manual
+                'name' => 'Abastecimento Manual',
+                'address' => 'N/A',
+                'cnpj' => '00.000.000/0000-00',
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
             [
                 'name' => 'Posto Central',
                 'address' => 'Av. Brasil, 123, Centro',
@@ -29,12 +39,15 @@ class GasStationSeeder extends Seeder
                 'name' => 'Posto Ipiranga - Bairro Norte',
                 'address' => 'Rua das Flores, 456',
                 'cnpj' => '33.333.333/0001-33',
-                'status' => 'inactive', // Exemplo de um posto inativo
+                'status' => 'inactive',
             ],
         ];
 
         foreach ($stations as $station) {
-            GasStation::create($station);
+            GasStation::updateOrCreate(
+                ['id' => $station['id'] ?? Str::uuid()],
+                $station
+            );
         }
     }
 }

@@ -358,11 +358,11 @@ class RunController extends Controller
                     $gasStation = GasStation::findOrFail($request->input('gas_station_id'));
                     $fuelingData['gas_station_id'] = $gasStation->id;
                     $fuelingData['value_per_liter'] = $gasStation->price_per_liter;
-                    $fuelingData['total_value'] = $request->input('liters') * $gasStation->price_per_liter;
+                    $fuelingData['value'] = $request->input('liters') * $gasStation->price_per_liter;
                     $fuelingData['is_manual'] = false;
                 } else {
                     $fuelingData['gas_station_name'] = $request->input('gas_station_name');
-                    $fuelingData['total_value'] = $request->input('total_value');
+                    $fuelingData['value'] = $request->input('total_value');
                     $fuelingData['value_per_liter'] = $request->input('total_value') / $request->input('liters');
                     $fuelingData['is_manual'] = true;
                 }

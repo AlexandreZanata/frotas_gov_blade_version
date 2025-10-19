@@ -170,7 +170,7 @@
                         </div>
                         <div class="text-right">
                             <p class="font-semibold text-gray-900 dark:text-navy-50">
-                                R$ {{ number_format($fueling->total_value, 2, ',', '.') }}
+                                R$ {{ number_format($fueling->value, 2, ',', '.') }}
                             </p>
                             <p class="text-xs text-gray-500 dark:text-navy-300">
                                 {{ $fueling->fueled_at->format('d/m/Y H:i') }}
@@ -180,12 +180,6 @@
                 @endforeach
             </div>
 
-            <div class="mt-4 text-center">
-                <a href="{{ route('logbook.fueling', $run) }}"
-                   class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm font-medium">
-                    Ver todos os abastecimentos →
-                </a>
-            </div>
         </x-ui.card>
     @endif
 </x-app-layout>

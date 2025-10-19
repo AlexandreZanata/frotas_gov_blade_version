@@ -7,13 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
+use App\Models\Vehicle\Vehicle;
 
 class Fueling extends Model
 {
     use HasFactory, HasUuids;
 
     protected $fillable = [
-        'user_id', 'vehicle_id', 'run_id', 'fuel_type_id', 'gas_station_id',
+        'user_id', 'vehicle_id', 'run_id', 'fuel_type_id', 'gas_station_id', 'gas_station_name',
         'fueled_at', 'km',
         'liters',
         'value',
