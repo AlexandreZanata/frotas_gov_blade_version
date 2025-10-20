@@ -17,7 +17,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
+use App\Models\garbage\GarbageChecklist;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -359,6 +360,14 @@ class User extends Authenticatable
         return $this->hasOne(GeneralManager::class);
     }
 
+    public function garbageChecklists(): HasMany
+    {
+        return $this->hasMany(GarbageChecklist::class, 'user_id');
+    }
 
+    public function approvedGarbageChecklists(): HasMany
+    {
+        return $this->hasMany(GarbageChecklist::class, 'approver_id');
+    }
 
 }
