@@ -19,6 +19,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RunController extends Controller
 {
@@ -37,28 +38,43 @@ class RunController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
+        $user = Auth::user();
 
-        $runs = Run::where('user_id', Auth::id())
-            ->with(['vehicle.prefix', 'vehicle.category'])
+        $runs = Run::where('user_id', $user->id)
+            ->with(['vehicle.prefix', 'vehicle.category', 'signature'])
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('destination', 'like', "%{$search}%")
-                      ->orWhere('stop_point', 'like', "%{$search}%")
-                      ->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
-                          $vehicleQuery->where('name', 'like', "%{$search}%")
-                              ->orWhere('plate', 'like', "%{$search}%")
-                              ->orWhereHas('prefix', function ($prefixQuery) use ($search) {
-                                  $prefixQuery->where('name', 'like', "%{$search}%");
-                              });
-                      });
+                    $q->whereHas('destinations', function ($destinationQuery) use ($search) {
+                        $destinationQuery->where('destination', 'like', "%{$search}%");
+                    })
+                        ->orWhere('stop_point', 'like', "%{$search}%")
+                        ->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
+                            $vehicleQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('plate', 'like', "%{$search}%")
+                                ->orWhereHas('prefix', function ($prefixQuery) use ($search) {
+                                    $prefixQuery->where('name', 'like', "%{$search}%");
+                                });
+                        });
                 });
             })
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
-        return view('logbook.index', compact('runs'));
+        // Obter as corridas não assinadas (sem assinatura do motorista) para o botão "Assinar Todas"
+        $unsignedRuns = Run::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->where(function ($query) {
+                $query->whereDoesntHave('signature')
+                    ->orWhereHas('signature', function ($q) {
+                        $q->whereNull('driver_signed_at');
+                    });
+            })
+            ->get();
+
+        return view('logbook.index', compact('runs', 'unsignedRuns'));
     }
+
 
     /**
      * Ponto de entrada do fluxo - verifica estado e redireciona
@@ -73,8 +89,8 @@ class RunController extends Controller
             if (!$activeRun->checklist) {
                 // Tem corrida mas não tem checklist - vai para checklist
                 return redirect()->route('logbook.checklist', $activeRun);
-            } elseif (!$activeRun->start_km || !$activeRun->destination) {
-                // Tem checklist mas não iniciou corrida (km inicial = 0 e destino vazio)
+            } elseif ($activeRun->destinations->isEmpty()) {
+                // Tem checklist mas não iniciou corrida (sem destinos)
                 // Redireciona para iniciar corrida
                 return redirect()->route('logbook.start-run', $activeRun);
             } else {
@@ -86,6 +102,7 @@ class RunController extends Controller
         // Se não há corrida em andamento, começa do início
         return redirect()->route('logbook.vehicle-select');
     }
+
 
     /**
      * ETAPA 1: Seleção do Veículo
@@ -101,11 +118,11 @@ class RunController extends Controller
      */
     public function getVehicleData(Vehicle $vehicle)
     {
-        /** @var \App\Models\user\User $user */
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         // Verifica se o usuário tem permissão para acessar este veículo
-        if (!\App\Models\logbook\LogbookPermission::canAccessVehicle($user, $vehicle)) {
+        if (method_exists(\App\Models\logbook\LogbookPermission::class, 'canAccessVehicle') && !\App\Models\logbook\LogbookPermission::canAccessVehicle($user, $vehicle)) {
             return response()->json([
                 'error' => true,
                 'message' => 'Você não tem permissão para acessar este veículo.',
@@ -119,7 +136,7 @@ class RunController extends Controller
             return response()->json([
                 'available' => false,
                 'driver_name' => $availability['active_run']->user->name,
-                'driver_phone' => $availability['active_run']->user->phone,
+                'driver_phone' => $availability['active_run']->user->phone ?? 'N/A',
                 'manager_contact' => $vehicle->secretariat->manager_contact ?? 'N/A',
             ]);
         }
@@ -133,6 +150,7 @@ class RunController extends Controller
         ]);
     }
 
+
     /**
      * Confirma seleção do veículo e salva na sessão (NÃO cria a corrida ainda)
      */
@@ -142,25 +160,21 @@ class RunController extends Controller
 
         $vehicle = Vehicle::findOrFail($request->vehicle_id);
 
-        /** @var \App\Models\user\User $user */
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        // Verifica se o usuário tem permissão para acessar este veículo
-        if (!\App\Models\logbook\LogbookPermission::canAccessVehicle($user, $vehicle)) {
+        if (method_exists(\App\Models\logbook\LogbookPermission::class, 'canAccessVehicle') && !\App\Models\logbook\LogbookPermission::canAccessVehicle($user, $vehicle)) {
             return back()->with('error', 'Você não tem permissão para acessar este veículo.');
         }
 
-        // Verifica disponibilidade novamente
         $availability = $this->logbookService->checkVehicleAvailability($request->vehicle_id);
 
         if (!$availability['available']) {
             return back()->with('error', 'Veículo em uso por outro motorista.');
         }
 
-        // Salva o veículo selecionado na sessão (NÃO cria a corrida ainda)
         $this->logbookService->saveVehicleSelection($request->vehicle_id);
 
-        // Redireciona para o checklist (sem criar a corrida)
         return redirect()->route('logbook.checklist-form');
     }
 
@@ -177,12 +191,10 @@ class RunController extends Controller
         }
 
         $vehicle = Vehicle::with('prefix', 'category')->findOrFail($vehicleId);
-
-        /** @var \App\Models\user\User $user */
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        // Verifica se o usuário tem permissão para acessar este veículo
-        if (!\App\Models\logbook\LogbookPermission::canAccessVehicle($user, $vehicle)) {
+        if (method_exists(\App\Models\logbook\LogbookPermission::class, 'canAccessVehicle') && !\App\Models\logbook\LogbookPermission::canAccessVehicle($user, $vehicle)) {
             $this->logbookService->clearVehicleSelection();
             return redirect()->route('logbook.vehicle-select')
                 ->with('error', 'Você não tem permissão para acessar este veículo.');
@@ -207,18 +219,15 @@ class RunController extends Controller
         }
 
         $vehicle = Vehicle::findOrFail($vehicleId);
-
-        /** @var \App\Models\user\User $user */
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        // Verifica se o usuário tem permissão para acessar este veículo
-        if (!\App\Models\logbook\LogbookPermission::canAccessVehicle($user, $vehicle)) {
+        if (method_exists(\App\Models\logbook\LogbookPermission::class, 'canAccessVehicle') && !\App\Models\logbook\LogbookPermission::canAccessVehicle($user, $vehicle)) {
             $this->logbookService->clearVehicleSelection();
             return redirect()->route('logbook.vehicle-select')
                 ->with('error', 'Você não tem permissão para acessar este veículo.');
         }
 
-        // AGORA SIM: Cria a corrida e salva o checklist
         $run = $this->logbookService->createRunWithChecklist(
             $vehicleId,
             $request->validated()['checklist'],
@@ -274,21 +283,16 @@ class RunController extends Controller
     /**
      * Salva dados de início da corrida
      */
-    /**
-     * Salva dados de início da corrida
-     */
     public function storeStartRun(RunStartRequest $request, Run $run)
     {
         try {
             DB::beginTransaction();
 
-            // Atualizar a corrida com o KM inicial
             $run->update([
                 'start_km' => $request->start_km,
                 'started_at' => now(),
             ]);
 
-            // Salvar os múltiplos destinos
             foreach ($request->destinations as $index => $destination) {
                 if (!empty(trim($destination))) {
                     RunDestination::create([
@@ -301,19 +305,19 @@ class RunController extends Controller
 
             DB::commit();
 
-            // CORREÇÃO: Redirecionar para a próxima etapa (finalizar corrida)
             return redirect()->route('logbook.finish', $run)
                 ->with('success', 'Corrida iniciada com sucesso!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Erro ao iniciar corrida: ' . $e->getMessage());
+            Log::error('Erro ao iniciar corrida: ' . $e->getMessage());
 
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Erro ao iniciar corrida. Tente novamente.');
         }
     }
+
     /**
      * ETAPA 4: Finalizar Corrida
      */
@@ -335,14 +339,13 @@ class RunController extends Controller
         $this->authorize('update', $run);
 
         DB::transaction(function () use ($request, $run) {
-            // Finaliza a corrida
             $this->logbookService->finishRun(
                 $run,
                 $request->validated()['end_km'],
                 $request->input('stop_point')
             );
 
-            if ($request->has('add_fueling')) {
+            if ($request->boolean('add_fueling')) {
                 $fuelingData = [
                     'vehicle_id' => $run->vehicle_id,
                     'user_id' => Auth::id(),
@@ -357,17 +360,16 @@ class RunController extends Controller
                 if ($request->input('fueling_type') === 'credenciado') {
                     $gasStation = GasStation::findOrFail($request->input('gas_station_id'));
                     $fuelingData['gas_station_id'] = $gasStation->id;
-                    $fuelingData['value_per_liter'] = $gasStation->price_per_liter;
-                    $fuelingData['value'] = $request->input('liters') * $gasStation->price_per_liter;
+                    $fuelingData['value_per_liter'] = $gasStation->price_per_liter ?? 0; // Fallback
+                    $fuelingData['value'] = $request->input('liters') * ($gasStation->price_per_liter ?? 0);
                     $fuelingData['is_manual'] = false;
                 } else {
                     $fuelingData['gas_station_name'] = $request->input('gas_station_name');
                     $fuelingData['value'] = $request->input('total_value');
-                    $fuelingData['value_per_liter'] = $request->input('total_value') / $request->input('liters');
+                    $fuelingData['value_per_liter'] = $request->input('liters') > 0 ? $request->input('total_value') / $request->input('liters') : 0;
                     $fuelingData['is_manual'] = true;
                 }
 
-                // Upload da nota fiscal se houver
                 if ($request->hasFile('invoice')) {
                     $fuelingData['invoice_path'] = $request->file('invoice')->store('invoices', 'public');
                 }
@@ -388,7 +390,6 @@ class RunController extends Controller
         $this->authorize('delete', $run);
 
         DB::transaction(function () use ($run) {
-            // Remove o checklist se existir
             if ($run->checklist) {
                 $run->checklist->delete();
             }
@@ -412,7 +413,10 @@ class RunController extends Controller
             'vehicle.prefix',
             'vehicle.category',
             'user',
-            'checklist.answers.item'
+            'checklist.answers.item',
+            'destinations',
+            'signature.driverSignature',
+            'signature.adminSignature',
         ]);
 
         return view('logbook.show', compact('run'));

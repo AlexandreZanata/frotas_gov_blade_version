@@ -5,6 +5,7 @@ namespace App\Models\run;
 use App\Models\checklist\Checklist;
 use App\Models\fuel\Fueling;
 use App\Models\user\User;
+use App\Models\run\RunSignature;
 use App\Models\Vehicle\Vehicle;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -145,5 +146,11 @@ class Run extends Model
     public function getIsInProgressAttribute(): bool
     {
         return $this->status === 'in_progress';
+    }
+
+    public function signature(): HasOne
+    {
+        // Certifique-se que seu model de assinatura se chama 'RunSignature'
+        return $this->hasOne(RunSignature::class);
     }
 }

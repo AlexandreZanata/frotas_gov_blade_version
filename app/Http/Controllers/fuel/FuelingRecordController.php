@@ -168,8 +168,6 @@ class FuelingRecordController extends Controller
                 'value' => $totalValue,
                 'invoice_path' => $invoicePath,
                 'public_code' => $this->generatePublicCode(),
-                'signature_id' => null,
-                'viewed_by' => null,
             ]);
 
             DB::commit();

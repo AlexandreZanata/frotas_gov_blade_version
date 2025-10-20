@@ -2,14 +2,25 @@
     <x-slot name="header">
         <x-ui.page-header title="Minhas Corridas" subtitle="Diário de Bordo" hide-title-mobile icon="clipboard" />
     </x-slot>
+
     <x-slot name="pageActions">
+        {{-- Verifica se a coleção $unsignedRuns (vinda do Controller) não está vazia --}}
+        @if(isset($unsignedRuns) && $unsignedRuns->isNotEmpty())
+            <form action="{{ route('logbook.runs.sign.all') }}" method="POST" class="inline" onsubmit="return confirm('Tem certeza que deseja assinar todas as {{ $unsignedRuns->count() }} corridas pendentes?');">
+                @csrf
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm font-medium shadow transition"
+                        title="Assina todas as suas corridas com status 'Concluída' que ainda não foram assinadas.">
+                    <x-icon name="pencil-square" class="w-4 h-4" /> {{-- Ícone de caneta com quadrado --}}
+                    <span>Assinar Pendentes ({{ $unsignedRuns->count() }})</span>
+                </button>
+            </form>
+        @endif
         <a href="{{ route('logbook.start-flow') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium shadow transition">
             <x-icon name="plus" class="w-4 h-4" />
             <span>Nova Corrida</span>
         </a>
     </x-slot>
 
-    <!-- Corrida Ativa Alert -->
     @if($activeRun = app(\App\Services\LogbookService::class)->getUserActiveRun())
         <div class="mb-4 rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-4 border border-yellow-200 dark:border-yellow-800">
             <div class="flex">
@@ -118,7 +129,43 @@
                         @endif
                     </td>
                     <td class="px-4 py-2 whitespace-nowrap text-right">
-                        <x-ui.action-icon :href="route('logbook.show', $run)" icon="eye" title="Ver Detalhes" variant="primary" />
+                        <div class="flex items-center justify-end space-x-2">
+                            <x-ui.action-icon :href="route('logbook.show', $run)" icon="eye" title="Ver Detalhes" variant="primary" />
+
+                            @if($run->status === 'completed') {{-- Só mostra opções de assinatura para corridas concluídas --}}
+
+                            {{-- Verifica SE a assinatura do MOTORISTA existe e tem data --}}
+                            @if(!$run->signature?->driver_signed_at)
+                                <form action="{{ route('logbook.runs.sign.driver', ['runId' => $run->id]) }}" method="POST" class="inline" onsubmit="return confirm('Deseja assinar esta corrida?');">
+                                    @csrf
+                                    <button type="submit"
+                                            class="p-1 rounded-md text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-navy-600 transition"
+                                            title="Assinar Corrida">
+                                        <x-icon name="pencil" class="w-5 h-5" /> {{-- Ícone de caneta simples --}}
+                                    </button>
+                                </form>
+                            @else
+                                <span class="p-1 text-green-500 cursor-default" title="Assinado pelo motorista em {{ $run->signature->driver_signed_at->format('d/m/Y H:i') }}">
+                                        <x-icon name="check-circle" class="w-5 h-5" />
+                                    </span>
+
+                                {{-- OPCIONAL: Lógica para assinatura do ADMIN (se aplicável) --}}
+                                {{-- @if (Auth::user()->/* tem permissao de admin */ && !$run->signature->admin_signed_at)
+                                    <form action="{{ route('logbook.runs.sign.admin', ['runId' => $run->id]) }}" method="POST" class="inline" onsubmit="return confirm('Assinar como administrador?');">
+                                        @csrf
+                                        <button type="submit" class="p-1 rounded-md text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-navy-600 transition" title="Assinar como Admin">
+                                            <x-icon name="shield-check" class="w-5 h-5" />
+                                        </button>
+                                    </form>
+                                @elseif($run->signature?->admin_signed_at)
+                                    <span class="p-1 text-blue-500 cursor-default" title="Assinado pelo admin em {{ $run->signature->admin_signed_at->format('d/m/Y H:i') }}">
+                                        <x-icon name="shield-check" class="w-5 h-5" />
+                                    </span>
+                                @endif --}}
+
+                            @endif
+                            @endif
+                        </div>
                     </td>
                 </tr>
             @empty
@@ -128,4 +175,5 @@
             @endforelse
         </x-ui.table>
     </x-ui.card>
+
 </x-app-layout>

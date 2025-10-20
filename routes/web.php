@@ -13,6 +13,7 @@ use App\Http\Controllers\users\UserController;
 use App\Http\Controllers\vehicle\PrefixController;
 use App\Http\Controllers\vehicle\VehicleCategoryController;
 use App\Http\Controllers\vehicle\VehicleController;
+use App\Http\Controllers\runs\RunSignatureController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\fuel\FuelingExpenseController;
 
@@ -262,6 +263,11 @@ Route::middleware('auth')->group(function () {
 
         // Detalhes da corrida
         Route::get('/{run}', [\App\Http\Controllers\runs\RunController::class, 'show'])->name('show');
+
+        // ROTAS DE ASSINATURA MOVIDAS PARA O CONTROLLER CORRETO
+        Route::post('/runs/{runId}/sign-driver', [RunSignatureController::class, 'signDriver'])->name('runs.sign.driver');
+        Route::post('/runs/{runId}/sign-admin', [RunSignatureController::class, 'signAdmin'])->name('runs.sign.admin');
+        Route::post('/runs/sign-all-pending', [RunSignatureController::class, 'signAllPending'])->name('runs.sign.all');
     });
 
 // --- GRUPO DE GESTÃO DE DESPESAS ---
