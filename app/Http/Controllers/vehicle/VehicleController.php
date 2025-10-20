@@ -55,8 +55,8 @@ class VehicleController extends Controller
         $statuses = VehicleStatus::orderBy('name')->get();
         $fuelTypes = FuelType::orderBy('name')->get();
         $secretariats = Secretariat::orderBy('name')->get();
-        $brands = VehicleBrand::orderBy('name')->get(); // <-- Adicionado
-        $heritages = VehicleHeritage::orderBy('name')->get(); // <-- Adicionado
+        $brands = VehicleBrand::orderBy('name')->get();
+        $heritages = VehicleHeritage::orderBy('name')->get();
 
         return view('vehicles.create', compact('categories', 'prefixes', 'statuses', 'fuelTypes', 'secretariats', 'brands', 'heritages'));
     }
@@ -69,8 +69,8 @@ class VehicleController extends Controller
         // Validações ajustadas para os novos campos
         $request->validate([
             'name' => 'required|string|max:255',
-            'brand_id' => 'required|exists:vehicle_brands,id', // <-- Alterado
-            'heritage_id' => 'required|exists:vehicle_heritages,id', // <-- Adicionado
+            'brand_id' => 'required|exists:vehicle_brands,id',
+            'heritage_id' => 'required|exists:vehicle_heritages,id',
             'model_year' => 'required|string|max:255',
             'plate' => 'required|string|max:255|unique:vehicles,plate',
             'fuel_tank_capacity' => 'required|integer',
@@ -107,8 +107,8 @@ class VehicleController extends Controller
         $statuses = VehicleStatus::orderBy('name')->get();
         $fuelTypes = FuelType::orderBy('name')->get();
         $secretariats = Secretariat::orderBy('name')->get();
-        $brands = VehicleBrand::orderBy('name')->get(); // <-- Adicionado
-        $heritages = VehicleHeritage::orderBy('name')->get(); // <-- Adicionado
+        $brands = VehicleBrand::orderBy('name')->get();
+        $heritages = VehicleHeritage::orderBy('name')->get();
 
         return view('vehicles.edit', compact('vehicle', 'categories', 'prefixes', 'statuses', 'fuelTypes', 'secretariats', 'brands', 'heritages'));
     }
@@ -120,8 +120,8 @@ class VehicleController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'brand_id' => 'required|exists:vehicle_brands,id', // <-- Alterado
-            'heritage_id' => 'required|exists:vehicle_heritages,id', // <-- Adicionado
+            'brand_id' => 'required|exists:vehicle_brands,id',
+            'heritage_id' => 'required|exists:vehicle_heritages,id',
             'model_year' => 'required|string|max:255',
             'plate' => 'required|string|max:255|unique:vehicles,plate,' . $vehicle->id,
             'fuel_tank_capacity' => 'required|integer',

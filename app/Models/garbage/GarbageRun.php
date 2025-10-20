@@ -8,10 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\user\User;
 
 class GarbageRun extends Model
 {
     use HasFactory, HasUuids;
+
+    protected $table = 'garbage_runs';
 
     protected $fillable = [
         'vehicle_id',
@@ -30,14 +33,14 @@ class GarbageRun extends Model
         'finished_at' => 'datetime',
     ];
 
-    public function garbageVehicle(): BelongsTo
+    public function vehicle(): BelongsTo
     {
         return $this->belongsTo(GarbageVehicle::class, 'vehicle_id');
     }
 
-    public function garbageUser(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(GarbageUser::class, 'user_id');
+        return $this->belongsTo(\App\Models\user\User::class, 'user_id');
     }
 
     public function weighing(): BelongsTo
@@ -47,11 +50,16 @@ class GarbageRun extends Model
 
     public function destinations(): HasMany
     {
-        return $this->hasMany(GarbageRunDestination::class);
+        return $this->hasMany(GarbageRunDestination::class, 'garbage_run_id');
     }
 
     public function signature(): HasOne
     {
-        return $this->hasOne(GarbageRunSignature::class);
+        return $this->hasOne(GarbageRunSignature::class, 'garbage_run_id');
+    }
+
+    public function checklist()
+    {
+        return $this->morphOne(\App\Models\checklist\Checklist::class, 'checklistable');
     }
 }

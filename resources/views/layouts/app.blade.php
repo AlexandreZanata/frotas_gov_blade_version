@@ -234,5 +234,16 @@
 
 {{-- Ensure page-level scripts pushed with @push('scripts') are injected --}}
 @stack('scripts')
+
+@unless(request()->routeIs('chat.*'))
+    <a href="{{ route('chat.index') }}"
+       title="Abrir Chat"
+       aria-label="Abrir Chat"
+       class="fixed bottom-6 right-6 z-50 p-3 bg-primary-600 text-white rounded-full shadow-lg
+                  hover:bg-primary-700 transition-all duration-300 transform hover:scale-105">
+
+        <x-icon name="chat-bubble-left-right" />
+    </a>
+@endunless
 </body>
 </html>

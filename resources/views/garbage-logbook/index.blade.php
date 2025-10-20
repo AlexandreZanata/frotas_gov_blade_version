@@ -1,27 +1,26 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-ui.page-header title="Minhas Corridas" subtitle="Diário de Bordo" hide-title-mobile icon="clipboard" />
+        <x-ui.page-header title="Minhas Coletas" subtitle="Diário de Coleta de Resíduos" hide-title-mobile icon="trash" />
     </x-slot>
 
     <x-slot name="pageActions">
-        {{-- Verifica se a coleção $unsignedRuns (vinda do Controller) não está vazia --}}
         @if(isset($unsignedRuns) && $unsignedRuns->isNotEmpty())
-            <form action="{{ route('logbook.runs.sign.all') }}" method="POST" class="inline" onsubmit="return confirm('Tem certeza que deseja assinar todas as {{ $unsignedRuns->count() }} corridas pendentes?');">
+            <form action="{{ route('garbage-logbook.runs.sign.all') }}" method="POST" class="inline" onsubmit="return confirm('Tem certeza que deseja assinar todas as {{ $unsignedRuns->count() }} coletas pendentes?');">
                 @csrf
                 <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm font-medium shadow transition"
-                        title="Assina todas as suas corridas com status 'Concluída' que ainda não foram assinadas.">
-                    <x-icon name="pencil-square" class="w-4 h-4" /> {{-- Ícone de caneta com quadrado --}}
+                        title="Assina todas as suas coletas com status 'Concluída' que ainda não foram assinadas.">
+                    <x-icon name="pencil-square" class="w-4 h-4" />
                     <span>Assinar Pendentes ({{ $unsignedRuns->count() }})</span>
                 </button>
             </form>
         @endif
-        <a href="{{ route('logbook.start-flow') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium shadow transition">
+        <a href="{{ route('garbage-logbook.start-flow') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium shadow transition">
             <x-icon name="plus" class="w-4 h-4" />
-            <span>Nova Corrida</span>
+            <span>Nova Coleta</span>
         </a>
     </x-slot>
 
-    @if($activeRun = app(\App\Services\LogbookService::class)->getUserActiveRun())
+    @if($activeRun = app(\App\Services\GarbageLogbookService::class)->getUserActiveRun())
         <div class="mb-4 rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-4 border border-yellow-200 dark:border-yellow-800">
             <div class="flex">
                 <div class="flex-shrink-0">
@@ -31,14 +30,14 @@
                 </div>
                 <div class="ml-3 flex-1">
                     <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                        Você tem uma corrida em andamento
+                        Você tem uma coleta em andamento
                     </h3>
                     <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
-                        <p>Veículo: <span class="font-semibold">{{ $activeRun->vehicle->prefix->name ?? '' }} - {{ $activeRun->vehicle->name }}</span></p>
+                        <p>Veículo: <span class="font-semibold">{{ $activeRun->vehicle->vehicle->prefix->name ?? '' }} - {{ $activeRun->vehicle->vehicle->name }}</span></p>
                     </div>
                     <div class="mt-3">
-                        <a href="{{ route('logbook.start-flow') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-xs font-medium rounded-md text-yellow-800 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-800 dark:text-yellow-100 dark:hover:bg-yellow-700 transition">
-                            Continuar Corrida →
+                        <a href="{{ route('garbage-logbook.start-flow') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-xs font-medium rounded-md text-yellow-800 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-800 dark:text-yellow-100 dark:hover:bg-yellow-700 transition">
+                            Continuar Coleta →
                         </a>
                     </div>
                 </div>
@@ -48,24 +47,24 @@
 
     <x-ui.card>
         <x-ui.table
-            :headers="['Veículo','Destino','KM Rodados','Data/Hora','Status','Ações']"
+            :headers="['Veículo','Bairros','KM Rodados','Data/Hora','Status','Ações']"
             :searchable="true"
-            search-placeholder="Pesquisar por veículo, destino..."
+            search-placeholder="Pesquisar por veículo, bairro..."
             :search-value="$search ?? ''"
             :pagination="$runs">
             @forelse($runs as $run)
                 <tr class="hover:bg-gray-50 dark:hover:bg-navy-700/40">
                     <td class="px-4 py-2">
                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {{ $run->vehicle->prefix->name ?? 'N/A' }}
+                            {{ $run->vehicle->vehicle->prefix->name ?? 'N/A' }}
                         </div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ $run->vehicle->name }} • {{ $run->vehicle->plate }}
+                            {{ $run->vehicle->vehicle->name }} • {{ $run->vehicle->vehicle->plate }}
                         </div>
                     </td>
                     <td class="px-4 py-2">
                         <div class="text-sm text-gray-900 dark:text-gray-100 font-medium">
-                            {{ $run->destinations->first()->destination ?? 'N/A' }}
+                            {{ $run->destinations->first()->neighborhood->name ?? 'N/A' }}
                             @if($run->destinations->count() > 1)
                                 <span class="text-xs text-gray-500">(+{{ $run->destinations->count() - 1 }} outros)</span>
                             @endif
@@ -115,13 +114,6 @@
                                 </svg>
                                 Em Andamento
                             </span>
-                        @elseif($run->status === 'cancelled')
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                                </svg>
-                                Cancelada
-                            </span>
                         @else
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                                 {{ ucfirst($run->status) }}
@@ -130,50 +122,32 @@
                     </td>
                     <td class="px-4 py-2 whitespace-nowrap text-right">
                         <div class="flex items-center justify-end space-x-2">
-                            <x-ui.action-icon :href="route('logbook.show', $run)" icon="eye" title="Ver Detalhes" variant="primary" />
+                            <x-ui.action-icon :href="route('garbage-logbook.show', $run)" icon="eye" title="Ver Detalhes" variant="primary" />
 
-                            @if($run->status === 'completed') {{-- Só mostra opções de assinatura para corridas concluídas --}}
-
-                            {{-- Verifica SE a assinatura do MOTORISTA existe e tem data --}}
-                            @if(!$run->signature?->driver_signed_at)
-                                <form action="{{ route('logbook.runs.sign.driver', ['runId' => $run->id]) }}" method="POST" class="inline" onsubmit="return confirm('Deseja assinar esta corrida?');">
-                                    @csrf
-                                    <button type="submit"
-                                            class="p-1 rounded-md text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-navy-600 transition"
-                                            title="Assinar Corrida">
-                                        <x-icon name="pencil" class="w-5 h-5" /> {{-- Ícone de caneta simples --}}
-                                    </button>
-                                </form>
-                            @else
-                                <span class="p-1 text-green-500 cursor-default" title="Assinado pelo motorista em {{ $run->signature->driver_signed_at->format('d/m/Y H:i') }}">
-                                        <x-icon name="check-circle" class="w-5 h-5" />
-                                    </span>
-
-                                {{-- OPCIONAL: Lógica para assinatura do ADMIN (se aplicável) --}}
-                                {{-- @if (Auth::user()->/* tem permissao de admin */ && !$run->signature->admin_signed_at)
-                                    <form action="{{ route('logbook.runs.sign.admin', ['runId' => $run->id]) }}" method="POST" class="inline" onsubmit="return confirm('Assinar como administrador?');">
+                            @if($run->status === 'completed')
+                                @if(!$run->signature?->driver_signed_at)
+                                    <form action="{{ route('garbage-logbook.runs.sign.driver', ['runId' => $run->id]) }}" method="POST" class="inline" onsubmit="return confirm('Deseja assinar esta coleta?');">
                                         @csrf
-                                        <button type="submit" class="p-1 rounded-md text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-navy-600 transition" title="Assinar como Admin">
-                                            <x-icon name="shield-check" class="w-5 h-5" />
+                                        <button type="submit"
+                                                class="p-1 rounded-md text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-navy-600 transition"
+                                                title="Assinar Coleta">
+                                            <x-icon name="pencil" class="w-5 h-5" />
                                         </button>
                                     </form>
-                                @elseif($run->signature?->admin_signed_at)
-                                    <span class="p-1 text-blue-500 cursor-default" title="Assinado pelo admin em {{ $run->signature->admin_signed_at->format('d/m/Y H:i') }}">
-                                        <x-icon name="shield-check" class="w-5 h-5" />
+                                @else
+                                    <span class="p-1 text-green-500 cursor-default" title="Assinado pelo motorista em {{ $run->signature->driver_signed_at->format('d/m/Y H:i') }}">
+                                        <x-icon name="check-circle" class="w-5 h-5" />
                                     </span>
-                                @endif --}}
-
-                            @endif
+                                @endif
                             @endif
                         </div>
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-navy-200">Nenhuma corrida encontrada.</td>
+                    <td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-navy-200">Nenhuma coleta encontrada.</td>
                 </tr>
             @endforelse
         </x-ui.table>
     </x-ui.card>
-
 </x-app-layout>

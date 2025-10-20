@@ -17,6 +17,7 @@ class FuelQuotationSettingsController extends Controller
         return view('fuel-quotations.settings', compact('fuelTypes'));
     }
 
+    // Nos métodos store e update, redirecionar mantendo a aba
     public function storeCalculationMethod(Request $request)
     {
         $validated = $request->validate([
@@ -32,7 +33,10 @@ class FuelQuotationSettingsController extends Controller
 
         FuelCalculationMethod::create($validated);
 
-        return redirect()->back()->with('success', 'Método de cálculo criado com sucesso!');
+        $activeTab = $request->get('active_tab', 'calculation');
+
+        return redirect()->route('fuel-quotations.settings', ['tab' => $activeTab])
+            ->with('success', 'Método de cálculo criado com sucesso!');
     }
 
     public function updateCalculationMethod(Request $request, FuelCalculationMethod $method)
@@ -48,14 +52,18 @@ class FuelQuotationSettingsController extends Controller
 
         $method->update($validated);
 
-        return redirect()->back()->with('success', 'Método de cálculo atualizado com sucesso!');
+        $activeTab = $request->get('active_tab', 'calculation');
+
+        return redirect()->route('fuel-quotations.settings', ['tab' => $activeTab])
+            ->with('success', 'Método de cálculo atualizado com sucesso!');
     }
 
     public function destroyCalculationMethod(FuelCalculationMethod $method)
     {
         $method->delete();
 
-        return redirect()->back()->with('success', 'Método de cálculo excluído com sucesso!');
+        return redirect()->route('fuel-quotations.settings', ['tab' => 'calculation'])
+            ->with('success', 'Método de cálculo removido com sucesso!');
     }
 
     public function storeDiscountSetting(Request $request)
@@ -76,7 +84,10 @@ class FuelQuotationSettingsController extends Controller
 
         FuelDiscountSetting::create($validated);
 
-        return redirect()->back()->with('success', 'Desconto criado com sucesso!');
+        $activeTab = $request->get('active_tab', 'discount');
+
+        return redirect()->route('fuel-quotations.settings', ['tab' => $activeTab])
+            ->with('success', 'Desconto criado com sucesso!');
     }
 
     public function updateDiscountSetting(Request $request, FuelDiscountSetting $discount)
@@ -93,13 +104,17 @@ class FuelQuotationSettingsController extends Controller
 
         $discount->update($validated);
 
-        return redirect()->back()->with('success', 'Desconto atualizado com sucesso!');
+        $activeTab = $request->get('active_tab', 'discount');
+
+        return redirect()->route('fuel-quotations.settings', ['tab' => $activeTab])
+            ->with('success', 'Desconto atualizado com sucesso!');
     }
 
     public function destroyDiscountSetting(FuelDiscountSetting $discount)
     {
         $discount->delete();
 
-        return redirect()->back()->with('success', 'Desconto excluído com sucesso!');
+        return redirect()->route('fuel-quotations.settings', ['tab' => 'discount'])
+            ->with('success', 'Desconto removido com sucesso!');
     }
 }

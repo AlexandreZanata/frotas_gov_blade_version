@@ -4,6 +4,7 @@ namespace App\Http\Controllers\runs;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChecklistRequest;
+use App\Models\run\RunGapFind;
 use App\Http\Requests\FuelingRequest;
 use App\Http\Requests\RunFinishRequest;
 use App\Http\Requests\RunStartRequest;
@@ -292,6 +293,40 @@ class RunController extends Controller
                 'start_km' => $request->start_km,
                 'started_at' => now(),
             ]);
+
+            // <<< --- inicio da logica de GAP de KM --- >>>
+
+            // 1. Obter a última corrida CONCLUÍDA para o mesmo veículo
+            $lastCompletedRun = Run::where('vehicle_id', $run->vehicle_id)
+                ->where('id', '!=', $run->id) // Excluir a corrida atual
+                ->where('status', 'completed')
+                ->whereNotNull('end_km') // Garantir que end_km não seja nulo
+                ->orderBy('finished_at', 'desc') // Ordenar pela data de finalização mais recente
+                ->first();
+
+            if ($lastCompletedRun) {
+                $expectedKm = $lastCompletedRun->end_km;
+                $recordedKm = $run->start_km; // O KM que o usuário informou e foi salvo acima
+
+                // 2. Verificar se há diferença e se o KM registrado é maior que o esperado
+                //    (Evita criar gaps negativos se o usuário digitar um valor menor por engano,
+                //     embora você possa querer registrar isso também, ajustando a lógica)
+                if ($recordedKm !== $expectedKm && $recordedKm > $expectedKm) {
+                    $gap = $recordedKm - $expectedKm;
+
+                    // 3. Criar o registro na tabela run_gap_finds
+                    //    Certifique-se de que o Model RunGapFind foi criado e tem os fillable corretos
+                    RunGapFind::create([
+                        'run_id' => $run->id, // A corrida atual onde o gap foi detectado
+                        'vehicle_id' => $run->vehicle_id,
+                        'user_id' => $run->user_id, // Ou Auth::id() se preferir
+                        'recorded_start_km' => $recordedKm,
+                        'expected_start_km' => $expectedKm,
+                        'gap_km' => $gap,
+                    ]);
+                }
+            }
+            // <<< --- FIM DA LÓGICA DO GAP --- >>>
 
             foreach ($request->destinations as $index => $destination) {
                 if (!empty(trim($destination))) {

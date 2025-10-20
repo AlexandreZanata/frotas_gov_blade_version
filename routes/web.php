@@ -6,11 +6,13 @@ use App\Http\Controllers\fuel\FuelPriceController;
 use App\Http\Controllers\fuel\GasStationCurrentController;
 use App\Http\Controllers\fuel\ScheduledGasStationController;
 use App\Http\Controllers\fuel\ScheduledPriceController;
+use App\Http\Controllers\garbage\GarbageRunSignatureController;
 use App\Http\Controllers\runs\LogbookRuleController;
 use App\Http\Controllers\users\DefaultPasswordController;
 use App\Http\Controllers\users\ProfileController;
 use App\Http\Controllers\users\UserController;
 use App\Http\Controllers\vehicle\PrefixController;
+use App\Http\Controllers\vehicle\VehicleBrandController;
 use App\Http\Controllers\vehicle\VehicleCategoryController;
 use App\Http\Controllers\vehicle\VehicleController;
 use App\Http\Controllers\runs\RunSignatureController;
@@ -41,9 +43,17 @@ Route::get('/dashboard', function () {
         'series' => [],
         'categories' => []
     ];
+    $recentGaps = collect(); // Inicializar a variável
 
     // Dados apenas para general_manager e sector_manager
     if ($user->hasAnyRole(['general_manager', 'sector_manager'])) {
+        // Buscar gaps recentes
+        $recentGaps = \App\Models\run\RunGapFind::with(['vehicle', 'user', 'run'])
+            ->where('created_at', '>=', now()->subDays(7)) // Últimos 7 dias
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
         $query = \App\Models\Vehicle\Vehicle::query();
 
         // Filtra apenas veículos em uso (com diário de bordo em andamento)
@@ -87,11 +97,11 @@ Route::get('/dashboard', function () {
             ];
         }
 
-        // Gráfico de Gastos do Mês (últimos 7 dias) - CORREÇÃO APLICADA AQUI
+        // Gráfico de Gastos do Mês (últimos 7 dias)
         $startDate = now()->subDays(6)->startOfDay();
         $expenses = \App\Models\fuel\Fueling::query()
             ->whereBetween('created_at', [$startDate, now()])
-            ->selectRaw('DATE(created_at) as date, SUM(liters * value_per_liter) as total') // Correção: Trocado total_cost por liters * value_per_liter
+            ->selectRaw('DATE(created_at) as date, SUM(liters * value_per_liter) as total')
             ->groupBy('date')
             ->orderBy('date')
             ->get();
@@ -133,7 +143,14 @@ Route::get('/dashboard', function () {
         }
     }
 
-    return view('dashboard', compact('vehiclesInUse', 'stats', 'chartData', 'expensesData', 'fuelingsData'));
+    return view('dashboard', compact(
+        'vehiclesInUse',
+        'stats',
+        'chartData',
+        'expensesData',
+        'fuelingsData',
+        'recentGaps'
+    ));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -169,6 +186,10 @@ Route::middleware('auth')->group(function () {
     // API Routes para prefixos
     Route::get('/api/prefixes/search', [PrefixController::class, 'search'])->name('api.prefixes.search');
     Route::post('/api/prefixes/store-inline', [PrefixController::class, 'storeInline'])->name('api.prefixes.store-inline');
+
+    // API DE MARCAS PARA A BUSCA
+    Route::get('/api/brands/search', [VehicleBrandController::class, 'apiSearch'])->name('api.brands.search');
+    Route::post('/api/brands/store-inline', [VehicleBrandController::class, 'storeInline'])->name('api.brands.store-inline');
 
     // API Routes para veículos
     Route::get('/api/vehicles/search', [VehicleController::class, 'search'])->name('api.vehicles.search');
@@ -238,11 +259,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/select-vehicle', [\App\Http\Controllers\runs\RunController::class, 'selectVehicle'])->name('vehicle-select');
         Route::post('/select-vehicle', [\App\Http\Controllers\runs\RunController::class, 'storeVehicle'])->name('store-vehicle');
 
-        // Etapa 2: Checklist (NOVO FLUXO - sem corrida criada)
+        // Etapa 2: Checklist (sem corrida criada)
         Route::get('/checklist_form', [\App\Http\Controllers\runs\RunController::class, 'checklistForm'])->name('checklist-form');
         Route::post('/checklist_form', [\App\Http\Controllers\runs\RunController::class, 'storeChecklistAndCreateRun'])->name('store-checklist-form');
 
-        // Etapa 2: Checklist (ANTIGO - para compatibilidade)
         Route::get('/{run}/checklist', [\App\Http\Controllers\runs\RunController::class, 'checklist'])->name('checklist');
         Route::post('/{run}/checklist', [\App\Http\Controllers\runs\RunController::class, 'storeChecklist'])->name('store-checklist');
 
@@ -264,10 +284,98 @@ Route::middleware('auth')->group(function () {
         // Detalhes da corrida
         Route::get('/{run}', [\App\Http\Controllers\runs\RunController::class, 'show'])->name('show');
 
-        // ROTAS DE ASSINATURA MOVIDAS PARA O CONTROLLER CORRETO
+        // ROTAS DE ASSINATURA
         Route::post('/runs/{runId}/sign-driver', [RunSignatureController::class, 'signDriver'])->name('runs.sign.driver');
         Route::post('/runs/{runId}/sign-admin', [RunSignatureController::class, 'signAdmin'])->name('runs.sign.admin');
         Route::post('/runs/sign-all-pending', [RunSignatureController::class, 'signAllPending'])->name('runs.sign.all');
+
+        // Rota para obter dados dos gaps de quilometragem
+        Route::get('/api/run-gap-finds/recent', [\App\Http\Controllers\runs\RunGapFindController::class, 'getRecentGaps'])
+            ->middleware(['auth', 'verified'])
+            ->name('api.run-gap-finds.recent');
+    });
+
+    // Diário de Bordo para Coleta de Lixo
+    Route::prefix('garbage-logbook')->name('garbage-logbook.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\garbage\GarbageRunController::class, 'index'])->name('index');
+        Route::get('/start', [\App\Http\Controllers\garbage\GarbageRunController::class, 'start'])->name('start-flow');
+
+        // Etapa 1: Seleção do Veículo (apenas veículos de lixo)
+        Route::get('/select-vehicle', [\App\Http\Controllers\garbage\GarbageRunController::class, 'selectVehicle'])->name('vehicle-select');
+        Route::post('/select-vehicle', [\App\Http\Controllers\garbage\GarbageRunController::class, 'storeVehicle'])->name('store-vehicle');
+
+        // Etapa 2: Checklist
+        Route::get('/checklist_form', [\App\Http\Controllers\garbage\GarbageRunController::class, 'checklistForm'])->name('checklist-form');
+        Route::post('/checklist_form', [\App\Http\Controllers\garbage\GarbageRunController::class, 'storeChecklistAndCreateRun'])->name('store-checklist-form');
+
+        Route::get('/{run}/checklist', [\App\Http\Controllers\garbage\GarbageRunController::class, 'checklist'])->name('checklist');
+        Route::post('/{run}/checklist', [\App\Http\Controllers\garbage\GarbageRunController::class, 'storeChecklist'])->name('store-checklist');
+
+        // Etapa 3: Iniciar Coleta (com bairros)
+        Route::get('/{run}/start-run', [\App\Http\Controllers\garbage\GarbageRunController::class, 'startRun'])->name('start-run');
+        Route::post('/{run}/start-run', [\App\Http\Controllers\garbage\GarbageRunController::class, 'storeStartRun'])->name('store-start-run');
+
+        // Etapa 4: Finalizar Coleta (com pesagem)
+        Route::get('/{run}/finish', [\App\Http\Controllers\garbage\GarbageRunController::class, 'finishRun'])->name('finish');
+        Route::post('/{run}/finish', [\App\Http\Controllers\garbage\GarbageRunController::class, 'storeFinishRun'])->name('store-finish');
+
+        // Etapa 5: Abastecimento
+        Route::get('/{run}/fueling', [\App\Http\Controllers\fuel\FuelingRecordController::class, 'create'])->name('fueling');
+        Route::post('/{run}/fueling', [\App\Http\Controllers\fuel\FuelingRecordController::class, 'store'])->name('store-fueling');
+
+        // Cancelar coleta
+        Route::delete('/{run}/cancel', [\App\Http\Controllers\garbage\GarbageRunController::class, 'cancel'])->name('cancel');
+
+        // Detalhes da coleta
+        Route::get('/{run}', [\App\Http\Controllers\garbage\GarbageRunController::class, 'show'])->name('show');
+
+        // ROTAS DE ASSINATURA
+        Route::post('/runs/{runId}/sign-driver', [GarbageRunSignatureController::class, 'signDriver'])->name('runs.sign.driver');
+        Route::post('/runs/sign-all-pending', [GarbageRunSignatureController::class, 'signAllPending'])->name('runs.sign.all');
+    });
+
+    // Admin - Gerenciamento de Usuários de Lixo
+    Route::prefix('admin/garbage-users')->name('admin.garbage-users.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\admin\GarbageUserManagementController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\admin\GarbageUserManagementController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\admin\GarbageUserManagementController::class, 'store'])->name('store');
+        Route::get('/{garbageUser}', [\App\Http\Controllers\admin\GarbageUserManagementController::class, 'show'])->name('show');
+        Route::get('/{garbageUser}/edit', [\App\Http\Controllers\admin\GarbageUserManagementController::class, 'edit'])->name('edit');
+        Route::put('/{garbageUser}', [\App\Http\Controllers\admin\GarbageUserManagementController::class, 'update'])->name('update');
+        Route::delete('/{garbageUser}', [\App\Http\Controllers\admin\GarbageUserManagementController::class, 'destroy'])->name('destroy');
+
+        // Gerenciar veículos
+        Route::get('/{garbageUser}/vehicles', [\App\Http\Controllers\admin\GarbageUserManagementController::class, 'editVehicles'])->name('vehicles.edit');
+        Route::put('/{garbageUser}/vehicles', [\App\Http\Controllers\admin\GarbageUserManagementController::class, 'updateVehicles'])->name('vehicles.update');
+
+        // Gerenciar bairros
+        Route::get('/{garbageUser}/neighborhoods', [\App\Http\Controllers\admin\GarbageUserManagementController::class, 'editNeighborhoods'])->name('neighborhoods.edit');
+        Route::put('/{garbageUser}/neighborhoods', [\App\Http\Controllers\admin\GarbageUserManagementController::class, 'updateNeighborhoods'])->name('neighborhoods.update');
+    });
+
+    // Admin - Veículos de Lixo (CRUD básico)
+    Route::prefix('admin/garbage-vehicles')->name('admin.garbage-vehicles.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\admin\GarbageVehicleController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\admin\GarbageVehicleController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\admin\GarbageVehicleController::class, 'store'])->name('store');
+        Route::get('/{garbageVehicle}/edit', [\App\Http\Controllers\admin\GarbageVehicleController::class, 'edit'])->name('edit');
+        Route::put('/{garbageVehicle}', [\App\Http\Controllers\admin\GarbageVehicleController::class, 'update'])->name('update');
+        Route::delete('/{garbageVehicle}', [\App\Http\Controllers\admin\GarbageVehicleController::class, 'destroy'])->name('destroy');
+    });
+
+// Admin - Bairros (CRUD básico)
+    Route::prefix('admin/garbage-neighborhoods')->name('admin.garbage-neighborhoods.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\admin\GarbageNeighborhoodController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\admin\GarbageNeighborhoodController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\admin\GarbageNeighborhoodController::class, 'store'])->name('store');
+        Route::get('/{garbageNeighborhood}/edit', [\App\Http\Controllers\admin\GarbageNeighborhoodController::class, 'edit'])->name('edit');
+        Route::put('/{garbageNeighborhood}', [\App\Http\Controllers\admin\GarbageNeighborhoodController::class, 'update'])->name('update');
+        Route::delete('/{garbageNeighborhood}', [\App\Http\Controllers\admin\GarbageNeighborhoodController::class, 'destroy'])->name('destroy');
+    });
+
+// Admin - Relatórios de Coleta
+    Route::prefix('admin/garbage-reports')->name('admin.garbage-reports.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\admin\GarbageReportController::class, 'index'])->name('index');
     });
 
 // --- GRUPO DE GESTÃO DE DESPESAS ---
@@ -409,7 +517,7 @@ Route::middleware('auth')->group(function () {
     // Postos de Combustível
     Route::resource('gas-stations', \App\Http\Controllers\fuel\GasStationController::class);
     Route::get('/api/gas-stations/search', [\App\Http\Controllers\fuel\GasStationController::class, 'search'])->name('api.gas-stations.search');
-    Route::post('/gas-stations/check-cnpj', [GasStationController::class, 'checkCnpj'])->name('gas-stations.check-cnpj');
+    Route::post('/gas-stations/check-cnpj', [\App\Http\Controllers\fuel\GasStationController::class, 'checkCnpj'])->name('gas-stations.check-cnpj');
     //***** INICIO DO AGENDAMENTOS DE POSTOS *****//
 
     // Rotas para o CRUD de Agendamento de Postos
@@ -430,17 +538,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [\App\Http\Controllers\fuel\FuelQuotationController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\fuel\FuelQuotationController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\fuel\FuelQuotationController::class, 'store'])->name('store');
-        Route::get('/{fuelQuotation}', [\App\Http\Controllers\fuel\FuelQuotationController::class, 'show'])->name('show');
-        Route::get('/{fuelQuotation}/edit', [\App\Http\Controllers\fuel\FuelQuotationController::class, 'edit'])->name('edit');
-        Route::put('/{fuelQuotation}', [\App\Http\Controllers\fuel\FuelQuotationController::class, 'update'])->name('update');
-        Route::delete('/{fuelQuotation}', [\App\Http\Controllers\fuel\FuelQuotationController::class, 'destroy'])->name('destroy');
 
-        // API
+        Route::get('/settings', [\App\Http\Controllers\fuel\FuelQuotationSettingsController::class, 'index'])->name('settings')->middleware('role:general_manager');
+        // API (também mova essas antes das rotas com parâmetros)
         Route::post('/calculate-averages', [\App\Http\Controllers\fuel\FuelQuotationController::class, 'calculateAverages'])->name('calculate-averages');
         Route::post('/delete-image', [\App\Http\Controllers\fuel\FuelQuotationController::class, 'deleteImage'])->name('delete-image');
 
-        // Configurações (apenas para gestores gerais)
-        Route::get('/settings', [\App\Http\Controllers\fuel\FuelQuotationSettingsController::class, 'index'])->name('settings')->middleware('can:isGeneralManager');
+        // Rotas de configurações (também mova antes)
         Route::post('/settings/calculation-methods', [\App\Http\Controllers\fuel\FuelQuotationSettingsController::class, 'storeCalculationMethod'])->name('settings.calculation-methods.store');
         Route::put('/settings/calculation-methods/{method}', [\App\Http\Controllers\fuel\FuelQuotationSettingsController::class, 'updateCalculationMethod'])->name('settings.calculation-methods.update');
         Route::delete('/settings/calculation-methods/{method}', [\App\Http\Controllers\fuel\FuelQuotationSettingsController::class, 'destroyCalculationMethod'])->name('settings.calculation-methods.destroy');
@@ -448,6 +552,10 @@ Route::middleware('auth')->group(function () {
         Route::put('/settings/discount-settings/{discount}', [\App\Http\Controllers\fuel\FuelQuotationSettingsController::class, 'updateDiscountSetting'])->name('settings.discount-settings.update');
         Route::delete('/settings/discount-settings/{discount}', [\App\Http\Controllers\fuel\FuelQuotationSettingsController::class, 'destroyDiscountSetting'])->name('settings.discount-settings.destroy');
 
+        Route::get('/{fuelQuotation}', [\App\Http\Controllers\fuel\FuelQuotationController::class, 'show'])->name('show');
+        Route::get('/{fuelQuotation}/edit', [\App\Http\Controllers\fuel\FuelQuotationController::class, 'edit'])->name('edit');
+        Route::put('/{fuelQuotation}', [\App\Http\Controllers\fuel\FuelQuotationController::class, 'update'])->name('update');
+        Route::delete('/{fuelQuotation}', [\App\Http\Controllers\fuel\FuelQuotationController::class, 'destroy'])->name('destroy');
     });
 
     // Multas
@@ -468,7 +576,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/fines/search-drivers', [\App\Http\Controllers\FineController::class, 'searchDrivers'])->name('api.fines.search-drivers');
     Route::get('/api/fines/search-notices', [\App\Http\Controllers\FineController::class, 'searchInfractionNotices'])->name('api.fines.search-notices');
 
-}); // <--- ESTA É A CHAVE DE FECHAMENTO CORRETA PARA O GRUPO DE AUTH
+});
 
 // Verificação de Autenticidade de Multas (Público)
 Route::get('/fines/verify', function() {

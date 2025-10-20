@@ -163,6 +163,80 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v4"/>
         </svg>
         @break
+
+    @case('pencil-square')
+        <!-- Ícone de assinatura / lápis em documento -->
+        <svg {{ $attributes->merge(['class' => 'pencil-square '.$classes]) }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <!-- Contorno do documento -->
+            <rect x="4" y="4" width="16" height="16" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Lápis inclinado -->
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 15l6-6 2 2-6 6H9v-2z"/>
+            <!-- Detalhe da ponta do lápis -->
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14 9l2 2"/>
+            <!-- Linha simulando assinatura -->
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7 19c1.5-.8 3 .5 4.5-.5 1.5-1 3 1 4.5 0"/>
+        </svg>
+        @break
+    @case('pencil')
+        <!-- Ícone do ato de assinar (lápis escrevendo uma linha) -->
+        <svg {{ $attributes->merge(['class' => 'pencil '.$classes]) }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <!-- Lápis inclinado -->
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 5l4 4-9 9H6v-4l9-9z"/>
+            <!-- Detalhe da ponta do lápis -->
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14 6l4 4"/>
+            <!-- Linha de assinatura fluida -->
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 20c1.2-0.8 2.5.4 3.8-.4 1.3-.8 2.8.6 4.1-.2 1.3-.8 2.8.4 4.1-.4"/>
+        </svg>
+        @break
+    @case('chat-bubble-left-right')
+        <svg class="w-8 h-8 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+        </svg>
+        @break
+    @case('calculator') <!-- ICONE DE CALCULADORA -->
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Corpo da calculadora -->
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+        <!-- Tela -->
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 6h8v3H8z"/>
+        <!-- Botões -->
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/>
+    </svg>
+    @break
+
+    @case('truck') <!-- ICONE DE CAMINHAO -->
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Cabine e carroceria -->
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 7h10v10H3V7zM13 10h4l4 4v3h-8v-7z"/>
+        <!-- Rodas -->
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M5.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM17.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+    </svg>
+    @break
+
+
+
+
+    @case('calculator')
+        <!-- Ícone de calculadora -->
+        <svg {{ $attributes->merge(['class' => 'calculator w-5 h-5 shrink-0']) }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- Corpo da calculadora -->
+            <rect x="5" y="3" width="14" height="18" rx="2" ry="2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+            <!-- Tela da calculadora -->
+            <rect x="8" y="6" width="8" height="3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+            <!-- Botões -->
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/>
+        </svg>
+        @break
+
+
     @case('building-office')
         <svg {{ $attributes->merge(['class'=>$classes]) }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 21V5a2 2 0 012-2h12a2 2 0 012 2v16m-4-18v2m-8-2v2m-4 4h16m-12 4h.01M8 13h.01M16 9h.01M16 13h.01M12 9h.01M12 13h.01M8 17h.01M12 17h.01M16 17h.01"/>

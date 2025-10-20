@@ -2,7 +2,6 @@
 
 namespace App\Models\garbage;
 
-use App\Models\DigitalSignature;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,11 +11,13 @@ class GarbageRunSignature extends Model
 {
     use HasFactory, HasUuids;
 
+    protected $table = 'garbage_runs_signatures';
+
     protected $fillable = [
         'garbage_run_id',
         'driver_signature_id',
-        'driver_signed_at',
         'admin_signature_id',
+        'driver_signed_at',
         'admin_signed_at',
     ];
 
@@ -27,16 +28,16 @@ class GarbageRunSignature extends Model
 
     public function garbageRun(): BelongsTo
     {
-        return $this->belongsTo(GarbageRun::class);
+        return $this->belongsTo(GarbageRun::class, 'garbage_run_id');
     }
 
     public function driverSignature(): BelongsTo
     {
-        return $this->belongsTo(DigitalSignature::class, 'driver_signature_id');
+        return $this->belongsTo(\App\Models\DigitalSignature::class, 'driver_signature_id');
     }
 
     public function adminSignature(): BelongsTo
     {
-        return $this->belongsTo(DigitalSignature::class, 'admin_signature_id');
+        return $this->belongsTo(\App\Models\DigitalSignature::class, 'admin_signature_id');
     }
 }
