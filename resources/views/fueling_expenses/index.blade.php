@@ -194,7 +194,7 @@
                 </div>
 
                 <div x-show="!loading && error" class="text-center py-8">
-                    <x-icon name="exclamation-circle" class="w-16 h-16 text-red-400 mx-auto mb-4" />
+                    <x-icon name="alert" class="w-16 h-16 text-red-400 mx-auto mb-4" />
                     <p class="text-red-600 dark:text-red-400 text-lg font-medium" x-text="error"></p>
                 </div>
             </x-ui.card>

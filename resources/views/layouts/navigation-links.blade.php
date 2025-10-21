@@ -209,7 +209,7 @@
         <a href="{{ route('dashboard') }}"
            class="flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200
                   {{ request()->routeIs('dashboard') ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
-            <x-icon name="dashboard" class="w-5 h-5 shrink-0"/>
+            <x-icon name="house" class="w-5 h-5 shrink-0"/>
             <span class="truncate" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Dashboard</span>
             <!-- Tooltip quando colapsado -->
             <span x-cloak x-show="isSidebarCollapsed && !isMobileSidebarOpen"
@@ -227,7 +227,7 @@
                 @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ logbookSubmenuOpen = false; }"
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $logbookGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
-            <x-icon name="clipboard" class="w-5 h-5 shrink-0"/>
+            <x-icon name="journal-bookmark" class="w-5 h-5 shrink-0"/>
             <span class="truncate flex-1 text-left"
                   x-show="!isSidebarCollapsed || isMobileSidebarOpen">Diário de Bordo</span>
             <x-icon name="chevron-down" id="nav-logbook-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen"
@@ -238,14 +238,14 @@
             <li>
                 <a href="{{ route('logbook.start-flow') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('logbook.start-flow') || request()->routeIs('logbook.vehicle-select') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                    <x-icon name="plus" class="w-3.5 h-3.5"/>
+                    <x-icon name="journal-arrow-up" class="w-3.5 h-3.5"/>
                     <span>Nova Corrida</span>
                 </a>
             </li>
             <li>
                 <a href="{{ route('logbook.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('logbook.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                    <x-icon name="list" class="w-3.5 h-3.5"/>
+                    <x-icon name="book" class="w-3.5 h-3.5"/>
                     <span>Minhas Corridas</span>
                 </a>
             </li>
@@ -262,7 +262,7 @@
                 <li>
                     <a href="{{ route('logbook-rules.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
         {{ request()->routeIs('logbook-rules.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="cog" class="w-3.5 h-3.5"/>
+                        <x-icon name="gear" class="w-3.5 h-3.5"/>
                         <span>Regras de KM</span>
                     </a>
                 </li>
@@ -294,7 +294,7 @@
             <li>
                 <a href="{{ route('garbage-logbook.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                 {{ request()->routeIs('garbage-logbook.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                    <x-icon name="clipboard" class="w-3.5 h-3.5"/>
+                    <x-icon name="journal-arrow-up" class="w-3.5 h-3.5"/>
                     <span>Diário de Coleta</span>
                 </a>
             </li>
@@ -322,7 +322,7 @@
                 <li>
                     <a href="{{ route('admin.garbage-neighborhoods.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                 {{ request()->routeIs('admin.garbage-neighborhoods.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="map-pin" class="w-3.5 h-3.5"/>
+                        <x-icon name="map" class="w-3.5 h-3.5"/>
                         <span>Bairros</span>
                     </a>
                 </li>
@@ -331,7 +331,7 @@
                 <li>
                     <a href="{{ route('admin.garbage-reports.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                 {{ request()->routeIs('admin.garbage-reports.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="chart-bar" class="w-3.5 h-3.5"/>
+                        <x-icon name="bar-chart-line" class="w-3.5 h-3.5"/>
                         <span>Relatórios</span>
                     </a>
                 </li>
@@ -352,7 +352,7 @@
                 @if(auth()->user()->isManager() || auth()->user()->isGeneralManager())
                     {{-- Administração --}}
                     <a href="{{ route('admin.garbage-users.index') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-gray-100 dark:hover:bg-navy-700">
-                        <x-icon name="users" class="w-4 h-4"/>
+                        <x-icon name="people" class="w-4 h-4"/>
                         <span>Gerenciar Usuários</span>
                     </a>
 
@@ -364,7 +364,7 @@
 
                     {{-- Bairros --}}
                     <a href="{{ route('admin.garbage-neighborhoods.index') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-navy-100 hover:bg-gray-100 dark:hover:bg-navy-700">
-                        <x-icon name="map-pin" class="w-4 h-4"/>
+                        <x-icon name="geo-alt" class="w-4 h-4"/>
                         <span>Bairros</span>
                     </a>
 
@@ -388,7 +388,7 @@
                 @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ checklistSubmenuOpen = false; }"
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $checklistGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
-            <x-icon name="clipboard-check" class="w-5 h-5 shrink-0"/>
+            <x-icon name="checklist" class="w-5 h-5 shrink-0"/>
             <span class="truncate flex-1 text-left"
                   x-show="!isSidebarCollapsed || isMobileSidebarOpen">Checklists</span>
             <x-icon name="chevron-down" id="nav-checklist-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen"
@@ -399,7 +399,7 @@
             <li>
                 <a href="{{ route('checklists.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('checklists.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                    <x-icon name="list" class="w-3.5 h-3.5"/>
+                    <x-icon name="checklist" class="w-3.5 h-3.5"/>
                     <span>Todos</span>
                 </a>
             </li>
@@ -434,7 +434,7 @@
                 @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ vehiclesSubmenuOpen = false; }"
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $vehicleGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
-            <x-icon name="car" class="w-5 h-5 shrink-0"/>
+            <x-icon name="truck" class="w-5 h-5 shrink-0"/>
             <span class="truncate flex-1 text-left" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Veículos</span>
             <x-icon name="chevron-down" id="nav-vehicles-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen"
                     x-bind:class="vehiclesOpen ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200"/>
@@ -445,35 +445,35 @@
                 <li>
                     <a href="{{ route('vehicles.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('vehicles.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="list" class="w-3.5 h-3.5"/>
+                        <x-icon name="diagram-3" class="w-3.5 h-3.5"/>
                         <span>Gerenciar</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('vehicles.create') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('vehicles.create') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="plus" class="w-3.5 h-3.5"/>
+                        <x-icon name="plus-circle" class="w-3.5 h-3.5"/>
                         <span>Cadastrar</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('vehicle-categories.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('vehicle-categories.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="category" class="w-3.5 h-3.5"/>
+                        <x-icon name="ui-checks-grid" class="w-3.5 h-3.5"/>
                         <span>Categorias</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('prefixes.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('prefixes.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="prefix" class="w-3.5 h-3.5"/>
+                        <x-icon name="pass" class="w-3.5 h-3.5"/>
                         <span>Prefixos</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('vehicle-price-origins.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
         {{ request()->routeIs('vehicle-price-origins.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="currency-dollar" class="w-3.5 h-3.5"/>
+                        <x-icon name="bank" class="w-3.5 h-3.5"/>
                         <span>Patrimônios</span>
                     </a>
                 </li>
@@ -481,7 +481,7 @@
             <li>
                 <a href="{{ route('vehicle-transfers.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('vehicle-transfers.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                    <x-icon name="swap" class="w-3.5 h-3.5"/>
+                    <x-icon name="shuffle" class="w-3.5 h-3.5"/>
                     <span>Transferências</span>
                 </a>
             </li>
@@ -489,7 +489,7 @@
                 <li>
                     <a href="{{ route('vehicles.usage-panel') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
             {{ request()->routeIs('vehicles.usage-panel') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="chart-bar" class="w-3.5 h-3.5"/>
+                        <x-icon name="bar-chart-line" class="w-3.5 h-3.5"/>
                         <span>Veículos em Uso</span>
                     </a>
                 </li>
@@ -509,12 +509,7 @@
                     @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ maintenanceSubmenuOpen = false; }"
                     class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $maintenanceGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
-                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
+                <x-icon name="box-seam" class="w-5 h-5 shrink-0"/>
                 <span class="truncate flex-1 text-left"
                       x-show="!isSidebarCollapsed || isMobileSidebarOpen">Manutenção</span>
                 <x-icon name="chevron-down" id="nav-maintenance-chevron"
@@ -528,10 +523,7 @@
                 <li>
                     <a href="{{ route('oil-changes.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('oil-changes.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
-                        </svg>
+                        <x-icon name="moisture" class="w-3.5 h-3.5 shrink-0"/>
                         <span>Troca de Óleo</span>
                     </a>
                 </li>
@@ -539,7 +531,7 @@
                     <li>
                         <a href="{{ route('oil-changes.settings') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('oil-changes.settings') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                            <x-icon name="settings" class="w-3.5 h-3.5"/>
+                            <x-icon name="wrench" class="w-3.5 h-3.5"/>
                             <span>Configurações Óleo</span>
                         </a>
                     </li>
@@ -548,36 +540,28 @@
                 <li>
                     <a href="{{ route('tires.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('tires.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9 10h.01M15 10h.01M9 14h6"/>
-                        </svg>
+                        <x-icon name="vinyl" class="w-3.5 h-3.5"/>
                         <span>Dashboard Pneus</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('tires.vehicles') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('tires.vehicles') || request()->routeIs('tires.vehicles.show') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="car" class="w-3.5 h-3.5"/>
+                        <x-icon name="truck" class="w-3.5 h-3.5"/>
                         <span>Veículos</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('tires.stock') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('tires.stock') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                        </svg>
+                        <x-icon name="box-seam" class="w-3.5 h-3.5"/>
                         <span>Estoque</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('tires.create') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('tires.create') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="plus" class="w-3.5 h-3.5"/>
+                        <x-icon name="plus-circle" class="w-3.5 h-3.5"/>
                         <span>Cadastrar Pneu</span>
                     </a>
                 </li>
@@ -597,10 +581,7 @@
                     @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ fuelSubmenuOpen = false; }"
                     class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
         {{ $fuelGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
-                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>
+                <x-icon name="fuel-pump" class="w-5 h-5 shrink-0"/>
                 <span class="truncate flex-1 text-left"
                       x-show="!isSidebarCollapsed || isMobileSidebarOpen">Combustível</span>
                 <x-icon name="chevron-down" id="nav-fuel-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen"
@@ -612,12 +593,7 @@
                 <li>
                     <a href="{{ route('gas-stations.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                 {{ request()->routeIs('gas-stations.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
+                        <x-icon name="fuel-pump" class="w-3.5 h-3.5"/>
                         <span>Postos</span>
                     </a>
                 </li>
@@ -625,7 +601,7 @@
                 <li>
                     <a href="{{ route('gas_stations_current.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                 {{ request()->routeIs('gas_stations_current.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="clipboard-check" class="w-3.5 h-3.5"/>
+                        <x-icon name="calendar-check" class="w-3.5 h-3.5"/>
                         <span>Postos Ativos</span>
                     </a>
                 </li>
@@ -633,14 +609,14 @@
                 <li>
                     <a href="{{ route('scheduled_gas_stations.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                 {{ request()->routeIs('scheduled_gas_stations.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="calendar" class="w-3.5 h-3.5"/>
+                        <x-icon name="calendar2-plus" class="w-3.5 h-3.5"/>
                         <span>Agendamentos</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('fuel_prices.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                 {{ request()->routeIs('fuel_prices.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="currency-dollar" class="w-3.5 h-3.5"/>
+                        <x-icon name="cash-stack" class="w-3.5 h-3.5"/>
                         <span>Preços Atuais</span>
                     </a>
                 </li>
@@ -648,7 +624,7 @@
                 <li>
                     <a href="{{ route('scheduled_prices.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                 {{ request()->routeIs('scheduled_prices.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="calendar" class="w-3.5 h-3.5"/>
+                        <x-icon name="cash-coin" class="w-3.5 h-3.5"/>
                         <span>Agendamento de Preços</span>
                     </a>
                 </li>
@@ -657,14 +633,14 @@
                 <li>
                     <a href="{{ route('fuel-quotations.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                 {{ request()->routeIs('fuel-quotations.index') || request()->routeIs('fuel-quotations.show') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="list" class="w-3.5 h-3.5"/>
+                        <x-icon name="card-checklist" class="w-3.5 h-3.5"/>
                         <span>Cotações</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('fuel-quotations.create') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                 {{ request()->routeIs('fuel-quotations.create') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="plus" class="w-3.5 h-3.5"/>
+                        <x-icon name="plus-circle" class="w-3.5 h-3.5"/>
                         <span>Nova Cotação</span>
                     </a>
                 </li>
@@ -673,7 +649,7 @@
                         <a href="{{ route('fuel-quotations.settings') }}"
                            class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                 {{ request()->routeIs('fuel-quotations.settings') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                            <x-icon name="settings" class="w-3.5 h-3.5"/>
+                            <x-icon name="wrench" class="w-3.5 h-3.5"/>
                             <span>Configurações</span>
                         </a>
                     </li>
@@ -682,7 +658,7 @@
                     <li>
                         <a href="{{ route('fueling_expenses.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                 {{ request()->routeIs('fueling_expenses.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                            <x-icon name="chart-bar" class="w-3.5 h-3.5"/>
+                            <x-icon name="coin" class="w-3.5 h-3.5"/>
                             <span>Despesas</span>
                         </a>
                     </li>
@@ -702,7 +678,7 @@
                     @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ finesSubmenuOpen = false; }"
                     class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
         {{ $finesGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
-                <x-icon name="speed-camera" class="w-5 h-5 shrink-0"/>
+                <x-icon name="person-video2" class="w-5 h-5 shrink-0"/>
                 <span class="truncate flex-1 text-left"
                       x-show="!isSidebarCollapsed || isMobileSidebarOpen">Multas</span>
                 <x-icon name="chevron-down" id="nav-fines-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen"
@@ -713,14 +689,14 @@
                 <li>
                     <a href="{{ route('fines.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                 {{ request()->routeIs('fines.index') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="list" class="w-3.5 h-3.5"/>
+                        <x-icon name="clipboard-data" class="w-3.5 h-3.5"/>
                         <span>Gerenciar</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('fines.create') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                 {{ request()->routeIs('fines.create') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="plus" class="w-3.5 h-3.5"/>
+                        <x-icon name="inboxes" class="w-3.5 h-3.5"/>
                         <span>Cadastrar</span>
                     </a>
                 </li>
@@ -757,7 +733,7 @@
                 @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ reportsSubmenuOpen = false; }"
                 class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $reportsGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
-            <x-icon name="document" class="w-5 h-5 shrink-0"/>
+            <x-icon name="file-earmark-text" class="w-5 h-5 shrink-0"/>
             <span class="truncate flex-1 text-left"
                   x-show="!isSidebarCollapsed || isMobileSidebarOpen">Relatórios</span>
             <x-icon name="chevron-down" id="nav-reports-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen"
@@ -768,7 +744,7 @@
             <li>
                 <a href="{{ route('backup-reports.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('backup-reports.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                    <x-icon name="list" class="w-3.5 h-3.5"/>
+                    <x-icon name="file-earmark-pdf" class="w-3.5 h-3.5"/>
                     <span>Backups</span>
                 </a>
             </li>
@@ -776,7 +752,7 @@
                 <li>
                     <a href="{{ route('pdf-templates.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('pdf-templates.*') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="template" class="w-3.5 h-3.5"/>
+                        <x-icon name="file-earmark-richtext" class="w-3.5 h-3.5"/>
                         <span>Modelos</span>
                     </a>
                 </li>
@@ -807,14 +783,14 @@
                 <li>
                     <a href="{{ route('users.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('users.*') && !request()->routeIs('users.create') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="list" class="w-3.5 h-3.5"/>
+                        <x-icon name="person-vcard" class="w-3.5 h-3.5"/>
                         <span>Gerenciar</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('users.create') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('users.create') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="plus" class="w-3.5 h-3.5"/>
+                        <x-icon name="person-add" class="w-3.5 h-3.5"/>
                         <span>Cadastrar</span>
                     </a>
                 </li>
@@ -843,7 +819,7 @@
                     @click.away="if(isSidebarCollapsed && !isMobileSidebarOpen){ auditSubmenuOpen = false; }"
                     class="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none
             {{ $auditGroupActive ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
-                <x-icon name="clipboard" class="w-5 h-5 shrink-0"/>
+                <x-icon name="archive" class="w-5 h-5 shrink-0"/>
                 <span class="truncate flex-1 text-left"
                       x-show="!isSidebarCollapsed || isMobileSidebarOpen">Auditoria</span>
                 <x-icon name="chevron-down" id="nav-audit-chevron" x-show="!isSidebarCollapsed || isMobileSidebarOpen"
@@ -854,28 +830,28 @@
                 <li>
                     <a href="{{ route('audit-logs.index') }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->routeIs('audit-logs.index') && !request()->input('type') ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="list" class="w-3.5 h-3.5"/>
+                        <x-icon name="book" class="w-3.5 h-3.5"/>
                         <span>Todos os Logs</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('audit-logs.index', ['type' => 'App\Models\user\User']) }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->input('type') == 'App\Models\User' ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="users" class="w-3.5 h-3.5"/>
+                        <x-icon name="person-gear" class="w-3.5 h-3.5"/>
                         <span>Usuários</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('audit-logs.index', ['type' => 'App\Models\Vehicle\Vehicle']) }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->input('type') == 'App\Models\Vehicle' ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="car" class="w-3.5 h-3.5"/>
+                        <x-icon name="truck" class="w-3.5 h-3.5"/>
                         <span>Veículos</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('audit-logs.index', ['type' => 'App\Models\run\Run']) }}" class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-wide transition-colors duration-150
                     {{ request()->input('type') == 'App\Models\Run' ? 'bg-primary-100 text-primary-700 dark:bg-navy-700 dark:text-navy-50' : 'text-gray-600 dark:text-navy-100 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-navy-700/60 dark:hover:text-white' }}">
-                        <x-icon name="route" class="w-3.5 h-3.5"/>
+                        <x-icon name="arrow-left-right" class="w-3.5 h-3.5"/>
                         <span>Rodagens</span>
                     </a>
                 </li>
