@@ -9,9 +9,7 @@
             <x-ui.card class="border-l-4 border-l-red-500 bg-red-50 dark:bg-red-900/20">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                        </svg>
+                        <x-icon name="alert" class="w-4 h-4"/>
                         Alertas de Quilometragem Inconsistente
                     </h3>
                     <span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">
@@ -25,9 +23,7 @@
                             <div class="flex items-center gap-4">
                                 <div class="flex-shrink-0">
                                     <div class="w-10 h-10 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
-                                        <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                        </svg>
+                                        <x-icon name="calendar" class="w-5 h-5 text-red-600 dark:text-red-400"/>
                                     </div>
                                 </div>
                                 <div>
@@ -77,7 +73,7 @@
                         <x-ui.stat-card
                             title="Total em Uso"
                             :value="$stats['total']"
-                            icon="car"
+                            icon="truck"
                             variant="default"
                         />
 
@@ -90,7 +86,7 @@
                             <x-ui.stat-card
                                 :title="$stat->secretariat_name"
                                 :value="$stat->total"
-                                icon="building-office"
+                                icon="building"
                                 :variant="$variant"
                             />
                         @endforeach
@@ -102,9 +98,7 @@
                         <x-ui.card>
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                    </svg>
+                                    <x-icon name="calendar" class="w-5 h-5 text-blue-600 dark:text-blue-400"/>
                                     Veículos Ativos Agora
                                 </h3>
                             </div>
@@ -150,10 +144,8 @@
                             <div class="mt-4 pt-4 border-t dark:border-gray-700">
                                 <a href="{{ route('vehicles.usage-panel') }}"
                                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
+                                    <x-icon name="eye" class="w-5 h-5"/>
+
                                     <span>Ver Detalhes Completos</span>
                                 </a>
                             </div>
@@ -162,10 +154,7 @@
                         {{-- Gráfico de Veículos por Secretaria --}}
                         <x-ui.card>
                             <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
-                                </svg>
+                                    <x-icon name="pie-chart" class="w-5 h-5 text-green-600 dark:text-green-400"/>
                                 Distribuição por Secretaria
                             </h3>
 
@@ -194,9 +183,7 @@
                         {{-- Gráfico de Gastos --}}
                         <x-ui.card>
                             <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
+                                    <x-icon name="coin" class="w-5 h-5 text-red-600 dark:text-red-400"/>
                                 Gastos (Últimos 7 dias)
                             </h3>
                             @if(!empty($expensesData['series']) && !empty($expensesData['categories']))
@@ -209,9 +196,8 @@
                             @else
                                 <div class="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500">
                                     <div class="text-center">
-                                        <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
-                                        </svg>
+                                        <x-icon name="coin" class="w-5 h-5 text-red-600 dark:text-red-400"/>
+
                                         <p>Sem dados de gastos</p>
                                     </div>
                                 </div>
@@ -221,9 +207,8 @@
                         {{-- Gráfico de Abastecimentos --}}
                         <x-ui.card>
                             <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                </svg>
+                                    <x-icon name="speedometer2" class="w-5 h-5 text-yellow-600 dark:text-yellow-400"/>
+
                                 Abastecimentos (Últimos 7 dias)
                             </h3>
                             @if(!empty($fuelingsData['series']) && !empty($fuelingsData['categories']))

@@ -51,7 +51,7 @@
         <x-ui.stat-card
             title="Veículos"
             :value="$stats['total_vehicles']"
-            icon="car"
+            icon="truck"
             variant="success"
         />
     </div>

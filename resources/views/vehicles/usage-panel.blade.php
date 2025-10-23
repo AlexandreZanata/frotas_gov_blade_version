@@ -14,7 +14,7 @@
             <x-ui.stat-card
                 title="Total em Uso"
                 :value="$vehicles->total()"
-                icon="car"
+                icon="truck"
                 variant="default"
             />
 
@@ -28,7 +28,7 @@
                     <x-ui.stat-card
                         :title="$stat->secretariat_name"
                         :value="$stat->total"
-                        icon="building-office"
+                        icon="building"
                         :variant="$variant"
                     />
                 @endforeach
@@ -40,7 +40,7 @@
             {{-- Gráfico de Barras --}}
             <x-ui.card>
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-                    <x-icon name="chart-bar" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <x-icon name="bar-chart-line" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     Veículos por Secretaria
                 </h3>
 
@@ -61,7 +61,7 @@
             {{-- Gráfico de Pizza --}}
             <x-ui.card>
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-                    <x-icon name="chart-pie" class="w-5 h-5 text-green-600 dark:text-green-400" />
+                    <x-icon name="pie-chart" class="w-5 h-5 text-green-600 dark:text-green-400" />
                     Distribuição Percentual
                 </h3>
 
@@ -82,7 +82,7 @@
             {{-- Gráfico de Status --}}
             <x-ui.card>
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-                    <x-icon name="status-online" class="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    <x-icon name="bar-chart-steps" class="w-5 h-5 text-purple-600 dark:text-purple-400" />
                     Status Geral
                 </h3>
 

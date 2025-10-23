@@ -12,9 +12,8 @@
         <button
             @click="showRegisterModal = true"
             class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium shadow transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
+            <x-icon name="coin" class="w-5 h-5 bg-primary-600 hover:bg-primary-700"/>
+
             <span>Registrar Troca</span>
         </button>
     </x-slot>
@@ -24,9 +23,8 @@
         @if($lowStockOils->isNotEmpty())
             <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                 <div class="flex">
-                    <svg class="w-5 h-5 text-red-600 dark:text-red-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                    </svg>
+                    <x-icon name="box-seam" class="w-8 h-8 text-red-600 dark:text-red-400 mr-2 flex-shrink-0"/>
+
                     <div class="text-sm text-red-800 dark:text-red-300">
                         <p class="font-semibold mb-1">Estoque Baixo de Óleo</p>
                         <ul class="list-disc list-inside space-y-1">
@@ -183,16 +181,14 @@
                                         <button @click="openRegisterModal('{{ $vehicle->id }}')"
                                                 title="Registrar Troca"
                                                 class="p-1.5 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 rounded transition">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                            </svg>
+                                            <x-icon name="plus" class="w-5 h-5 text-green-600 hover:bg-green-50 dark:text-green-400"/>
+
                                         </button>
                                         <a href="{{ route('oil-changes.history', $vehicle) }}"
                                            title="Histórico"
                                            class="p-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded transition">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                                            </svg>
+                                            <x-icon name="calendar" class="w-5 h-5 text-blue-600 hover:bg-blue-50 dark:text-blue-400"/>
+
                                         </a>
                                     </div>
                                 </td>
@@ -243,9 +239,8 @@
                             <p class="text-sm text-gray-500 dark:text-navy-300 mt-0.5">Preencha os dados da manutenção realizada</p>
                         </div>
                         <button @click="showRegisterModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
+                            <x-icon name="x-square" class="w-5 h-5 text-red-600 hover:bg-red-50 dark:text-red-400"/>
+
                         </button>
                     </div>
 
@@ -275,9 +270,8 @@
                         <!-- Informações da Troca -->
                         <div>
                             <h4 class="text-sm font-semibold text-gray-700 dark:text-navy-300 mb-3 flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                </svg>
+                                <x-icon name="info-circle" class="w-5 h-5 text-gray-700 dark:text-navy-300"/>
+
                                 Informações da Troca
                             </h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -316,9 +310,8 @@
                         <!-- Óleo e Estoque -->
                         <div>
                             <h4 class="text-sm font-semibold text-gray-700 dark:text-navy-300 mb-3 flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
-                                </svg>
+                                <x-icon name="moisture" class="w-5 h-5 ext-gray-700 dark:text-navy-300"/>
+
                                 Óleo Utilizado
                             </h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -364,9 +357,8 @@
                         <!-- Custo e Prestador -->
                         <div>
                             <h4 class="text-sm font-semibold text-gray-700 dark:text-navy-300 mb-3 flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
-                                </svg>
+                                <x-icon name="coin" class="w-5 h-5 text-gray-700 dark:text-navy-300"/>
+
                                 Informações Financeiras
                             </h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -397,9 +389,8 @@
                         <!-- Próxima Troca -->
                         <div class="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
                             <h4 class="text-sm font-semibold text-primary-900 dark:text-primary-300 mb-3 flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                </svg>
+                                <x-icon name="calendar" class="w-5 h-5 text-primary-900 dark:text-primary-300"/>
+
                                 Próxima Troca Prevista
                             </h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -460,9 +451,8 @@
                             <button
                                 type="submit"
                                 class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm transition inline-flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
+                                <x-icon name="plus" class="w-5 h-5 bg-primary-600 hover:bg-primary-700"/>
+
                                 <span>Registrar Troca</span>
                             </button>
                         </div>

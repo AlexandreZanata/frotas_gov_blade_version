@@ -9,7 +9,7 @@
         <!-- Botão para abastecimento independente -->
         <a href="{{ route('logbook.fueling', $run) }}"
            class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm font-medium shadow transition">
-            <x-icon name="fuel" class="w-4 h-4"/>
+            <x-icon name="fuel-pump" class="w-4 h-4"/>
             <span>Abastecer</span>
         </a>
     </x-slot>
@@ -18,7 +18,7 @@
     <div class="mb-6 bg-white dark:bg-navy-800 rounded-lg shadow p-6">
         <div class="flex items-center gap-4">
             <div class="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-full">
-                <x-icon name="car" class="w-8 h-8 text-primary-600 dark:text-primary-400"/>
+                <x-icon name="truck" class="w-8 h-8 text-primary-600 dark:text-primary-400"/>
             </div>
             <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-navy-50">
@@ -126,7 +126,7 @@
 
                     <a href="{{ route('logbook.fueling', $run) }}">
                         <x-secondary-button type="button" variant="outline">
-                            <x-icon name="fuel" class="w-4 h-4 mr-2"/>
+                            <x-icon name="fuel-pump" class="w-4 h-4 mr-2"/>
                             Abastecer Agora
                         </x-secondary-button>
                     </a>
@@ -157,7 +157,7 @@
                         class="flex items-center justify-between p-3 border border-gray-200 dark:border-navy-700 rounded-lg">
                         <div class="flex-1">
                             <div class="flex items-center space-x-3">
-                                <x-icon name="fuel" class="w-5 h-5 text-green-600 dark:text-green-400"/>
+                                <x-icon name="fuel-pump" class="w-5 h-5 text-green-600 dark:text-green-400"/>
                                 <div>
                                     <p class="font-medium text-gray-900 dark:text-navy-50">
                                         {{ $fueling->liters }}L - {{ $fueling->fuelType->name ?? 'N/A' }}

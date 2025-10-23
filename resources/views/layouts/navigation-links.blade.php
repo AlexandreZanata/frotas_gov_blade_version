@@ -869,7 +869,7 @@
         <a href="{{ route('chat.index') }}"
            class="flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200
                   {{ request()->routeIs('chat.*') ? 'text-primary-700 dark:text-navy-50 bg-primary-50 dark:bg-navy-700/50' : 'text-gray-600 dark:text-navy-100 hover:text-primary-700 hover:bg-primary-50 dark:hover:text-white dark:hover:bg-navy-700/40' }}">
-            <x-icon name="chat-bubble" class="w-3.5 h-3.5"/>
+            <x-icon name="chat-bubble-left-right" class="w-5 h-5"/>
             <span class="truncate" x-show="!isSidebarCollapsed || isMobileSidebarOpen">Chat</span>
             <span x-cloak x-show="isSidebarCollapsed && !isMobileSidebarOpen"
                   class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 rounded bg-primary-600 text-white text-xs opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow z-50">Chat</span>
